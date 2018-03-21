@@ -1,0 +1,5 @@
+{
+    "description": "Example data base",
+    "name": "workforce",
+    "location": "s3://my_bucket/my_folder/"
+}
