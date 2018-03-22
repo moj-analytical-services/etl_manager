@@ -1,0 +1,17 @@
+{
+    "StorageDescriptor": {
+        "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+        "OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        "SerdeInfo": {
+            "Parameters": {
+                "input.regex": "(.*)",
+                "serialization.format": "1"
+            },
+            "SerializationLibrary": "org.apache.hadoop.hive.serde2.RegexSerDe"
+        },
+        "StoredAsSubDirectories": false
+    },
+    "Parameters": {
+        "classification": "csv"
+    }
+}

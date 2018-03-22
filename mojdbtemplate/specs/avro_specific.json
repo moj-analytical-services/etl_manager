@@ -1,0 +1,22 @@
+{
+    "StorageDescriptor": {
+        "InputFormat": "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
+        "OutputFormat": "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat",
+        "SerdeInfo": {
+            "SerializationLibrary": "org.apache.hadoop.hive.serde2.avro.AvroSerDe",
+            "Parameters": {
+                "avro.schema.literal": ""
+            }
+        },
+        "BucketColumns": [],
+        "SortColumns": [],
+        "Parameters": {
+            "avro.schema.literal": "",
+            "classification": "avro"
+        }
+    },
+    "Parameters": {
+        "avro.schema.literal": "",
+        "classification": "avro"
+    }
+}

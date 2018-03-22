@@ -1,0 +1,19 @@
+{
+    "Name": "",
+    "Role": "",
+    "ExecutionProperty": {
+        "MaxConcurrentRuns": 1
+    },
+    "Command": {
+        "Name": "glueetl",
+        "ScriptLocation": ""
+    },
+    "DefaultArguments": {
+        "--TempDir": "",
+        "--extra-files": "",
+        "--extra-py-files": "",
+        "--job-bookmark-option": "job-bookmark-disable"
+    },
+    "MaxRetries": 0,
+    "AllocatedCapacity": 2
+}

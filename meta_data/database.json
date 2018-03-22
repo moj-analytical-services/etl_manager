@@ -1,5 +1,7 @@
 {
     "description": "Example data base",
     "name": "workforce",
-    "location": "s3://my_bucket/my_folder/"
+    "bucket": "my_bucket",
+    "base_folder": "my_folder",
+    "location": "database/database1"
 }
