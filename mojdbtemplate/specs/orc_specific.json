@@ -1,0 +1,17 @@
+{
+    "StorageDescriptor": {
+        "InputFormat": "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
+        "OutputFormat": "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
+        "SerdeInfo": {
+            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.orc.OrcSerde",
+            "Parameters": {}
+        },
+        "Parameters": {
+            "classification": "orc",
+            "compressionType": "none"
+        }
+    },
+    "Parameters": {
+        "classification": "orc"
+    }
+}

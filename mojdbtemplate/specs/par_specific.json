@@ -1,0 +1,19 @@
+{
+    "StorageDescriptor": {
+        "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+        "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+        "SerdeInfo": {
+            "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+            "Parameters": {
+                "serialization.format": "1"
+            }
+        },
+        "Parameters": {
+            "classification": "parquet",
+            "compressionType": "none"
+        }
+    },
+    "Parameters": {
+        "classification": "parquet"
+    }
+}

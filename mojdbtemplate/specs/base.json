@@ -1,0 +1,27 @@
+{
+    "Name": "",
+    "Description": "",
+    "Owner": "owner",
+    "Retention": 0,
+    "StorageDescriptor": {
+        "Columns": [],
+        "Location": "",
+        "InputFormat": "",
+        "OutputFormat": "",
+        "Compressed": false,
+        "NumberOfBuckets": -1,
+        "SerdeInfo": {
+            "SerializationLibrary": "",
+            "Parameters": {}
+        },
+        "BucketColumns": [],
+        "SortColumns": [],
+        "Parameters": {
+        },
+        "StoredAsSubDirectories": false
+    },
+    "PartitionKeys": [],
+    "TableType": "EXTERNAL_TABLE",
+    "Parameters": {
+    }
+}
