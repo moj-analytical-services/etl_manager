@@ -9,22 +9,28 @@ import pkg_resources
 
 _glue_client = boto3.client('glue', 'eu-west-1')
 
-_conversion = {
-    "base": pkg_resources.resource_stream(__name__, "specs/base.json"),
-    "avro": pkg_resources.resource_stream(__name__, "specs/avro_specific.json"),
-    "csv": pkg_resources.resource_stream(__name__, "specs/csv_specific.json"),
-    "csv_quoted_nodate": pkg_resources.resource_stream(__name__, "specs/csv_quoted_nodate_specific.json"),
-    "regex": pkg_resources.resource_stream(__name__, "specs/regex_specific.json"),
-    "orc": pkg_resources.resource_stream(__name__, "specs/orc_specific.json"),
-    "par": pkg_resources.resource_stream(__name__, "specs/par_specific.json"),
-    "parquet": pkg_resources.resource_stream(__name__, "specs/par_specific.json")
+_template = {
+    "base":  json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
+    "avro":  json.load(pkg_resources.resource_stream(__name__, "specs/avro_specific.json")),
+    "csv":  json.load(pkg_resources.resource_stream(__name__, "specs/csv_specific.json")),
+    "csv_quoted_nodate":  json.load(pkg_resources.resource_stream(__name__, "specs/csv_quoted_nodate_specific.json")),
+    "regex":  json.load(pkg_resources.resource_stream(__name__, "specs/regex_specific.json")),
+    "orc":  json.load(pkg_resources.resource_stream(__name__, "specs/orc_specific.json")),
+    "par":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
+    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json"))
 }
 
 def _get_spec(spec_name) :
-    if spec_name not in _conversion :
+    if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
 
-    return json.load(_conversion[spec_name])
+    return _template[spec_name]
+
+def _end_with_slash(string) :
+    if string[-1] != '/' :
+        return string + '/'
+    else :
+        return string
 
 # Used by both classes (Should move into another module)
 def _validate_string(s, allowed_chars = "_") :
@@ -190,12 +196,9 @@ class Table_Meta :
         self.columns = new_cols
 
     def glue_table_definition(self, full_database_path) :
-        # base_io = _conversion['base']
+        
         glue_table_definition = _get_spec('base')
-        # specific_io = _conversion[self.data_format]
-        # specific = json.load(specific_io)
         specific = _get_spec(self.data_format)
-
         dict_merge(glue_table_definition, specific)
         
         # Create glue specific variables from meta data
@@ -236,7 +239,7 @@ class Database_Meta :
 
         self.name = db_meta['name']
         self.bucket = db_meta['bucket']
-        self.base_folder = db_meta['bucket']
+        self.base_folder = db_meta['base_folder']
         self.location = db_meta['location']
         self.description = db_meta['description']
         self.db_suffix = db_suffix
@@ -269,6 +272,7 @@ class Database_Meta :
 
     @base_folder.setter 
     def base_folder(self, base_folder) :
+        base_folder = _end_with_slash(base_folder)
         self._base_folder = base_folder
     
     @property
@@ -277,6 +281,7 @@ class Database_Meta :
 
     @location.setter 
     def location(self, location) :
+        location = _end_with_slash(location)
         self._location = location
     
     @property
@@ -308,11 +313,11 @@ class Database_Meta :
     
     @property
     def s3_base_folder(self) :
-        return self.base_folder + self.db_suffix
+        return self.base_folder[:-1] + self.db_suffix + '/'
 
     @property
     def s3_database_path(self) :
-        return "s3://{}/{}/{}/".format(self.bucket, self.s3_base_folder, self.location)
+        return "s3://{}/{}{}".format(self.bucket, self.s3_base_folder, self.location)
  
     def _check_table_exists(self, table_name) : 
         return table_name in self.table_names
@@ -329,12 +334,22 @@ class Database_Meta :
         return out
 
     def add_table(self, table) :
+        if not isinstance(table, Table_Meta) :
+            raise ValueError("table must an object of Table_Meta class")
         self._throw_error_check_table(table.name)
         self._tables.append(table)
 
     def remove_table(self, table_name) :
         self._throw_error_check_table(table_name, False)
         self._tables = [t for t in self._tables if t.name != table_name]
+
+    def delete_glue_database(self) :
+        try :
+            _glue_client.delete_database(Name = self.glue_name)
+            response = 'database deleted'
+        except :
+            response = 'database not found'
+        return response
 
     def create_glue_database(self) :
         """
@@ -347,10 +362,8 @@ class Database_Meta :
             }
         }
 
-        try:
-            _glue_client.delete_database(Name = self.glue_name)
-        except :
-            pass
+        del_resp = self.delete_glue_database()
+
         _glue_client.create_database(**db)
 
         for tab in self._tables :
