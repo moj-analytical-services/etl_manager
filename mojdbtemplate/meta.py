@@ -348,7 +348,7 @@ class Database_Meta :
             _glue_client.delete_database(Name = self.glue_name)
             response = 'database deleted'
         except :
-            response = 'database not found'
+            response = 'Cannot delete as database not found in glue catalogue'
         return response
 
     def create_glue_database(self) :

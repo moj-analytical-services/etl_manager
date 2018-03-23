@@ -5,7 +5,7 @@ Testing Database_Meta, Table_Meta
 """
 
 import unittest
-from mojdbtemplate.meta import Database_Meta, Table_Meta, _end_with_slash, _validate_string
+from mojdbtemplate.meta import Database_Meta, Table_Meta, _end_with_slash, _validate_string, _glue_client
 
 class DatabaseMetaTest(unittest.TestCase):
     """
@@ -80,6 +80,15 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertRaises(ValueError, _validate_string, "UPPER")
         self.assertRaises(ValueError, _validate_string, "test:!@")
         self.assertEqual(_validate_string("test:!@", ":!@"), None)
+
+    def test_glue_database_creation(self) :
+        db = Database_Meta('example_meta_data/', db_suffix = '_unit_test_')
+        db.create_glue_database()
+        resp = _glue_client.get_tables(DatabaseName = db.glue_name)
+        test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
+        self.assertTrue(test_created, msg= "Note this requires user to have correct credentials to create a glue database")
+        self.assertEqual(db.delete_glue_database(), 'database deleted')
+        self.assertEqual(db.delete_glue_database(), 'Cannot delete as database not found in glue catalogue')
 
 if __name__ == '__main__':
     unittest.main()
