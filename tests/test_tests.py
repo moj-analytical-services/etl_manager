@@ -6,6 +6,7 @@ Testing Database_Meta, Table_Meta
 
 import unittest
 from mojdbtemplate.meta import Database_Meta, Table_Meta, _end_with_slash, _validate_string, _glue_client
+import boto3
 
 class DatabaseMetaTest(unittest.TestCase):
     """
@@ -75,6 +76,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertRaises(ValueError, db.add_table, emp_table)
         
     def test_meta_funs(self) :
+        
         self.assertEqual(_end_with_slash('no_slash'), 'no_slash/')
         self.assertEqual(_end_with_slash('slash/'), 'slash/')
         self.assertRaises(ValueError, _validate_string, "UPPER")
@@ -82,13 +84,24 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(_validate_string("test:!@", ":!@"), None)
 
     def test_glue_database_creation(self) :
-        db = Database_Meta('example_meta_data/', db_suffix = '_unit_test_')
-        db.create_glue_database()
-        resp = _glue_client.get_tables(DatabaseName = db.glue_name)
-        test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
-        self.assertTrue(test_created, msg= "Note this requires user to have correct credentials to create a glue database")
-        self.assertEqual(db.delete_glue_database(), 'database deleted')
-        self.assertEqual(db.delete_glue_database(), 'Cannot delete as database not found in glue catalogue')
-
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        has_access_key = True
+        try :
+            ac = credentials.access_key
+        except :
+            has_access_key = False
+        
+        if has_access_key :
+            db = Database_Meta('example_meta_data/', db_suffix = '_unit_test_')
+            db.create_glue_database()
+            resp = _glue_client.get_tables(DatabaseName = db.glue_name)
+            test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
+            self.assertTrue(test_created, msg= "Note this requires user to have correct credentials to create a glue database")
+            self.assertEqual(db.delete_glue_database(), 'database deleted')
+            self.assertEqual(db.delete_glue_database(), 'Cannot delete as database not found in glue catalogue')
+        else :
+            print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
+            self.assertTrue(True)
 if __name__ == '__main__':
     unittest.main()

@@ -229,7 +229,12 @@ class Table_Meta :
 
 
 class Database_Meta :
-
+    """
+    Python class to manage glue databases from our agnostic meta data. 
+    db = Database_Meta('path_to_local_meta_data_folder/')
+    This will create a database object that also holds table objects for each table json in the folder it is pointed to.
+    The meta data folder used to initialise the database must contain a database.json file.
+    """
     def __init__(self, database_folder_path, db_suffix = '_dev') :
         self._tables = []
         if database_folder_path[-1] != '/' :
@@ -252,6 +257,9 @@ class Database_Meta :
         
     @property
     def name(self):
+        """
+        Name of the database. When used to create the database in s3 this is suffixed with db.sb_suffix.
+        """
         return self._name
 
     @name.setter 
@@ -260,6 +268,9 @@ class Database_Meta :
     
     @property
     def bucket(self):
+        """
+        The s3 bucket in which the database exists.
+        """
         return self._bucket
 
     @bucket.setter 
@@ -268,6 +279,10 @@ class Database_Meta :
     
     @property
     def base_folder(self):
+        """
+        The base folder is the path to the database build. This path is relative to the root dir of the bucket. It is also suffixed by db_suffix when creating the glue database.
+        e.g. if db.base_folder = 'v1' denoting the first version of the database build. Then the path to the s3 base folder for this database would be 'v1_dev' providing that db.db_suffix == '_dev'.
+        """
         return self._base_folder
 
     @base_folder.setter 
@@ -277,6 +292,9 @@ class Database_Meta :
     
     @property
     def location(self):
+        """
+        Location of the database. This folder path is relative to the base_folder path. E.g. the database might be in my_database/
+        """
         return self._location
 
     @location.setter 
@@ -286,6 +304,9 @@ class Database_Meta :
     
     @property
     def description(self):
+        """
+        The database's description.
+        """
         return self._description
 
     @description.setter 
@@ -294,11 +315,17 @@ class Database_Meta :
 
     @property
     def table_names(self) :
+        """
+        Returns the names of the table objects in the database object.
+        """
         table_names = [t.name for t in self._tables]
         return table_names
     
     @property
     def db_suffix(self) :
+        """
+        The suffix that is added to the database. Default is _dev. The suffix is used to create different build of the database in glue.
+        """
         return self._db_suffix
 
     @db_suffix.setter
@@ -309,41 +336,64 @@ class Database_Meta :
 
     @property
     def glue_name(self) :
+        """
+        Returns the name of the database in the aws glue catalogue.
+        """
         return self.name + self.db_suffix
     
     @property
     def s3_base_folder(self) :
+        """
+        Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix. 
+        """
         return self.base_folder[:-1] + self.db_suffix + '/'
 
     @property
     def s3_database_path(self) :
+        """
+        Returns the s3 path to the database
+        """
         return "s3://{}/{}{}".format(self.bucket, self.s3_base_folder, self.location)
  
     def _check_table_exists(self, table_name) : 
         return table_name in self.table_names
 
     def _throw_error_check_table(self, table_name, error_on_table_exists = True) :
-        
         error_string = "Table {} already exists.".format(table_name) if error_on_table_exists else "Table {} does not exist.".format(table_name)
         if self._check_table_exists(table_name) == error_on_table_exists:
             raise ValueError(error_string)
 
     def table(self, table_name) :
+        """
+        Returns table object that is in database object.
+        table_name is the name of the table obj you want to return i.e. table.name.
+        """
         self._throw_error_check_table(table_name, error_on_table_exists = False)
         out = [t for t in self._tables if t.name == table_name][0]
         return out
 
     def add_table(self, table) :
+        """
+        Adds a table object to the database object.
+        table must be a table object e.g. table = Table_Meta(example_meta_data/employees.json)
+        """
         if not isinstance(table, Table_Meta) :
             raise ValueError("table must an object of Table_Meta class")
         self._throw_error_check_table(table.name)
         self._tables.append(table)
 
     def remove_table(self, table_name) :
+        """
+        Removes a Table object from the database object. 
+        table_name : name of the table object i.e. table.name
+        """
         self._throw_error_check_table(table_name, False)
         self._tables = [t for t in self._tables if t.name != table_name]
 
     def delete_glue_database(self) :
+        """
+        Deletes a glue database with the same name (db.alias_name). Returns a response explaining if it was deleted or didn't delete because database was not found.
+        """
         try :
             _glue_client.delete_database(Name = self.glue_name)
             response = 'database deleted'
@@ -353,7 +403,7 @@ class Database_Meta :
 
     def create_glue_database(self) :
         """
-        Creates a database in Glue.  If it exists, delete it
+        Creates a database in Glue based on the database object calling the method function. If a database with the same name (db.glue_name) already exists it overwrites it.
         """
         db = {
             "DatabaseInput": { 
@@ -369,3 +419,24 @@ class Database_Meta :
         for tab in self._tables :
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
             _glue_client.create_table(DatabaseName = self.glue_name, TableInput = glue_table_def)
+
+    def write_to_json(self, folder_path, write_tables = True) :
+        """
+        Writes the database object back into the agnostic meta data json files.
+        Function writes a file called database.json to the folder_path provided.
+        If write_tables is True (default) this method will also write all table objects as an agnostic meta data json. 
+        The table meta data json will be saved as <table_name>.json where table_name == table.name.
+        """
+        folder_path = _end_with_slash(folder_path)
+        db_write_obj = {
+            "description": self.description,
+            "name": self.name,
+            "bucket": self.bucket,
+            "base_folder": self.base_folder,
+            "location": self.location
+        }
+        write_json(db_write_obj, folder_path + 'database.json')
+
+        if write_tables : 
+            for t in self._tables :
+                t.write_json(folder_path + t.name + '.json')
