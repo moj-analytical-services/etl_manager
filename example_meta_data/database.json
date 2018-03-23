@@ -1,5 +1,5 @@
 {
-    "description": "Example data base",
+    "description": "Example database",
     "name": "workforce",
     "bucket": "my_bucket",
     "base_folder": "my_folder",

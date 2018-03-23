@@ -4,6 +4,12 @@ A python package to create a database on the platform using our moj data warehou
 
 The main functionality of this package is to sync and run jobs on AWS.
 
+To unit test the package
+
+```python
+python -m unittest tests.test_tests -v
+```
+
 ## Rules
 
 - Package does not need to be able to run on glue. Therefore python 3 is fine.
@@ -13,6 +19,7 @@ The main functionality of this package is to sync and run jobs on AWS.
 - Every function needs to be unit tested
 - Use data engineering warehouse template as unit tests for functions
 - All of the data dependencies of the job should be ran from s3. Even if the job is ran on python locally code should download data from s3, process it and upload to s3
+
 
 ## Examples
 
@@ -31,9 +38,11 @@ database.json is a special json file that holds the meta data for the database. 
 
 ```json
 {
-    "description": "Example data base",
+    "description": "Example database",
     "name": "workforce",
-    "location": "s3://my_bucket/my_folder/"
+    "bucket": "my_bucket",
+    "base_folder": "my_folder/",
+    "location": "database/database1/"
 }
 ```
 
