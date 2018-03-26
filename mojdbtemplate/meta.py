@@ -1,13 +1,10 @@
-from dataengineeringutils.utils import read_json, write_json, dict_merge
+from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client
 from copy import copy
 import string
 import json
 import os
 import re
-import boto3
 import pkg_resources
-
-_glue_client = boto3.client('glue', 'eu-west-1')
 
 _template = {
     "base":  json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
@@ -26,25 +23,6 @@ def _get_spec(spec_name) :
 
     return _template[spec_name]
 
-def _end_with_slash(string) :
-    if string[-1] != '/' :
-        return string + '/'
-    else :
-        return string
-
-# Used by both classes (Should move into another module)
-def _validate_string(s, allowed_chars = "_") :
-    if s != s.lower() :
-        raise ValueError("string provided must be lowercase")
-    
-    invalid_chars = string.punctuation
-
-    for a in allowed_chars :
-        invalid_chars = invalid_chars.replace(a, "")
-    
-    if any(char in invalid_chars for char in s) :
-        raise ValueError("punctuation excluding ({}) is not allowed in string".format(allowed_chars))
-
 class Table_Meta :
 
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long')
@@ -61,7 +39,7 @@ class Table_Meta :
     }
 
     def __init__(self, filepath) :
-        meta = read_json(filepath)
+        meta = _read_json(filepath)
         self.columns = meta['columns']
         self.name = meta['table_name']
         self.description = meta['table_desc']
@@ -199,7 +177,7 @@ class Table_Meta :
         
         glue_table_definition = _get_spec('base')
         specific = _get_spec(self.data_format)
-        dict_merge(glue_table_definition, specific)
+        _dict_merge(glue_table_definition, specific)
         
         # Create glue specific variables from meta data
         glue_table_definition["Name"] = self.name
@@ -225,7 +203,7 @@ class Table_Meta :
             "columns" : self.column_names,
             "partitions" : self.partitions
         }
-        write_json(write_obj, file_path)
+        _write_json(write_obj, file_path)
 
 
 class Database_Meta :
@@ -236,11 +214,11 @@ class Database_Meta :
     The meta data folder used to initialise the database must contain a database.json file.
     """
     def __init__(self, database_folder_path, db_suffix = '_dev') :
-        self._tables = []
-        if database_folder_path[-1] != '/' :
-            database_folder_path = database_folder_path + '/'
         
-        db_meta = read_json(database_folder_path + 'database.json')
+        self._tables = []
+        database_folder_path = _end_with_slash(database_folder_path)
+        
+        db_meta = _read_json(database_folder_path + 'database.json')
 
         self.name = db_meta['name']
         self.bucket = db_meta['bucket']
@@ -435,8 +413,8 @@ class Database_Meta :
             "base_folder": self.base_folder,
             "location": self.location
         }
-        write_json(db_write_obj, folder_path + 'database.json')
+        _write_json(db_write_obj, folder_path + 'database.json')
 
         if write_tables : 
             for t in self._tables :
-                t.write_json(folder_path + t.name + '.json')
+                t._write_json(folder_path + t.name + '.json')

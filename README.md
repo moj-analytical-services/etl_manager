@@ -122,7 +122,7 @@ The code snippet below creates a database meta object that allows you to manipul
 ```python
 from mojdbtemplate.meta import Database_Meta
 
-db = Database_Meta('meta_data/')
+db = Database_Meta('example_meta_data/')
 
 # Database has callable objects
 
@@ -142,5 +142,13 @@ db.name # 'new_db_name
 db.table('employees').name = 'new_name'
 
 db.table_names # [new_name, teams]
-```
 
+db.remove_table('new_name')
+
+db.glue_name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in Database_Meta)
+
+# Set all table types to parquet and create database schema in glue
+for t in db_table_names :
+    db.table(t).data_format = 'parquet'
+db.create_glue_database()
+```
