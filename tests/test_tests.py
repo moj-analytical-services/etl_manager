@@ -103,5 +103,6 @@ class DatabaseMetaTest(unittest.TestCase):
         else :
             print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
             self.assertTrue(True)
+            
 if __name__ == '__main__':
     unittest.main()
