@@ -309,8 +309,11 @@ class Database_Meta :
 
     @db_suffix.setter
     def db_suffix(self, db_suffix) :
-        _validate_string(db_suffix)
-        self._db_suffix = db_suffix
+        if db_suffix is not None or db_suffix != '' :
+            _validate_string(db_suffix, "_-")
+            self._db_suffix = db_suffix
+        else :
+            self._db_suffix = db_suffix
         return self._db_suffix
 
     @property
