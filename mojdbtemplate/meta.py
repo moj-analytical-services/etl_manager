@@ -125,7 +125,14 @@ class TableMeta :
         if location[0] == '/' or location[-1] != '/':
             raise ValueError("location should not start with a slash and end with a slash")
         self._location = location
-        
+    
+    def remove_column(self, column_name) :
+        self._check_column_exists(column_name)
+        new_cols = [c for c in self.columns if c['name'] != column_name]
+        new_partitions = [p for p in self.partitions if p != column_name]
+        self.columns = new_cols
+        self.partitions = new_partitions
+
     def generate_glue_columns(self, exclude_columns = []) :
 
         glue_columns = []
