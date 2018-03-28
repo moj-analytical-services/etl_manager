@@ -267,7 +267,8 @@ class Glue_Job_Runner :
         
         self.job_run_id = response['JobRunId']
 
-    def get_job_status(self) :
+    @property
+    def job_status(self) :
         if self.job_name is None or self.job_run_id is None :
             response = "Object missing job_name or job_run_id"
         else :
@@ -276,6 +277,17 @@ class Glue_Job_Runner :
             except :
                 response = 'job name and job_run_id not found'
         return response
+
+    @property
+    def is_running(self) :
+        is_running = False
+        status = self.job_status
+        if isinstance(status, dict) :
+            try :
+                is_running = status['JobRun']['JobRunState'] == 'RUNNING'
+            except :
+                pass
+        return is_running
 
     def delete_job(self) :
         if self.job_name is None :
