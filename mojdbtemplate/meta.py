@@ -23,7 +23,7 @@ def _get_spec(spec_name) :
 
     return _template[spec_name]
 
-class Table_Meta :
+class TableMeta :
 
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
@@ -206,10 +206,10 @@ class Table_Meta :
         _write_json(write_obj, file_path)
 
 
-class Database_Meta :
+class DatabaseMeta :
     """
     Python class to manage glue databases from our agnostic meta data. 
-    db = Database_Meta('path_to_local_meta_data_folder/')
+    db = DatabaseMeta('path_to_local_meta_data_folder/')
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
@@ -231,7 +231,7 @@ class Database_Meta :
 
         for f in files :
             if 'database.json' not in f :
-                self.add_table(Table_Meta(database_folder_path + f))
+                self.add_table(TableMeta(database_folder_path + f))
         
     @property
     def name(self):
@@ -357,10 +357,10 @@ class Database_Meta :
     def add_table(self, table) :
         """
         Adds a table object to the database object.
-        table must be a table object e.g. table = Table_Meta(example_meta_data/employees.json)
+        table must be a table object e.g. table = TableMeta(example_meta_data/employees.json)
         """
-        if not isinstance(table, Table_Meta) :
-            raise ValueError("table must an object of Table_Meta class")
+        if not isinstance(table, TableMeta) :
+            raise ValueError("table must an object of TableMeta class")
         self._throw_error_check_table(table.name)
         self._tables.append(table)
 

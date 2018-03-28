@@ -115,14 +115,14 @@ The teams table is a list of employee IDs for each team. Showing which employees
 }
 ```
 
-### Using the Database_Meta Class
+### Using the DatabaseMeta Class
 
 The code snippet below creates a database meta object that allows you to manipulate the database and the tables that exist in it
 
 ```python
-from mojdbtemplate.meta import Database_Meta
+from mojdbtemplate.meta import DatabaseMeta
 
-db = Database_Meta('example_meta_data/')
+db = DatabaseMeta('example_meta_data/')
 
 # Database has callable objects
 
@@ -130,7 +130,7 @@ db.name # workforce
 
 db.table_names # [employees, teams]
 
-# Each table in the database is an object from the Table_Meta Class which can be callable from the database meta object
+# Each table in the database is an object from the TableMeta Class which can be callable from the database meta object
 
 db.table('employees').columns # returns all columns in employees table
 
@@ -145,7 +145,7 @@ db.table_names # [new_name, teams]
 
 db.remove_table('new_name')
 
-db.glue_name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in Database_Meta)
+db.glue_name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in DatabaseMeta)
 
 # Set all table types to parquet and create database schema in glue
 for t in db_table_names :

@@ -11,7 +11,7 @@ import shutil
 # Lock it in 
 # Run job - check if job exists and lock in temp folder matches 
 
-class Glue_Job_Runner :
+class GlueJob :
     """
     Take a folder structure on local disk.
 
@@ -73,7 +73,7 @@ class Glue_Job_Runner :
         
     @property
     def s3_job_folder_obj(self) :
-        return "{}/{}/{}/".format('_temp_glue_job_runner_', self.job_name, 'resources')
+        return "{}/{}/{}/".format('_temp_GlueJob_', self.job_name, 'resources')
 
     # @property
     # def _temp_glue_job_folder :
@@ -81,7 +81,7 @@ class Glue_Job_Runner :
 
     # @property
     # def _temp_glue_job_folder_obj :
-    #     return "{}/{}/{}/".format('_temp_glue_job_runner_', self.job_name, 'temp_glue_job')
+    #     return "{}/{}/{}/".format('_temp_GlueJob_', self.job_name, 'temp_glue_job')
         
     @property
     def job_parent_folder(self) :
