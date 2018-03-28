@@ -200,7 +200,7 @@ class Table_Meta :
             "table_name" : self.name,
             "table_description" : self.description,
             "data_format" : self.data_format,
-            "columns" : self.column_names,
+            "columns" : self.columns,
             "partitions" : self.partitions
         }
         _write_json(write_obj, file_path)
