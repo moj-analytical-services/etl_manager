@@ -75,6 +75,14 @@ class Glue_Job_Runner :
     def s3_job_folder_obj(self) :
         return "{}/{}/{}/".format('_temp_glue_job_runner_', self.job_name, 'resources')
 
+    # @property
+    # def _temp_glue_job_folder :
+    #     return "s3://{}/{}".format(self.bucket, self._temp_glue_job_folder_obj)
+
+    # @property
+    # def _temp_glue_job_folder_obj :
+    #     return "{}/{}/{}/".format('_temp_glue_job_runner_', self.job_name, 'temp_glue_job')
+        
     @property
     def job_parent_folder(self) :
         parent = self.job_folder.split('/')
@@ -194,6 +202,9 @@ class Glue_Job_Runner :
         files_to_sync = self.github_py_resources + self.py_resources + self.resources + [self.job_folder + 'job.py']
         self._check_nondup_resources(files_to_sync)
 
+        # delete the tmp folder before uploading new data to it
+        self.delete_s3_job_temp_folder()
+        
         # Sync all files to the same s3 folder
         for f in files_to_sync :
             s3_file_path = self.s3_job_folder_obj + _get_file_from_file_path(f)
