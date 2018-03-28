@@ -198,7 +198,7 @@ class Table_Meta :
         write_obj = {
             "id" : self.id,
             "table_name" : self.name,
-            "table_description" : self.table_description,
+            "table_description" : self.description,
             "data_format" : self.data_format,
             "columns" : self.column_names,
             "partitions" : self.partitions
