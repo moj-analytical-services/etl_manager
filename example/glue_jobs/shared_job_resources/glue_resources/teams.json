@@ -1,0 +1,35 @@
+{
+    "id": "workforce.teams",
+    "table_name": "teams",
+    "table_desc": "month snapshot of which employee with working in what team",
+    "data_format": "parquet",
+    "location": "teams/",
+    "columns": [
+        {
+            "name": "team_id",
+            "type": "int",
+            "description": "ID given to each team"
+        },
+        {
+            "name": "team_name",
+            "type": "character",
+            "description": "name of the team"
+        },
+        {
+            "name": "employee_id",
+            "type": "int",
+            "description": "primary key for each employee in the employees table"
+        },
+        {
+            "name": "snapshot_year",
+            "type": "int",
+            "description": "year at which snapshot of workforce was taken"
+        },
+        {
+            "name": "snapshot_month",
+            "type": "int",
+            "description": "month at which snapshot of workforce was taken"
+        }
+    ],
+    "partitions" : ["snapshot_year", "snapshot_month"]
+}

@@ -9,6 +9,7 @@ import os
 
 _glue_client = boto3.client('glue', 'eu-west-1')
 _s3_client = boto3.client('s3')
+_s3_resource = boto3.resource('s3')
 
 # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
 def _dict_merge(dct, merge_dct):
@@ -59,7 +60,7 @@ def _validate_string(s, allowed_chars = "_") :
 
 def _get_file_from_file_path(file_path) :
     return file_path.split('/')[-1]
-    
+
 def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
     """
     When we download a zipball from github like this one:
