@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Testing Database_Meta, Table_Meta
+Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from mojdbtemplate.meta import Database_Meta, Table_Meta
+from mojdbtemplate.meta import DatabaseMeta, TableMeta
 from mojdbtemplate.utils import _end_with_slash, _validate_string, _glue_client
-from mojdbtemplate.glue_job import Glue_Job_Runner
+from mojdbtemplate.etl import GlueJob
 import boto3
 
 class UtilsTest(unittest.TestCase) :
@@ -23,10 +23,10 @@ class UtilsTest(unittest.TestCase) :
 
 class GlueTest(unittest.TestCase) :
     """
-    Test the glue_job_runner class
+    Test the GlueJob class
     """
     def test_init(self) :
-        g = Glue_Job_Runner('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
+        g = GlueJob('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
         
         self.assertEqual(g.resources, ['example/glue_jobs/simple_etl_job/glue_resources/employees.json', 'example/glue_jobs/shared_job_resources/glue_resources/teams.json'])
         self.assertEqual(g.py_resources, ['example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip'])
@@ -40,13 +40,13 @@ class GlueTest(unittest.TestCase) :
         self.assertEqual(g.max_concurrent_runs, 1)
         self.assertEqual(g.allocated_capacity, 2)
 
-        g2 = Glue_Job_Runner('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', include_shared_job_resources=False)
+        g2 = GlueJob('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', include_shared_job_resources=False)
         self.assertEqual(g2.resources, ['example/glue_jobs/simple_etl_job/glue_resources/employees.json'])
         self.assertEqual(g2.py_resources, [])
         self.assertEqual(g2.job_arguments, None)
 
     def test_db_value_properties(self) :
-        g = Glue_Job_Runner('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
+        g = GlueJob('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
         
         g.job_name = 'changed_job_name'
         self.assertEqual(g.job_name, 'changed_job_name')
@@ -74,7 +74,7 @@ class DatabaseMetaTest(unittest.TestCase):
     """
 
     def test_init(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
 
         self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
@@ -83,12 +83,12 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.location, 'database/database1/')
         self.assertEqual(db.db_suffix, '_dev')
 
-        db2 = Database_Meta('example/meta_data/', db_suffix='_test')
+        db2 = DatabaseMeta('example/meta_data/', db_suffix='_test')
         self.assertEqual(db2.db_suffix, '_test')
 
 
     def test_db_value_properties(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
         db.name = 'new_name'
         self.assertEqual(db.name,'new_name')
         db.description = 'new description'
@@ -103,31 +103,31 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.db_suffix, 'new_suffix')
 
     def test_db_table_names(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
         t = all(t in ['teams', 'employees'] for t in db.table_names)
         self.assertTrue(t)
 
     def test_db_glue_name(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
         self.assertEqual(db.glue_name, 'workforce_dev')
     
     def test_db_s3_database_path(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
         self.assertEqual(db.s3_database_path, 's3://my-bucket/my_folder_dev/database/database1/')
 
     def test_db_table(self) :
-        db = Database_Meta('example/meta_data/')
-        self.assertTrue(isinstance(db.table('employees'), Table_Meta))
+        db = DatabaseMeta('example/meta_data/')
+        self.assertTrue(isinstance(db.table('employees'), TableMeta))
         self.assertRaises(ValueError, db.table, 'not_a_table_name')
 
     def test_add_remove_table(self) :
-        db = Database_Meta('example/meta_data/')
+        db = DatabaseMeta('example/meta_data/')
         self.assertRaises(ValueError, db.remove_table, 'not_a_table')
         db.remove_table('employees')
         tns = db.table_names
         self.assertEqual(tns[0], 'teams')
 
-        emp_table = Table_Meta('example/meta_data/employees.json')
+        emp_table = TableMeta('example/meta_data/employees.json')
         db.add_table(emp_table)
         t = all(t in ['teams', 'employees'] for t in db.table_names)
         self.assertTrue(t)
@@ -145,7 +145,7 @@ class DatabaseMetaTest(unittest.TestCase):
             has_access_key = False
         
         if has_access_key :
-            db = Database_Meta('example/meta_data/', db_suffix = '_unit_test_')
+            db = DatabaseMeta('example/meta_data/', db_suffix = '_unit_test_')
             db.create_glue_database()
             resp = _glue_client.get_tables(DatabaseName = db.glue_name)
             test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
