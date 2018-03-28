@@ -77,12 +77,12 @@ class Table_Meta :
 
     # table description
     @property
-    def table_description(self) :
-        return self._table_description
+    def description(self) :
+        return self._description
 
-    @table_description.setter
-    def table_description(self, table_description) :
-        self._table_description = table_description
+    @description.setter
+    def description(self, description) :
+        self._description = description
 
     # data format
     @property
@@ -421,4 +421,4 @@ class Database_Meta :
 
         if write_tables : 
             for t in self._tables :
-                t._write_json(folder_path + t.name + '.json')
+                t._write_to_json(folder_path + t.name + '.json')
