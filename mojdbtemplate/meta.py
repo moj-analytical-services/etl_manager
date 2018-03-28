@@ -253,6 +253,7 @@ class Database_Meta :
 
     @bucket.setter 
     def bucket(self, bucket) :
+        _validate_string(bucket, allowed_chars='.-')
         self._bucket = bucket
     
     @property

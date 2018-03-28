@@ -1,0 +1,24 @@
+{
+    "id": "workforce.employees",
+    "table_name": "employees",
+    "table_desc": "table containing employee information",
+    "data_format": "parquet",
+    "location": "employees/",
+    "columns": [
+        {
+            "name": "employee_id",
+            "type": "int",
+            "description": "an ID for each employee"
+        },
+        {
+            "name": "employee_name",
+            "type": "character",
+            "description": "name of the employee"
+        },
+        {
+            "name": "employee_dob",
+            "type": "date",
+            "description": "date of birth for the employee"
+        }
+    ]
+}

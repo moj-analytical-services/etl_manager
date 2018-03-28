@@ -1,4 +1,4 @@
-from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _get_file_from_file_path
+from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _get_file_from_file_path, _s3_resource
 from urllib.request import urlretrieve
 import os 
 import re
@@ -13,10 +13,10 @@ import shutil
 
 class Glue_Job_Runner :
     """
-    Take a folder structure on local disk and transfer to s3.
+    Take a folder structure on local disk.
 
     Folder must be formatted as follows:
-    base dir
+    job_folder
       job.py
       glue_py_resources/
         zip and python files
@@ -24,30 +24,39 @@ class Glue_Job_Runner :
       glue_resources/
         txt, sql, json, or csv files
 
-    The folder name base dir will be in the folder s3_path_to_glue_jobs_folder
+    Can then run jobs on aws glue using this class.
+
+    If include_shared_job_resources is True then glue_py_resources and glue_resources folders inside a special named folder 'shared_glue_resources'
+    will also be referenced.
+    glue_jobs (parent folder to 'job_folder')
+      shared_glue_resources
+        glue_py_resources/
+          zip, python and zip_urls
+        glue_resources/
+          txt, sql, json, or csv files
+      job_folder
+        etc...
     """
-    def __init__(self, glue_job_folder, s3_bucket, job_role, job_suffix = '_dev', include_shared_job_resources = True) :
+    def __init__(self, job_folder, bucket, job_role, job_arguments = None, include_shared_job_resources = True) :
 
-        if not os.path.exists(self.glue_job_folder + 'job.py') :
-            raise ValueError("Could not find job.py in base directory provided ({}), stopping.\nOnly folder allowed to have no job.py is a folder named shared_job_resources".format(glue_job_folder))
+        self._job_folder = job_folder
 
-        glue_job_folder_split = glue_job_folder.split('/')
+        if not os.path.exists(self.job_folder + 'job.py') :
+            raise ValueError("Could not find job.py in base directory provided ({}), stopping.\nOnly folder allowed to have no job.py is a folder named shared_job_resources".format(job_folder))
 
-        self.glue_job_folder = glue_job_folder
-        self.s3_bucket = s3_bucket
-        self.job_folder = glue_job_folder_split[-1]
-        self.job_name = glue_job_folder_split[-1]
+        glue_job_folder_split = self.job_folder.split('/')
+
+        self.bucket = bucket
+        self.job_name = glue_job_folder_split[-2]
         self.job_role = job_role
         self.py_resources = self._get_resources(True, include_shared_job_resources)
         self.resources = self._get_resources(False, include_shared_job_resources)
         self.github_zip_urls = self._get_github_resource_list(include_shared_job_resources)
-        
-        self.job_arguments = None
+        self.job_arguments = job_arguments
+
         self.github_py_resources = []
-        self.s3_job_response = None
-        self._lockin_upload_path = None
-        self.external_py_resources = None
-        self.external_resources = None
+        # self.external_py_resources = None
+        # self.external_resources = None
 
         # Set as default can change using standard getters and setters
         self.max_retries = 0
@@ -55,34 +64,56 @@ class Glue_Job_Runner :
         self.allocated_capacity = 2
 
     @property
-    def glue_job_folder(self) :
-        return self._glue_job_folder
-
-    @glue_job_folder.setter
-    def glue_job_folder(self, glue_job_folder) :
-        glue_job_folder = _end_with_slash(glue_job_folder)
-        self._glue_job_folder = glue_job_folder
+    def job_folder(self) :
+        return self._job_folder
 
     @property
     def s3_job_folder(self) :
-        return "s3://{}/{}/{}/{}/".format(self.s3_bucket, '_temp_glue_job_runner_', self.job_name, 'resources')
+        return "s3://{}/{}".format(self.bucket, self.s3_job_folder_obj)
+        
+    @property
+    def s3_job_folder_obj(self) :
+        return "{}/{}/{}/".format('_temp_glue_job_runner_', self.job_name, 'resources')
 
-    #  @property
-    # def s3_job_temp_folder(self) :
-    #     return "s3://{}/{}/{}/{}/".format(self.s3_bucket, '_temp_glue_job_runner_', self.job_name, 'temp_dir')
-
-    def _glue_job_folder_parent(self) :
-        parent = self.glue_job_folder.split('/')
+    @property
+    def job_parent_folder(self) :
+        parent = self.job_folder.split('/')
         return '/'.join(parent[:-2]) + '/'
     
+    @property
+    def job_arguments(self) :
+        return self._job_arguments
+
+    @job_arguments.setter
+    def job_arguments(self, job_arguments) :
+        # https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html
+        if job_arguments is not None :
+            if not isinstance(job_arguments, dict) :
+                raise ValueError("job_arguments must be a dictionary")
+            # validate dict keys    
+            special_aws_params = ['--JOB_NAME', '--conf', '--debug', '--mode']
+            for k in job_arguments.keys() :
+                if k[:2] != '--' or k in special_aws_params:
+                    raise ValueError("Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(k, ', '.join(special_aws_params)))
+        self._job_arguments = job_arguments
+    
+    @property
+    def bucket(self) :
+        return self._bucket
+
+    @bucket.setter
+    def bucket(self, bucket) :
+        _validate_string(bucket, '-,')
+        self._bucket = bucket
+
     def _check_nondup_resources(self, resources_list) :
         file_list = [_get_file_from_file_path(r) for r in resources_list]
         if(len(file_list) != len(set(file_list))) :
             raise ValueError("There are duplicate file names in your suplied resources. A file in job resources might share the same name as a file in the shared resources folders.")
             
     def _get_github_resource_list(self, include_shared_job_resources) :
-        zip_urls_path = os.path.join(self.glue_job_folder, "py_resources", "github_zip_urls.txt")
-        shared_zip_urls_path = os.path.join(self.glue_job_folder, "shared_job_resources", "py_resources", "github_zip_urls.txt")
+        zip_urls_path = os.path.join(self.job_folder, "glue_py_resources", "github_zip_urls.txt")
+        shared_zip_urls_path = os.path.join(self.job_parent_folder, "shared_job_resources", "glue_py_resources", "github_zip_urls.txt")
 
         if os.path.exists(zip_urls_path) :
             with open(zip_urls_path, "r") as f:
@@ -108,8 +139,8 @@ class Glue_Job_Runner :
         resource_folder = "glue_py_resources" if py else "glue_resources"
         regex = ".+(\.py|\.zip)$" if py else ".+(\.sql|\.json|\.csv|\.txt)$"
         
-        resources_path = os.path.join(self.glue_job_folder, resource_folder)
-        shared_resources_path = os.path.join(self._glue_job_folder_parent(), "shared_job_resources", resource_folder)
+        resources_path = os.path.join(self.job_folder, resource_folder)
+        shared_resources_path = os.path.join(self.job_parent_folder, "shared_job_resources", resource_folder)
 
         if os.path.isdir(resources_path) :
             resource_listing = os.listdir(resources_path)
@@ -140,30 +171,39 @@ class Glue_Job_Runner :
             output_path = os.path.join(original_dir, name)
             final_output_path = shutil.make_archive(output_path, 'zip', nested_path)
 
-        os.rmdir(this_zip_path)
+        os.remove(this_zip_path)
 
         return final_output_path
 
     def sync_job_to_s3_folder(self) :
 
+        # Test if folder exists and create if not
+        temp_folder_already_exists = False
+        temp_zip_folder = '_tmp_zip_files_to_s3_'
+        if os.path.exists(temp_zip_folder) :
+            temp_folder_already_exists = True
+        else :
+            os.makedirs(temp_zip_folder)
+        
         # Download the github urls and rezip them to work with aws glue
         self.github_py_resources = []
         for url in self.github_zip_urls :
             self.github_py_resources.append(self._download_github_zipfile_and_rezip_to_glue_file_structure(url))
 
         # Check if all filenames are unique
-        files_to_sync = self.github_py_resources + self.py_resources + self.resources
+        files_to_sync = self.github_py_resources + self.py_resources + self.resources + [self.job_folder + 'job.py']
         self._check_nondup_resources(files_to_sync)
 
         # Sync all files to the same s3 folder
         for f in files_to_sync :
-            s3_file_path = self.s3_job_folder + _get_file_from_file_path(f)
-            _s3_client.upload_file(f, self.s3_bucket, s3_file_path)
+            s3_file_path = self.s3_job_folder_obj + _get_file_from_file_path(f)
+            _s3_client.upload_file(f, self.bucket, s3_file_path)
 
         # Clean up downloaded zip files
         for f in list(self.github_py_resources) :
             os.remove(f)
-        os.rmdir('_tmp_zip_files_to_s3_')
+        if not temp_folder_already_exists :
+            os.rmdir(temp_zip_folder)
 
     
     def _create_glue_job_definition(self):
@@ -191,7 +231,7 @@ class Glue_Job_Runner :
         template["Name"] = self.job_name
         template["Role"] = self.job_role
         template["Command"]["ScriptLocation"] = self.s3_job_folder + 'job.py'
-        template["DefaultArguments"]["--TempDir"] = self.s3_temp_folder
+        template["DefaultArguments"]["--TempDir"] = self.s3_job_folder + 'glue_temp_folder/'
 
         if len(self.resources) > 0 :
             extra_files = ','.join([self.s3_job_folder + _get_file_from_file_path(f) for f in self.resources])
@@ -206,7 +246,7 @@ class Glue_Job_Runner :
             template["DefaultArguments"].pop("--extra-py-files", None)
 
         template["MaxRetries"] = self.max_retries
-        template["ExecututionProperty"]["MaxConcurrentRuns"] = self.max_concurrent_runs
+        template["ExecutionProperty"]["MaxConcurrentRuns"] = self.max_concurrent_runs
         template["AllocatedCapacity"] = self.allocated_capacity
 
         return template
@@ -221,9 +261,9 @@ class Glue_Job_Runner :
         create_job_response = _glue_client.create_job(**job_spec)
 
         if self.job_arguments :
-            response = glue_client.start_job_run(JobName = self.job_name, Arguments = self.job_arguments)
+            response = _glue_client.start_job_run(JobName = self.job_name, Arguments = self.job_arguments)
         else:
-            response = glue_client.start_job_run(JobName = self.job_name)
+            response = _glue_client.start_job_run(JobName = self.job_name)
         
         self.job_run_id = response['JobRunId']
 
@@ -243,4 +283,9 @@ class Glue_Job_Runner :
 
         try :
             _glue_client.delete_job(JobName=self.job_name)
-        
+        except :
+            pass
+
+    def delete_s3_job_temp_folder(self) :
+        bucket = _s3_resource.Bucket(self.bucket)
+        bucket.objects.filter(Prefix=self.s3_job_folder_obj).delete()

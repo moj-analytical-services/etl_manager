@@ -1,7 +1,7 @@
 {
     "description": "Example database",
     "name": "workforce",
-    "bucket": "my_bucket",
+    "bucket": "my-bucket",
     "base_folder": "my_folder",
     "location": "database/database1"
 }
