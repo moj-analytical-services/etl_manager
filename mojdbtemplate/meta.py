@@ -328,12 +328,11 @@ class DatabaseMeta :
 
     @db_suffix.setter
     def db_suffix(self, db_suffix) :
-        if db_suffix is not None or db_suffix != '' :
+        if db_suffix is not None and db_suffix != '' :
             _validate_string(db_suffix, "_-")
             self._db_suffix = db_suffix
         else :
-            self._db_suffix = db_suffix
-        return self._db_suffix
+            self._db_suffix = ''
 
     @property
     def glue_name(self) :
