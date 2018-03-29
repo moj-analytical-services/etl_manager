@@ -133,6 +133,12 @@ class TableMeta :
         self.columns = new_cols
         self.partitions = new_partitions
 
+    def add_column(self, name, data_type, description) :
+        self._check_column_does_not_exists(name)
+        self._check_valid_datatype(data_type)
+        _validate_string(name)
+        self.columns = self.columns.append({"name": name, "type": data_type, "description": description})
+
     def generate_glue_columns(self, exclude_columns = []) :
 
         glue_columns = []
@@ -153,6 +159,10 @@ class TableMeta :
     def _check_column_exists(self, column_name) :
         if column_name not in self.column_names :
             raise ValueError("The column name does not match those existing in meta: {}".format(", ".join(self.column_names)))
+    
+    def _check_column_does_not_exists(self, column_name) :
+        if column_name in self.column_names :
+            raise ValueError("The column name provided ({}) already exists table in meta.".format(column_name))
         
     def update_column(self, column_name, new_name = None, new_data_type = None, new_description = None) :
         
