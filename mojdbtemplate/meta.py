@@ -440,4 +440,4 @@ class DatabaseMeta :
 
         if write_tables : 
             for t in self._tables :
-                t._write_to_json(folder_path + t.name + '.json')
+                t.write_to_json(folder_path + t.name + '.json')
