@@ -36,7 +36,7 @@ def _read_json(filename) :
 
 # Write json file
 def _write_json(data, filename) :
-    with open(filename, 'w') as outfile:
+    with open(filename, 'w+') as outfile:
         json.dump(data, outfile, indent=4, separators=(',', ': '))
 
 def _end_with_slash(string) :
