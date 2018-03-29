@@ -137,7 +137,9 @@ class TableMeta :
         self._check_column_does_not_exists(name)
         self._check_valid_datatype(data_type)
         _validate_string(name)
-        self.columns = self.columns.append({"name": name, "type": data_type, "description": description})
+        cols = self.columns
+        cols.append({"name": name, "type": data_type, "description": description})
+        self.columns = cols
 
     def generate_glue_columns(self, exclude_columns = []) :
 
