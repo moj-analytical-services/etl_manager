@@ -37,7 +37,7 @@ class GlueJob :
       job_folder
         etc...
     """
-    def __init__(self, job_folder, bucket, job_role, job_arguments = None, include_shared_job_resources = True) :
+    def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = None, include_shared_job_resources = True) :
 
         self._job_folder = job_folder
 
@@ -47,7 +47,10 @@ class GlueJob :
         glue_job_folder_split = self.job_folder.split('/')
 
         self.bucket = bucket
-        self.job_name = glue_job_folder_split[-2]
+        if job_name is None :
+            self.job_name = glue_job_folder_split[-2]
+        else :
+            self.job_name = job_name
         self.job_role = job_role
         self.py_resources = self._get_resources(True, include_shared_job_resources)
         self.resources = self._get_resources(False, include_shared_job_resources)
