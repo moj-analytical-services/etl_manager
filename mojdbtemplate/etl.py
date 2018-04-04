@@ -61,7 +61,8 @@ class GlueJob :
         # self.external_py_resources = None
         # self.external_resources = None
 
-        # Set as default can change using standard getters and setters
+        # Set as default can change using standard getters and setters (except _job_run_id only has getter)
+        self._job_run_id = None
         self.max_retries = 0
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
@@ -116,6 +117,19 @@ class GlueJob :
     def bucket(self, bucket) :
         _validate_string(bucket, '-,')
         self._bucket = bucket
+
+    @property
+    def job_name(self) :
+        return self._job_name
+
+    @job_name.setter
+    def job_name(self, job_name) :
+        _validate_string(job_name, allowed_chars="-_:")
+        self._job_name = job_name
+
+    @property
+    def job_run_id(self) :
+        return self._job_run_id
 
     def _check_nondup_resources(self, resources_list) :
         file_list = [_get_file_from_file_path(r) for r in resources_list]
@@ -279,17 +293,17 @@ class GlueJob :
         else:
             response = _glue_client.start_job_run(JobName = self.job_name)
         
-        self.job_run_id = response['JobRunId']
+        self._job_run_id = response['JobRunId']
 
     @property
     def job_status(self) :
         if self.job_name is None or self.job_run_id is None :
-            response = "Object missing job_name or job_run_id"
+            response = "Glue Job Obj missing job_name or job_run_id"
         else :
             try :
                 response = _glue_client.get_job_run(JobName = self.job_name, RunId = self.job_run_id)
             except :
-                response = 'job name and job_run_id not found'
+                response = 'No glue job with job_name: {} and job_run_id: {}'.format(self.job_name, self.job_run_id)
         return response
 
     @property
@@ -302,11 +316,21 @@ class GlueJob :
             except :
                 pass
         return is_running
+    
+    @property
+    def job_run_state(self) :
+        state = 'no_run_state'
+        status = self.job_status
+        if isinstance(status, dict) :
+            try :
+                state = status['JobRun']['JobRunState'].lower()
+            except :
+                pass
+        return state        
 
     def delete_job(self) :
         if self.job_name is None :
             raise ValueError("Object has no job_name.")
-
         try :
             _glue_client.delete_job(JobName=self.job_name)
         except :
