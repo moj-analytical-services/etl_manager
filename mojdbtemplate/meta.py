@@ -393,7 +393,7 @@ class DatabaseMeta :
 
     def delete_glue_database(self) :
         """
-        Deletes a glue database with the same name (db.alias_name). Returns a response explaining if it was deleted or didn't delete because database was not found.
+        Deletes a glue database with the same name. Returns a response explaining if it was deleted or didn't delete because database was not found.
         """
         try :
             _glue_client.delete_database(Name = self.glue_name)

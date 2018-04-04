@@ -168,7 +168,7 @@ class GlueJob :
         
     def _download_github_zipfile_and_rezip_to_glue_file_structure(self, url) :
         
-        this_zip_path = os.path.join('_tmp_zip_files_to_s3_',"github.zip")
+        this_zip_path = os.path.join('_' + self.job_name + '_tmp_zip_files_to_s3_',"github.zip")
         urlretrieve(url, this_zip_path)
 
         original_dir = os.path.dirname(this_zip_path)
@@ -190,7 +190,7 @@ class GlueJob :
 
         # Test if folder exists and create if not
         temp_folder_already_exists = False
-        temp_zip_folder = '_tmp_zip_files_to_s3_'
+        temp_zip_folder = '_' + self.job_name + '_tmp_zip_files_to_s3_'
         if os.path.exists(temp_zip_folder) :
             temp_folder_already_exists = True
         else :
