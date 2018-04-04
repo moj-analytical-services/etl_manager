@@ -220,7 +220,8 @@ class TableMeta :
             "table_description" : self.description,
             "data_format" : self.data_format,
             "columns" : self.columns,
-            "partitions" : self.partitions
+            "partitions" : self.partitions,
+            "location" : self.location
         }
         _write_json(write_obj, file_path)
 
