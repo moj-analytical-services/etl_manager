@@ -42,7 +42,7 @@ class TableMeta :
         meta = _read_json(filepath)
         self.columns = meta['columns']
         self.name = meta['table_name']
-        self.description = meta['table_desc']
+        self.description = meta['table_description']
         self.data_format = meta['data_format']
         self.id = meta['id']
         self.location = meta['location']
