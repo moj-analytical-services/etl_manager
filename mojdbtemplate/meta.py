@@ -217,7 +217,7 @@ class TableMeta :
         write_obj = {
             "id" : self.id,
             "table_name" : self.name,
-            "table_description" : self.description,
+            "table_desc" : self.description,
             "data_format" : self.data_format,
             "columns" : self.columns,
             "partitions" : self.partitions,
