@@ -21,7 +21,7 @@ def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
 
-    return _template[spec_name]
+    return copy(_template[spec_name])
 
 class TableMeta :
 
