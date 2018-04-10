@@ -25,7 +25,7 @@ def _get_spec(spec_name) :
 
 class TableMeta :
 
-    _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long')
+    _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
     
     _agnostic_to_glue_spark_dict = {
@@ -33,6 +33,7 @@ class TableMeta :
         'int' : {'glue' : 'int', 'spark': 'IntegerType'},
         'long' : {'glue' : 'bigint', 'spark': 'LongType'},
         'float' : {'glue' : 'float', 'spark': 'FloatType'},
+        'double' : {'glue' : 'double', 'spark': 'DoubleType'},
         'date' : {'glue' : 'date', 'spark': 'DateType'},
         'datetime' : {'glue' : 'double', 'spark': 'DoubleType'},
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
