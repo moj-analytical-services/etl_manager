@@ -114,7 +114,10 @@ class TableMeta :
             partitions = []
         else :
             for p in partitions : self._check_column_exists(p)
+            new_col_order = [for c in self.column_names if c not in partitions]
+            new_col_order = new_col_order + partitions
             self._partitions = partitions
+            self.reorder_columns(new_col_order)
 
     @property
     def location(self) :
@@ -141,6 +144,12 @@ class TableMeta :
         cols = self.columns
         cols.append({"name": name, "type": data_type, "description": description})
         self.columns = cols
+
+    def reorder_columns(self, column_name_order) :
+        for c in self.column_names :
+            if c not in column_name_order :
+                raise ValueError("input column_name_order is missing column ({}) in meta table".format(c))
+        self.columns = sorted(self.columns, key=lambda x: column_name_order.index(x['name']))
 
     def generate_glue_columns(self, exclude_columns = []) :
 
