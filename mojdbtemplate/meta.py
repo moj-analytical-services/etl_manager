@@ -223,8 +223,8 @@ class TableMeta :
 
         return glue_table_definition
 
-    def write_to_json(self, file_path) :
-        write_obj = {
+    def to_dict(self) :
+        meta = {
             "id" : self.id,
             "table_name" : self.name,
             "table_desc" : self.description,
@@ -233,7 +233,10 @@ class TableMeta :
             "partitions" : self.partitions,
             "location" : self.location
         }
-        _write_json(write_obj, file_path)
+        return meta
+    
+    def write_to_json(self, file_path) :
+        _write_json(self.to_dict(), file_path)
 
 
 class DatabaseMeta :
