@@ -77,15 +77,7 @@ class GlueJob :
         
     @property
     def s3_job_folder_obj(self) :
-        return "{}/{}/{}/".format('_temp_GlueJob_', self.job_name, 'resources')
-
-    # @property
-    # def _temp_glue_job_folder :
-    #     return "s3://{}/{}".format(self.bucket, self._temp_glue_job_folder_obj)
-
-    # @property
-    # def _temp_glue_job_folder_obj :
-    #     return "{}/{}/{}/".format('_temp_GlueJob_', self.job_name, 'temp_glue_job')
+        return "{}/{}/{}/".format('_GlueJob_', self.job_name, 'resources')
         
     @property
     def job_parent_folder(self) :
