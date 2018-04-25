@@ -2,7 +2,12 @@
 
 A python package to create a database on the platform using our moj data warehousing framework.
 
-The main functionality of this package is to sync and run jobs on AWS.
+The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
+
+To install:
+```bash
+pip install git+git://github.com/moj-analytical-services/mojdbtemplate.git#egg=mojdbtemplate
+```
 
 To unit test the package
 
