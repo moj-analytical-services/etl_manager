@@ -6,7 +6,7 @@ Testing DatabaseMeta, TableMeta
 
 import unittest
 from mojdbtemplate.meta import DatabaseMeta, TableMeta
-from mojdbtemplate.utils import _end_with_slash, _validate_string, _glue_client
+from mojdbtemplate.utils import _end_with_slash, _validate_string, _glue_client, _read_json
 from mojdbtemplate.etl import GlueJob
 import boto3
 
@@ -101,6 +101,11 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.location, 'new/folder/location/')
         db.db_suffix = 'new_suffix'
         self.assertEqual(db.db_suffix, 'new_suffix')
+
+    def test_table_to_dict(self) :
+        db = DatabaseMeta('example/meta_data/')
+        test_dict = _read_json('example/meta_data/teams.json')
+        self.assertDictEqual(test_dict, db.table('teams').to_dict())
 
     def test_db_table_names(self) :
         db = DatabaseMeta('example/meta_data/')

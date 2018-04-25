@@ -39,6 +39,7 @@ class GlueJob :
     """
     def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = None, include_shared_job_resources = True) :
 
+        job_folder = _end_with_slash(job_folder)
         self._job_folder = job_folder
 
         if not os.path.exists(self.job_folder + 'job.py') :
