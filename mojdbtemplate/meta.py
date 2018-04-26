@@ -1,4 +1,4 @@
-from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client
+from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource
 from copy import copy
 import string
 import json
@@ -414,6 +414,19 @@ class DatabaseMeta :
         except :
             response = 'Cannot delete as database not found in glue catalogue'
         return response
+
+    def delete_data_in_database(self, tables_only = False) :
+        """
+        Deletes the data that is in the databases s3_database_path. If tables only is False, then the entire database folder is deleted otherwise the class will only delete folders corresponding to the tables in the database.
+        """
+        bucket = _s3_resource.Bucket(self.bucket)
+        database_obj_folder = self.s3_base_folder + self.location
+        if tables_only :
+            for t in self.table_names :
+                table_s3_obj_folder = database_obj_folder + self.table(t).location
+                bucket.objects.filter(Prefix=table_s3_obj_folder).delete()
+        else :
+            bucket.objects.filter(Prefix=database_obj_folder).delete()
 
     def create_glue_database(self) :
         """

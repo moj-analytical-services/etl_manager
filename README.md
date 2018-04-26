@@ -9,6 +9,8 @@ To install:
 pip install git+git://github.com/moj-analytical-services/mojdbtemplate.git#egg=mojdbtemplate
 ```
 
+If you do not have it installed already you will also need to install boto3.
+
 To unit test the package
 
 ```python
