@@ -6,10 +6,19 @@ import zipfile
 import shutil
 import string 
 import os
+import subprocess
 
 _glue_client = boto3.client('glue', 'eu-west-1')
 _s3_client = boto3.client('s3')
 _s3_resource = boto3.resource('s3')
+
+
+def _get_git_revision_hash():
+    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8')
+
+def _get_git_revision_short_hash():
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8')
+
 
 # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
 def _dict_merge(dct, merge_dct):
