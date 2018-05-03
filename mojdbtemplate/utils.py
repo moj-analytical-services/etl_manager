@@ -12,12 +12,11 @@ _glue_client = boto3.client('glue', 'eu-west-1')
 _s3_client = boto3.client('s3')
 _s3_resource = boto3.resource('s3')
 
-
 def _get_git_revision_hash():
-    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8')
+    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').replace('\n','')
 
 def _get_git_revision_short_hash():
-    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8')
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('utf-8').replace('\n','')
 
 
 # https://gist.github.com/angstwad/bf22d1822c38a92ec0a9
