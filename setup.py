@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='mojdbtemplate',
+    name='etl_manager',
     version='0.1',
     packages=find_packages(exclude=['tests*']),
     license='MIT',
@@ -9,7 +9,7 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[],
     include_package_data=True,
-    url='https://github.com/moj-analytical-services/mojdbtemplate',
+    url='https://github.com/moj-analytical-services/etl_manager',
     author='Karik Isichei',
     author_email='karik.isichei@digital.justice.gov.uk'
 )
