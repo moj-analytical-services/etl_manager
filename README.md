@@ -1,6 +1,6 @@
 # etl_manager
 
-A python package to create a database on the platform using our moj data warehousing framework.
+A python package that manages our data engineering framework and implements them on AWS Glue.
 
 The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
 
