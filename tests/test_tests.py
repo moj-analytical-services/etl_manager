@@ -5,9 +5,9 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from mojdbtemplate.meta import DatabaseMeta, TableMeta
-from mojdbtemplate.utils import _end_with_slash, _validate_string, _glue_client, _read_json
-from mojdbtemplate.etl import GlueJob
+from etl_manager.meta import DatabaseMeta, TableMeta
+from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, _read_json
+from etl_manager.etl import GlueJob
 import boto3
 
 class UtilsTest(unittest.TestCase) :
