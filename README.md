@@ -1,4 +1,4 @@
-# mojdbtemplate
+# etl_manager
 
 A python package to create a database on the platform using our moj data warehousing framework.
 
@@ -6,7 +6,7 @@ The main functionality of this package is to interact with AWS Glue to create me
 
 To install:
 ```bash
-pip install git+git://github.com/moj-analytical-services/mojdbtemplate.git#egg=mojdbtemplate
+pip install git+git://github.com/moj-analytical-services/etl_manager.git#egg=etl_manager
 ```
 
 If you do not have it installed already you will also need to install boto3.
@@ -127,7 +127,7 @@ The teams table is a list of employee IDs for each team. Showing which employees
 The code snippet below creates a database meta object that allows you to manipulate the database and the tables that exist in it
 
 ```python
-from mojdbtemplate.meta import DatabaseMeta
+from etl_manager.meta import DatabaseMeta
 
 db = DatabaseMeta('example_meta_data/')
 

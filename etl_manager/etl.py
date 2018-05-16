@@ -1,4 +1,4 @@
-from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _get_file_from_file_path, _s3_resource
+from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _get_file_from_file_path, _s3_resource
 from urllib.request import urlretrieve
 import os 
 import re

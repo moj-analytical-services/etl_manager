@@ -1,4 +1,4 @@
-from mojdbtemplate.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource
+from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource
 from copy import copy
 import string
 import json
