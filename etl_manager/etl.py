@@ -237,6 +237,8 @@ class GlueJob :
         files_to_sync = self.github_py_resources + self.py_resources + self.resources + [self.job_folder + 'job.py']
         self._check_nondup_resources(files_to_sync)
 
+        # TODO:  Add all metadata.
+
         # delete the tmp folder before uploading new data to it
         self.delete_s3_job_temp_folder()
 
