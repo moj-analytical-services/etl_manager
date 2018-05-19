@@ -7,7 +7,6 @@ script:
   - pylint --disable=R,C etl_manager/
 install:
   - pip install git+git://github.com/moj-analytical-services/dataengineeringutils.git#egg=etl_manager
-  - pip install boto3
   - pip install codecov
   - pip install coverage
   - pip install pylint
