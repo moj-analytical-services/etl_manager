@@ -1,5 +1,7 @@
 # etl_manager
 
+[![Build Status](https://travis-ci.org/moj-analytical-services/etl_manager.svg?branch=master)](https://travis-ci.org/moj-analytical-services/etl_manager)
+
 A python package that manages our data engineering framework and implements them on AWS Glue.
 
 The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
