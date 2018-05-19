@@ -39,7 +39,7 @@ class GlueJob :
       job_folder
         etc...
     """
-    def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = {}, include_shared_job_resources = True, include_meta_data = True) :
+    def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = {}, include_shared_job_resources = True) :
         self.job_id = int(time.time())
 
         job_folder = os.path.normpath(job_folder)
@@ -342,7 +342,7 @@ class GlueJob :
             self.sync_job_to_s3_folder()
 
         job_spec = self._create_glue_job_definition()
-        print(job_spec)
+
         self.delete_job()
         create_job_response = _glue_client.create_job(**job_spec)
 
