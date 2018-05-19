@@ -1,6 +1,6 @@
 from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _get_file_from_file_path, _s3_resource
 from urllib.request import urlretrieve
-import os 
+import os
 import re
 import json
 import tempfile
@@ -8,8 +8,8 @@ import zipfile
 import shutil
 
 # Create temp folder - upload to s3
-# Lock it in 
-# Run job - check if job exists and lock in temp folder matches 
+# Lock it in
+# Run job - check if job exists and lock in temp folder matches
 
 class GlueJob :
     """
@@ -20,7 +20,7 @@ class GlueJob :
       job.py
       glue_py_resources/
         zip and python files
-        zip_urls <- file containing urls of additional zip files e.g. on github
+        github_zip_urls.txt <- file containing urls of additional zip files e.g. on github
       glue_resources/
         txt, sql, json, or csv files
 
@@ -37,7 +37,7 @@ class GlueJob :
       job_folder
         etc...
     """
-    def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = None, include_shared_job_resources = True) :
+    def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = None, include_shared_job_resources = True, include_meta_data = True) :
 
         job_folder = _end_with_slash(job_folder)
         self._job_folder = job_folder
@@ -75,16 +75,16 @@ class GlueJob :
     @property
     def s3_job_folder(self) :
         return "s3://{}/{}".format(self.bucket, self.s3_job_folder_obj)
-        
+
     @property
     def s3_job_folder_obj(self) :
         return "{}/{}/{}/".format('_GlueJob_', self.job_name, 'resources')
-        
+
     @property
     def job_parent_folder(self) :
         parent = self.job_folder.split('/')
         return '/'.join(parent[:-2]) + '/'
-    
+
     @property
     def job_arguments(self) :
         return self._job_arguments
@@ -95,13 +95,13 @@ class GlueJob :
         if job_arguments is not None :
             if not isinstance(job_arguments, dict) :
                 raise ValueError("job_arguments must be a dictionary")
-            # validate dict keys    
+            # validate dict keys
             special_aws_params = ['--JOB_NAME', '--conf', '--debug', '--mode']
             for k in job_arguments.keys() :
                 if k[:2] != '--' or k in special_aws_params:
                     raise ValueError("Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(k, ', '.join(special_aws_params)))
         self._job_arguments = job_arguments
-    
+
     @property
     def bucket(self) :
         return self._bucket
@@ -128,7 +128,7 @@ class GlueJob :
         file_list = [_get_file_from_file_path(r) for r in resources_list]
         if(len(file_list) != len(set(file_list))) :
             raise ValueError("There are duplicate file names in your suplied resources. A file in job resources might share the same name as a file in the shared resources folders.")
-            
+
     def _get_github_resource_list(self, include_shared_job_resources) :
         zip_urls_path = os.path.join(self.job_folder, "glue_py_resources", "github_zip_urls.txt")
         shared_zip_urls_path = os.path.join(self.job_parent_folder, "shared_job_resources", "glue_py_resources", "github_zip_urls.txt")
@@ -144,19 +144,44 @@ class GlueJob :
             with open(shared_zip_urls_path, "r") as f:
                 shared_urls = f.readlines()
             f.close()
-            urls = urls + shared_urls 
-        
+            urls = urls + shared_urls
+
         urls = [url for url in urls if len(url) > 10]
 
         return urls
 
+    def _get_py_resources():
+        # Upload all the .py or .zip files in resources
+        # Check existence of folder, otherwise skip
+
+        resource_folder = "glue_py_resources"
+        regex = ".+(\.py|\.zip)$"
+
+        resources_path = os.path.join(self.job_folder, "glue_py_resources")
+        shared_resources_path = os.path.join(self.job_parent_folder, "shared_job_resources", resource_folder)
+
+        if os.path.isdir(resources_path) :
+            resource_listing = os.listdir(resources_path)
+            resource_listing = [os.path.join(resources_path, f) for f in resource_listing if re.match(regex, f)]
+        else :
+            resource_listing = []
+
+        if os.path.isdir(shared_resources_path) and include_shared_job_resources :
+            shared_resource_listing = os.listdir(shared_resources_path)
+            shared_resource_listing = [os.path.join(shared_resources_path, f) for f in shared_resource_listing if re.match(regex, f)]
+            resource_listing = resource_listing + shared_resource_listing
+
+        return resource_listing
+
+    def _get_other_resource():
+
     def _get_resources(self, py, include_shared_job_resources) :
         # Upload all the .py or .zip files in resources
         # Check existence of folder, otherwise skip
-        
+
         resource_folder = "glue_py_resources" if py else "glue_resources"
         regex = ".+(\.py|\.zip)$" if py else ".+(\.sql|\.json|\.csv|\.txt)$"
-        
+
         resources_path = os.path.join(self.job_folder, resource_folder)
         shared_resources_path = os.path.join(self.job_parent_folder, "shared_job_resources", resource_folder)
 
@@ -165,16 +190,16 @@ class GlueJob :
             resource_listing = [_end_with_slash(resources_path) + f for f in resource_listing if re.match(regex, f)]
         else :
             resource_listing = []
-        
+
         if os.path.isdir(shared_resources_path) and include_shared_job_resources :
             shared_resource_listing = os.listdir(shared_resources_path)
             shared_resource_listing = [_end_with_slash(shared_resources_path) + f for f in shared_resource_listing if re.match(regex, f)]
             resource_listing = resource_listing + shared_resource_listing
 
         return resource_listing
-        
+
     def _download_github_zipfile_and_rezip_to_glue_file_structure(self, url) :
-        
+
         this_zip_path = os.path.join('_' + self.job_name + '_tmp_zip_files_to_s3_',"github.zip")
         urlretrieve(url, this_zip_path)
 
@@ -202,7 +227,7 @@ class GlueJob :
             temp_folder_already_exists = True
         else :
             os.makedirs(temp_zip_folder)
-        
+
         # Download the github urls and rezip them to work with aws glue
         self.github_py_resources = []
         for url in self.github_zip_urls :
@@ -214,7 +239,7 @@ class GlueJob :
 
         # delete the tmp folder before uploading new data to it
         self.delete_s3_job_temp_folder()
-        
+
         # Sync all files to the same s3 folder
         for f in files_to_sync :
             s3_file_path = self.s3_job_folder_obj + _get_file_from_file_path(f)
@@ -226,7 +251,7 @@ class GlueJob :
         if not temp_folder_already_exists :
             os.rmdir(temp_zip_folder)
 
-    
+
     def _create_glue_job_definition(self):
 
         template = {
@@ -275,7 +300,7 @@ class GlueJob :
     def run_job(self, sync_to_s3_before_run = True) :
         if sync_to_s3_before_run :
             self.sync_job_to_s3_folder()
-        
+
         job_spec = self._create_glue_job_definition()
 
         self.delete_job()
@@ -285,7 +310,7 @@ class GlueJob :
             response = _glue_client.start_job_run(JobName = self.job_name, Arguments = self.job_arguments)
         else:
             response = _glue_client.start_job_run(JobName = self.job_name)
-        
+
         self._job_run_id = response['JobRunId']
 
     @property
@@ -309,7 +334,7 @@ class GlueJob :
             except :
                 pass
         return is_running
-    
+
     @property
     def job_run_state(self) :
         state = 'no_run_state'
@@ -319,7 +344,7 @@ class GlueJob :
                 state = status['JobRun']['JobRunState'].lower()
             except :
                 pass
-        return state        
+        return state
 
     def delete_job(self) :
         if self.job_name is None :
