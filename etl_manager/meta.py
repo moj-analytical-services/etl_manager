@@ -162,7 +162,7 @@ class TableMeta :
 
         self.columns = new_cols
 
-    def glue_table_definition(self, full_database_path) :
+    def glue_table_definition(self, full_database_path = None) :
 
         glue_table_definition = _get_spec('base')
         specific = _get_spec(self.data_format)
@@ -173,7 +173,14 @@ class TableMeta :
         glue_table_definition["Description"] = self.description
 
         glue_table_definition['StorageDescriptor']['Columns'] = self.generate_glue_columns(exclude_columns = self.partitions)
-        glue_table_definition['StorageDescriptor']["Location"] = full_database_path + self.location
+
+        if full_database_path:
+            glue_table_definition['StorageDescriptor']["Location"] = os.path.join(full_database_path, self.location)
+        else:
+            if self.database:
+                glue_table_definition['StorageDescriptor']["Location"] = os.path.join(self.database.s3_database_path, self.location)
+            else:
+                raise ValueError("Need to provide a database or full database path to generate glue table def")
 
         if len(self.partitions) > 0 :
             not_partitions = [c for c in self.column_names if c not in self.partitions]
