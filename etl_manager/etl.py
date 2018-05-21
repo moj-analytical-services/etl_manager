@@ -40,7 +40,7 @@ class GlueJob :
         etc...
     """
     def __init__(self, job_folder, bucket, job_role, job_name = None, job_arguments = {}, include_shared_job_resources = True) :
-        self.job_id = int(time.time())
+        self.job_id = "{:0.0f}".format(time.time())
 
         job_folder = os.path.normpath(job_folder)
         self._job_folder = job_folder
