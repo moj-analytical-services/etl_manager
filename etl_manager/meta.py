@@ -5,6 +5,7 @@ import json
 import os
 import re
 import pkg_resources
+from pyathenajdbc import connect
 
 _template = {
     "base":  json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
@@ -24,10 +25,13 @@ def _get_spec(spec_name) :
     return copy(_template[spec_name])
 
 class TableMeta :
+    """
+    Manipulate the agnostic metadata associated with a table and convert to a Glue spec
+    """
 
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
-    
+
     _agnostic_to_glue_spark_dict = {
         'character' : {'glue' : 'string', 'spark': 'StringType'},
         'int' : {'glue' : 'int', 'spark': 'IntegerType'},
@@ -39,7 +43,7 @@ class TableMeta :
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
 
-    def __init__(self, filepath) :
+    def __init__(self, filepath, database = None) :
         meta = _read_json(filepath)
         self.columns = meta['columns']
         self.name = meta['table_name']
@@ -51,57 +55,13 @@ class TableMeta :
             self.partitions = meta['partitions']
         else :
             self.partitions = []
-    
-    # # # Getter and setter functions
-    # Columns
-    @property
-    def columns(self) :
-        return self._columns
 
-    @columns.setter
-    def columns(self, columns) :
-        self._columns = columns
+        self.database = database
 
-    # column_names
+
     @property
     def column_names(self) :
-        return [c['name'] for c in self._columns]
-
-    # table name
-    @property
-    def name(self) :
-        return self._name
-
-    @name.setter
-    def name(self, name) :
-        self._name = name
-
-    # table description
-    @property
-    def description(self) :
-        return self._description
-
-    @description.setter
-    def description(self, description) :
-        self._description = description
-
-    # data format
-    @property
-    def data_format(self) :
-        return self._data_format
-
-    @data_format.setter
-    def data_format(self, data_format) :
-        self._data_format = data_format
-
-    # id
-    @property
-    def id(self) :
-        return self._id
-
-    @id.setter
-    def id(self, id) :
-        self._id = id
+        return [c['name'] for c in self.columns]
 
     # partitions
     @property
@@ -111,7 +71,7 @@ class TableMeta :
     @partitions.setter
     def partitions(self, partitions) :
         if partitions is None :
-            partitions = []
+            self._partitions = []
         else :
             for p in partitions : self._check_column_exists(p)
             new_col_order = [c for c in self.column_names if c not in partitions]
@@ -129,7 +89,7 @@ class TableMeta :
         if location[0] == '/' or location[-1] != '/':
             raise ValueError("location should not start with a slash and end with a slash")
         self._location = location
-    
+
     def remove_column(self, column_name) :
         self._check_column_exists(column_name)
         new_cols = [c for c in self.columns if c['name'] != column_name]
@@ -161,7 +121,7 @@ class TableMeta :
                 new_c["Comment"] = c["description"]
                 new_c["Type"] = self._agnostic_to_glue_spark_dict[c['type']]['glue']
                 glue_columns.append(new_c)
-    
+
         return glue_columns
 
     def _check_valid_datatype(self, data_type) :
@@ -171,13 +131,13 @@ class TableMeta :
     def _check_column_exists(self, column_name) :
         if column_name not in self.column_names :
             raise ValueError("The column name does not match those existing in meta: {}".format(", ".join(self.column_names)))
-    
+
     def _check_column_does_not_exists(self, column_name) :
         if column_name in self.column_names :
             raise ValueError("The column name provided ({}) already exists table in meta.".format(column_name))
-        
+
     def update_column(self, column_name, new_name = None, new_data_type = None, new_description = None) :
-        
+
         self._check_column_exists(column_name)
 
         if new_name is None and new_data_type is None and new_description is None :
@@ -189,7 +149,7 @@ class TableMeta :
 
                 if new_name is not None :
                     c['name'] = new_name
-                
+
                 if new_data_type is not None :
                     self._check_valid_datatype(new_data_type)
                     c['type'] = new_data_type
@@ -199,15 +159,15 @@ class TableMeta :
                     c['description'] = new_description
 
             new_cols.append(c)
-        
+
         self.columns = new_cols
 
     def glue_table_definition(self, full_database_path) :
-        
+
         glue_table_definition = _get_spec('base')
         specific = _get_spec(self.data_format)
         _dict_merge(glue_table_definition, specific)
-        
+
         # Create glue specific variables from meta data
         glue_table_definition["Name"] = self.name
         glue_table_definition["Description"] = self.description
@@ -234,23 +194,51 @@ class TableMeta :
             "location" : self.location
         }
         return meta
-    
+
     def write_to_json(self, file_path) :
         _write_json(self.to_dict(), file_path)
+
+    def refresh_paritions(self, temp_athena_staging_dir = None, database_name = None):
+        """
+        Refresh the partitions in a table, if they exist
+        """
+
+        if self.partitions:
+            if not temp_athena_staging_dir:
+                if self.database:
+                    temp_athena_staging_dir = self.database.s3_athena_temp_folder
+                else:
+                    raise ValueError("You must provide a path to a directory in s3 for Athena to cache query results")
+
+            conn = connect(s3_staging_dir = temp_athena_staging_dir, region_name = 'eu-west-1')
+
+            if not database_name:
+                if self.database:
+                    database_name = self.database.name
+                else:
+                    raise KeyError("You must provide a database name, or register a database object against the table")
+
+            sql = "MSCK REPAIR TABLE {}.{}".format(database_name, self.name)
+
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(sql)
+            finally:
+                conn.close()
 
 
 class DatabaseMeta :
     """
-    Python class to manage glue databases from our agnostic meta data. 
+    Python class to manage glue databases from our agnostic meta data.
     db = DatabaseMeta('path_to_local_meta_data_folder/')
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
     def __init__(self, database_folder_path, db_suffix = '_dev') :
-        
+
         self._tables = []
         database_folder_path = _end_with_slash(database_folder_path)
-        
+
         db_meta = _read_json(database_folder_path + 'database.json')
 
         self.name = db_meta['name']
@@ -263,20 +251,12 @@ class DatabaseMeta :
         files = set([f for f in files if re.match(".+\.json$", f)])
 
         for f in files :
-            if 'database.json' not in f :
-                self.add_table(TableMeta(database_folder_path + f))
-        
-    @property
-    def name(self):
-        """
-        Name of the database. When used to create the database in s3 this is suffixed with db.sb_suffix.
-        """
-        return self._name
+            if 'database.json' not in f:
+                table_file_path = os.path.join(database_folder_path, f)
+                tm = TableMeta(table_file_path, database=self)
+                self.add_table(tm)
 
-    @name.setter 
-    def name(self, name) :
-        self._name = name
-    
+
     @property
     def bucket(self):
         """
@@ -284,11 +264,11 @@ class DatabaseMeta :
         """
         return self._bucket
 
-    @bucket.setter 
+    @bucket.setter
     def bucket(self, bucket) :
         _validate_string(bucket, allowed_chars='.-')
         self._bucket = bucket
-    
+
     @property
     def base_folder(self):
         """
@@ -297,11 +277,11 @@ class DatabaseMeta :
         """
         return self._base_folder
 
-    @base_folder.setter 
+    @base_folder.setter
     def base_folder(self, base_folder) :
         base_folder = _end_with_slash(base_folder)
         self._base_folder = base_folder
-    
+
     @property
     def location(self):
         """
@@ -309,21 +289,11 @@ class DatabaseMeta :
         """
         return self._location
 
-    @location.setter 
+    @location.setter
     def location(self, location) :
         location = _end_with_slash(location)
         self._location = location
-    
-    @property
-    def description(self):
-        """
-        The database's description.
-        """
-        return self._description
 
-    @description.setter 
-    def description(self, description) :
-        self._description = description
 
     @property
     def table_names(self) :
@@ -332,7 +302,7 @@ class DatabaseMeta :
         """
         table_names = [t.name for t in self._tables]
         return table_names
-    
+
     @property
     def db_suffix(self) :
         """
@@ -354,11 +324,11 @@ class DatabaseMeta :
         Returns the name of the database in the aws glue catalogue.
         """
         return self.name + self.db_suffix
-    
+
     @property
     def s3_base_folder(self) :
         """
-        Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix. 
+        Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix.
         """
         return self.base_folder[:-1] + self.db_suffix + '/'
 
@@ -368,8 +338,15 @@ class DatabaseMeta :
         Returns the s3 path to the database
         """
         return "s3://{}/{}{}".format(self.bucket, self.s3_base_folder, self.location)
- 
-    def _check_table_exists(self, table_name) : 
+
+    @property
+    def s3_athena_temp_folder(self) :
+        """
+        Athena needs to use a temporary bucket to run queries
+        """
+        return "s3://{}/{}".format(self.bucket, "__temp_athena__")
+
+    def _check_table_exists(self, table_name) :
         return table_name in self.table_names
 
     def _throw_error_check_table(self, table_name, error_on_table_exists = True) :
@@ -394,11 +371,15 @@ class DatabaseMeta :
         if not isinstance(table, TableMeta) :
             raise ValueError("table must an object of TableMeta class")
         self._throw_error_check_table(table.name)
+
+        if not table.database:
+            table.database = self
+
         self._tables.append(table)
 
     def remove_table(self, table_name) :
         """
-        Removes a Table object from the database object. 
+        Removes a Table object from the database object.
         table_name : name of the table object i.e. table.name
         """
         self._throw_error_check_table(table_name, False)
@@ -433,7 +414,7 @@ class DatabaseMeta :
         Creates a database in Glue based on the database object calling the method function. If a database with the same name (db.glue_name) already exists it overwrites it.
         """
         db = {
-            "DatabaseInput": { 
+            "DatabaseInput": {
                 "Description": self.description,
                 "Name": self.glue_name,
             }
@@ -451,7 +432,7 @@ class DatabaseMeta :
         """
         Writes the database object back into the agnostic meta data json files.
         Function writes a file called database.json to the folder_path provided.
-        If write_tables is True (default) this method will also write all table objects as an agnostic meta data json. 
+        If write_tables is True (default) this method will also write all table objects as an agnostic meta data json.
         The table meta data json will be saved as <table_name>.json where table_name == table.name.
         """
         folder_path = _end_with_slash(folder_path)
@@ -464,6 +445,11 @@ class DatabaseMeta :
         }
         _write_json(db_write_obj, folder_path + 'database.json')
 
-        if write_tables : 
+        if write_tables :
             for t in self._tables :
                 t.write_to_json(folder_path + t.name + '.json')
+
+    def refresh_all_table_partitions(self):
+        for table in self._tables:
+            if table.partitions:
+                table.refresh_paritions()
