@@ -1,4 +1,4 @@
-from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _s3_resource
+from etl_manager.utils import _read_json, _write_json, _dict_merge, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _s3_resource
 from urllib.request import urlretrieve
 import os
 import re
@@ -89,7 +89,7 @@ class GlueJob :
 
     @property
     def s3_job_folder_no_bucket(self) :
-        return "{}/{}/{}/{}/".format('_GlueJobs_', self.job_name, self.job_id, 'resources')
+        return os.path.join('_GlueJobs_', self.job_name, self.job_id, 'resources/')
 
     @property
     def s3_metadata_base_folder_inc_bucket(self) :
@@ -119,7 +119,7 @@ class GlueJob :
             if not isinstance(job_arguments, dict) :
                 raise ValueError("job_arguments must be a dictionary")
             # validate dict keys
-            special_aws_params = ['--JOB_NAME', '--conf', '--debug', '--mode']
+            special_aws_params = ['--JOB_NAME', '--conf', '--debug', '--mode', '--metadata_base_path']
             for k in job_arguments.keys() :
                 if k[:2] != '--' or k in special_aws_params:
                     raise ValueError("Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(k, ', '.join(special_aws_params)))
@@ -274,7 +274,7 @@ class GlueJob :
 
         # Sync all job resources to the same s3 folder
         for f in files_to_sync :
-            s3_file_path = self.s3_job_folder_no_bucket + os.path.basename(f)
+            s3_file_path = os.path.join(self.s3_job_folder_no_bucket, os.path.basename(f))
             _s3_client.upload_file(f, self.bucket, s3_file_path)
 
         # Upload metadata to subfolder
@@ -316,17 +316,17 @@ class GlueJob :
 
         template["Name"] = self.job_name
         template["Role"] = self.job_role
-        template["Command"]["ScriptLocation"] = self.s3_job_folder_inc_bucket + 'job.py'
-        template["DefaultArguments"]["--TempDir"] = self.s3_job_folder_inc_bucket + 'glue_temp_folder/'
+        template["Command"]["ScriptLocation"] = os.path.join(self.s3_job_folder_inc_bucket, 'job.py')
+        template["DefaultArguments"]["--TempDir"] = os.path.join(self.s3_job_folder_inc_bucket, 'glue_temp_folder/')
 
         if len(self.resources) > 0 :
-            extra_files = ','.join([self.s3_job_folder_inc_bucket + os.path.basename(f) for f in self.resources])
+            extra_files = ','.join([os.path.join(self.s3_job_folder_inc_bucket, os.path.basename(f)) for f in self.resources])
             template["DefaultArguments"]["--extra-files"] = extra_files
         else :
             template["DefaultArguments"].pop("--extra-files", None)
 
         if len(self.py_resources) > 0 :
-            extra_py_files = ','.join([self.s3_job_folder_inc_bucket + os.path.basename(f) for f in (self.py_resources + self.github_py_resources)])
+            extra_py_files = ','.join([os.path.join(self.s3_job_folder_inc_bucket, os.path.basename(f)) for f in (self.py_resources + self.github_py_resources)])
             template["DefaultArguments"]["--extra-py-files"] = extra_py_files
         else :
             template["DefaultArguments"].pop("--extra-py-files", None)
