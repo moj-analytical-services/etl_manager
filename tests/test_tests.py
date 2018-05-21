@@ -69,6 +69,19 @@ class GlueTest(unittest.TestCase) :
             g.job_arguments = {"--JOB_NAME" : "new_job_name"}
             g.job_arguments = {"no_dash" : "test"}
 
+
+class TableTest(unittest.TestCase):
+
+    def test_table_init(self):
+        tm = TableMeta("example/meta_data/db1/teams.json")
+
+        self.assertTrue(tm.database is None)
+
+        gtd = tm.glue_table_definition("full_db_path")
+        self.assertTrue(gtd["StorageDescriptor"]["Location"] == 'full_db_path/teams/')
+
+
+
 class DatabaseMetaTest(unittest.TestCase):
     """
     Test the Databasse_Meta class
@@ -140,6 +153,14 @@ class DatabaseMetaTest(unittest.TestCase):
 
         self.assertRaises(ValueError, db.add_table, 'not a table obj')
         self.assertRaises(ValueError, db.add_table, emp_table)
+
+    def test_location(self):
+        db = DatabaseMeta('example/meta_data/db1/')
+        tbl = db.table('teams')
+        gtd = tbl.glue_table_definition()
+        location = gtd["StorageDescriptor"]["Location"]
+        self.assertTrue(location == 's3://my-bucket/my_folder_dev/database/database1/teams/')
+
 
     def test_glue_database_creation(self) :
         session = boto3.Session()
