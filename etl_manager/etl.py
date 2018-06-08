@@ -93,11 +93,11 @@ class GlueJob :
 
     @property
     def s3_metadata_base_folder_inc_bucket(self) :
-        return os.path.join(self.s3_job_folder_inc_bucket, "metadata")
+        return os.path.join(self.s3_job_folder_inc_bucket, "meta_data")
 
     @property
     def s3_metadata_base_folder_no_bucket(self) :
-        return os.path.join(self.s3_job_folder_no_bucket, "metadata")
+        return os.path.join(self.s3_job_folder_no_bucket, "meta_data")
 
     @property
     def job_parent_folder(self) :
