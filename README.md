@@ -154,7 +154,7 @@ db.table_names # [new_name, teams]
 
 db.remove_table('new_name')
 
-db.glue_name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in DatabaseMeta)
+db.name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in DatabaseMeta)
 
 # Set all table types to parquet and create database schema in glue
 for t in db_table_names :
