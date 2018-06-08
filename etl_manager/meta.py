@@ -248,7 +248,7 @@ class DatabaseMeta :
 
         db_meta = _read_json(database_folder_path + 'database.json')
 
-        self.name = db_meta['name']
+        self.name = db_meta['name'] + db_suffix
         self.bucket = db_meta['bucket']
         self.base_folder = db_meta['base_folder']
         self.location = db_meta['location']
@@ -326,13 +326,6 @@ class DatabaseMeta :
             self._db_suffix = ''
 
     @property
-    def glue_name(self) :
-        """
-        Returns the name of the database in the aws glue catalogue.
-        """
-        return self.name + self.db_suffix
-
-    @property
     def s3_base_folder(self) :
         """
         Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix.
@@ -397,7 +390,7 @@ class DatabaseMeta :
         Deletes a glue database with the same name. Returns a response explaining if it was deleted or didn't delete because database was not found.
         """
         try :
-            _glue_client.delete_database(Name = self.glue_name)
+            _glue_client.delete_database(Name = self.name)
             response = 'database deleted'
         except :
             response = 'Cannot delete as database not found in glue catalogue'
@@ -418,12 +411,12 @@ class DatabaseMeta :
 
     def create_glue_database(self) :
         """
-        Creates a database in Glue based on the database object calling the method function. If a database with the same name (db.glue_name) already exists it overwrites it.
+        Creates a database in Glue based on the database object calling the method function. If a database with the same name (db.name) already exists it overwrites it.
         """
         db = {
             "DatabaseInput": {
                 "Description": self.description,
-                "Name": self.glue_name,
+                "Name": self.name,
             }
         }
 
@@ -433,7 +426,7 @@ class DatabaseMeta :
 
         for tab in self._tables :
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
-            _glue_client.create_table(DatabaseName = self.glue_name, TableInput = glue_table_def)
+            _glue_client.create_table(DatabaseName = self.name, TableInput = glue_table_def)
 
     def write_to_json(self, folder_path, write_tables = True) :
         """

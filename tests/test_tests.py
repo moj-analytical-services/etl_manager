@@ -128,7 +128,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_glue_name(self) :
         db = DatabaseMeta('example/meta_data/db1/')
-        self.assertEqual(db.glue_name, 'workforce_dev')
+        self.assertEqual(db.name, 'workforce_dev')
 
     def test_db_s3_database_path(self) :
         db = DatabaseMeta('example/meta_data/db1/')
@@ -174,7 +174,7 @@ class DatabaseMetaTest(unittest.TestCase):
         if has_access_key :
             db = DatabaseMeta('example/meta_data/db1/', db_suffix = '_unit_test_')
             db.create_glue_database()
-            resp = _glue_client.get_tables(DatabaseName = db.glue_name)
+            resp = _glue_client.get_tables(DatabaseName = db.name)
             test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
             self.assertTrue(test_created, msg= "Note this requires user to have correct credentials to create a glue database")
             self.assertEqual(db.delete_glue_database(), 'database deleted')
