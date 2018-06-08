@@ -90,7 +90,7 @@ class DatabaseMetaTest(unittest.TestCase):
     def test_init(self) :
         db = DatabaseMeta('example/meta_data/db1/')
 
-        self.assertEqual(db.name, 'workforce')
+        self.assertEqual(db.name, 'workforce_dev')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
         self.assertEqual(db.base_folder, "my_folder/")
