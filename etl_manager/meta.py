@@ -1,4 +1,4 @@
-from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource
+from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource, _remove_final_slash
 from copy import copy
 import string
 import json
@@ -176,11 +176,10 @@ class TableMeta :
 
         if full_database_path:
             glue_table_definition['StorageDescriptor']["Location"] = os.path.join(full_database_path, self.location)
+        elif self.database:
+            glue_table_definition['StorageDescriptor']["Location"] = os.path.join(self.database.s3_database_path, self.location)
         else:
-            if self.database:
-                glue_table_definition['StorageDescriptor']["Location"] = os.path.join(self.database.s3_database_path, self.location)
-            else:
-                raise ValueError("Need to provide a database or full database path to generate glue table def")
+            raise ValueError("Need to provide a database or full database path to generate glue table def")
 
         if len(self.partitions) > 0 :
             not_partitions = [c for c in self.column_names if c not in self.partitions]
@@ -286,7 +285,7 @@ class DatabaseMeta :
 
     @base_folder.setter
     def base_folder(self, base_folder) :
-        base_folder = _end_with_slash(base_folder)
+        base_folder = _remove_final_slash(base_folder)
         self._base_folder = base_folder
 
     @property
@@ -330,21 +329,21 @@ class DatabaseMeta :
         """
         Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix.
         """
-        return self.base_folder[:-1] + self.db_suffix + '/'
+        return self.base_folder + self.db_suffix
 
     @property
     def s3_database_path(self) :
         """
         Returns the s3 path to the database
         """
-        return "s3://{}/{}{}".format(self.bucket, self.s3_base_folder, self.location)
+        return os.path.join('s3://',self.bucket, self.s3_base_folder, self.location)
 
     @property
     def s3_athena_temp_folder(self) :
         """
         Athena needs to use a temporary bucket to run queries
         """
-        return "s3://{}/{}".format(self.bucket, "__temp_athena__")
+        return os.path.join('s3://',self.bucket, "__temp_athena__")
 
     def _check_table_exists(self, table_name) :
         return table_name in self.table_names
@@ -451,5 +450,4 @@ class DatabaseMeta :
 
     def refresh_all_table_partitions(self):
         for table in self._tables:
-            if table.partitions:
                 table.refresh_paritions()

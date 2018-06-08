@@ -6,7 +6,7 @@ Testing DatabaseMeta, TableMeta
 
 import unittest
 from etl_manager.meta import DatabaseMeta, TableMeta
-from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, _read_json
+from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, _read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
 
@@ -20,6 +20,8 @@ class UtilsTest(unittest.TestCase) :
         self.assertRaises(ValueError, _validate_string, "UPPER")
         self.assertRaises(ValueError, _validate_string, "test:!@")
         self.assertEqual(_validate_string("test:!@", ":!@"), None)
+        self.assertEqual(_remove_final_slash('hello/'), 'hello')
+        self.assertEqual(_remove_final_slash('hello'), 'hello')
 
 class GlueTest(unittest.TestCase) :
     """
@@ -93,7 +95,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.name, 'workforce_dev')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
-        self.assertEqual(db.base_folder, "my_folder/")
+        self.assertEqual(db.base_folder, "my_folder")
         self.assertEqual(db.location, 'database/database1/')
         self.assertEqual(db.db_suffix, '_dev')
 
@@ -110,7 +112,7 @@ class DatabaseMetaTest(unittest.TestCase):
         db.bucket = 'new-bucket'
         self.assertEqual(db.bucket, 'new-bucket')
         db.base_folder = 'this/is/a/base/folder/'
-        self.assertEqual(db.base_folder, 'this/is/a/base/folder/')
+        self.assertEqual(db.base_folder, 'this/is/a/base/folder')
         db.location = 'new/folder/location'
         self.assertEqual(db.location, 'new/folder/location/')
         db.db_suffix = 'new_suffix'
@@ -160,7 +162,6 @@ class DatabaseMetaTest(unittest.TestCase):
         gtd = tbl.glue_table_definition()
         location = gtd["StorageDescriptor"]["Location"]
         self.assertTrue(location == 's3://my-bucket/my_folder_dev/database/database1/teams/')
-
 
     def test_glue_database_creation(self) :
         session = boto3.Session()
