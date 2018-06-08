@@ -4,7 +4,7 @@ import boto3
 import tempfile
 import zipfile
 import shutil
-import string 
+import string
 import os
 import subprocess
 
@@ -53,16 +53,22 @@ def _end_with_slash(string) :
     else :
         return string
 
+def _remove_final_slash(string) :
+    if string[-1] == '/' :
+        return string[:-1]
+    else:
+        return string
+
 # Used by both classes (Should move into another module)
 def _validate_string(s, allowed_chars = "_") :
     if s != s.lower() :
         raise ValueError("string provided must be lowercase")
-    
+
     invalid_chars = string.punctuation
 
     for a in allowed_chars :
         invalid_chars = invalid_chars.replace(a, "")
-    
+
     if any(char in invalid_chars for char in s) :
         raise ValueError("punctuation excluding ({}) is not allowed in string".format(allowed_chars))
 
