@@ -51,10 +51,16 @@ class TableMeta :
         self.data_format = meta['data_format']
         self.id = meta['id']
         self.location = meta['location']
+
         if 'partitions' in meta :
             self.partitions = meta['partitions']
         else :
             self.partitions = []
+
+        if "glue_specific" in meta:
+            self.glue_specific = meta['glue_specific']
+        else:
+            self.glue_specific = {}
 
         self.database = database
 
@@ -180,6 +186,9 @@ class TableMeta :
             glue_table_definition['StorageDescriptor']["Location"] = os.path.join(self.database.s3_database_path, self.location)
         else:
             raise ValueError("Need to provide a database or full database path to generate glue table def")
+
+        if self.glue_specific:
+            _dict_merge(glue_table_definition, self.glue_specific)
 
         if len(self.partitions) > 0 :
             not_partitions = [c for c in self.column_names if c not in self.partitions]
