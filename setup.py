@@ -5,7 +5,7 @@ setup(
     version='0.1',
     packages=find_packages(exclude=['tests*']),
     license='MIT',
-    description='A python package to manage our data management processes on AWS',
+    description='A python package to manage etl processes on AWS',
     long_description=open('README.md').read(),
     install_requires=[],
     include_package_data=True,

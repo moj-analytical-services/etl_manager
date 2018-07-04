@@ -1,5 +1,7 @@
 # etl_manager
 
+[![Build Status](https://travis-ci.org/moj-analytical-services/etl_manager.svg?branch=master)](https://travis-ci.org/moj-analytical-services/etl_manager)
+
 A python package that manages our data engineering framework and implements them on AWS Glue.
 
 The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
@@ -152,7 +154,7 @@ db.table_names # [new_name, teams]
 
 db.remove_table('new_name')
 
-db.glue_name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in DatabaseMeta)
+db.name # workforce_dev (note as default the package adds _dev if a db_suffix is not provided in DatabaseMeta)
 
 # Set all table types to parquet and create database schema in glue
 for t in db_table_names :
