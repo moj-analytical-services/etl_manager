@@ -64,7 +64,7 @@ class TableMeta :
             self.location = kwargs['location'] if 'location' in kwargs else ''
             self.partitions = kwargs['partitions'] if 'partitions' in kwargs else []
 
-    def __init__(self, filepath, database = None, **kwargs) :
+    def __init__(self, filepath = None, database = None, **kwargs) :
         if filepath : 
             meta = _read_json(filepath)
             self.columns = meta['columns']
