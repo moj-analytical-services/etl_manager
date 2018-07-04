@@ -43,7 +43,6 @@ class TableMeta :
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
 
-<<<<<<< HEAD
     def __init__(self, filepath, **kwargs) :
         if filepath :
             meta = _read_json(filepath)
