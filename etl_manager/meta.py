@@ -42,28 +42,7 @@ class TableMeta :
         'datetime' : {'glue' : 'double', 'spark': 'DoubleType'},
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
-    def __init__(self, filepath, **kwargs) :
-        if filepath :
-            meta = _read_json(filepath)
-            self.columns = meta['columns']
-            self.name = meta['table_name']
-            self.description = meta['table_desc']
-            self.data_format = meta['data_format']
-            self.id = meta['id']
-            self.location = meta['location']
-            if 'partitions' in meta :
-                self.partitions = meta['partitions']
-            else :
-                self.partitions = []
-        else :
-            self.columns = kwargs['columns'] if 'columns' in kwargs else []
-            self.name = kwargs['table_name'] if 'table_name' in kwargs else ''
-            self.description = kwargs['table_desc'] if 'table_desc' in kwargs else ''
-            self.data_format = kwargs['data_format'] if 'data_format' in kwargs else ''
-            self.id = kwargs['id'] if 'id' in kwargs else ''
-            self.location = kwargs['location'] if 'location' in kwargs else ''
-            self.partitions = kwargs['partitions'] if 'partitions' in kwargs else []
-
+    
     def __init__(self, filepath = None, database = None, **kwargs) :
         if filepath : 
             meta = _read_json(filepath)
