@@ -42,28 +42,59 @@ class TableMeta :
         'datetime' : {'glue' : 'double', 'spark': 'DoubleType'},
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
-
-    def __init__(self, filepath, database = None) :
-        meta = _read_json(filepath)
-        self.columns = meta['columns']
-        self.name = meta['table_name']
-        self.description = meta['table_desc']
-        self.data_format = meta['data_format']
-        self.id = meta['id']
-        self.location = meta['location']
-
-        if 'partitions' in meta :
-            self.partitions = meta['partitions']
+    def __init__(self, filepath, **kwargs) :
+        if filepath :
+            meta = _read_json(filepath)
+            self.columns = meta['columns']
+            self.name = meta['table_name']
+            self.description = meta['table_desc']
+            self.data_format = meta['data_format']
+            self.id = meta['id']
+            self.location = meta['location']
+            if 'partitions' in meta :
+                self.partitions = meta['partitions']
+            else :
+                self.partitions = []
         else :
-            self.partitions = []
+            self.columns = kwargs['columns'] if 'columns' in kwargs else []
+            self.name = kwargs['table_name'] if 'table_name' in kwargs else ''
+            self.description = kwargs['table_desc'] if 'table_desc' in kwargs else ''
+            self.data_format = kwargs['data_format'] if 'data_format' in kwargs else ''
+            self.id = kwargs['id'] if 'id' in kwargs else ''
+            self.location = kwargs['location'] if 'location' in kwargs else ''
+            self.partitions = kwargs['partitions'] if 'partitions' in kwargs else []
 
-        if "glue_specific" in meta:
-            self.glue_specific = meta['glue_specific']
-        else:
-            self.glue_specific = {}
+    def __init__(self, filepath, database = None, **kwargs) :
+        if filepath : 
+            meta = _read_json(filepath)
+            self.columns = meta['columns']
+            self.name = meta['table_name']
+            self.description = meta['table_desc']
+            self.data_format = meta['data_format']
+            self.id = meta['id']
+            self.location = meta['location']
 
-        self.database = database
+            if 'partitions' in meta :
+                self.partitions = meta['partitions']
+            else :
+                self.partitions = []
 
+            if "glue_specific" in meta:
+                self.glue_specific = meta['glue_specific']
+            else:
+                self.glue_specific = {}
+
+            self.database = database
+        
+        else :
+            self.columns = kwargs['columns'] if 'columns' in kwargs else []
+            self.name = kwargs['table_name'] if 'table_name' in kwargs else ''
+            self.description = kwargs['table_desc'] if 'table_desc' in kwargs else ''
+            self.data_format = kwargs['data_format'] if 'data_format' in kwargs else ''
+            self.id = kwargs['id'] if 'id' in kwargs else ''
+            self.location = kwargs['location'] if 'location' in kwargs else ''
+            self.partitions = kwargs['partitions'] if 'partitions' in kwargs else []
+            self.glue_specific = kwargs['glue_specific'] if 'glue_specific' in kwargs else {}
 
     @property
     def column_names(self) :
@@ -92,9 +123,12 @@ class TableMeta :
     @location.setter
     def location(self, location) :
         _validate_string(location, allowed_chars="_/")
-        if location[0] == '/' or location[-1] != '/':
-            raise ValueError("location should not start with a slash and end with a slash")
-        self._location = location
+        if location != '' :
+            if location[0] == '/' or location[-1] != '/':
+                raise ValueError("location should not start with a slash and end with a slash")
+            self._location = location
+        else :
+            self._location = location
 
     def remove_column(self, column_name) :
         self._check_column_exists(column_name)

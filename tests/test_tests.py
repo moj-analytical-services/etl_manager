@@ -184,5 +184,55 @@ class DatabaseMetaTest(unittest.TestCase):
             print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
             self.assertTrue(True)
 
+class TableMetaTest(unittest.TestCase): 
+    """
+    Test Table Meta class 
+    """
+    def test_null_init(self) :
+        tm = TableMeta(None)
+        
+        self.assertEqual(tm.name, '')
+        self.assertEqual(tm.description, '')
+        self.assertEqual(tm.data_format, '')
+        self.assertEqual(tm.location, '')
+        self.assertEqual(tm.columns, [])
+        self.assertEqual(tm.partitions, [])
+        self.assertEqual(tm.id, '')
+        self.assertEqual(tm.glue_specific, {})
+
+
+        kwargs = {
+            "id": "workforce.employees",
+            "table_name": "employees",
+            "table_desc": "table containing employee information",
+            "data_format": "parquet",
+            "location": "employees/",
+            "columns": [
+            {
+                "name": "employee_id",
+                "type": "int",
+                "description": "an ID for each employee"
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee"
+            },
+            {
+                "name": "employee_dob",
+                "type": "date",
+                "description": "date of birth for the employee"
+            }]
+        }
+
+        tm2 = TableMeta(None, **kwargs)
+        self.assertEqual(tm2.name, kwargs['table_name'])
+        self.assertEqual(tm2.description, kwargs['table_desc'])
+        self.assertEqual(tm2.data_format, kwargs['data_format'])
+        self.assertEqual(tm2.location, kwargs['location'])
+        self.assertEqual(tm2.columns, kwargs["columns"])
+        self.assertEqual(tm2.id, kwargs["id"])
+        self.assertEqual(tm2.glue_specific, {})
+
 if __name__ == '__main__':
     unittest.main()
