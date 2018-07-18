@@ -325,7 +325,7 @@ class GlueJob :
         else :
             template["DefaultArguments"].pop("--extra-files", None)
 
-        if len(self.py_resources) > 0 :
+        if len(self.py_resources) > 0 or  len(self.github_py_resources) > 0:
             extra_py_files = ','.join([os.path.join(self.s3_job_folder_inc_bucket, os.path.basename(f)) for f in (self.py_resources + self.github_py_resources)])
             template["DefaultArguments"]["--extra-py-files"] = extra_py_files
         else :
