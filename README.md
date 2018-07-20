@@ -29,6 +29,9 @@ python -m unittest tests.test_tests -v
 - Use data engineering warehouse template as unit tests for functions
 - All of the data dependencies of the job should be ran from s3. Even if the job is ran on python locally code should download data from s3, process it and upload to s3
 
+**Currently supported data types for your columns currently are:**
+
+`character | int | long | float | double | date | datetime |  boolean`
 
 ## Examples
 
@@ -161,3 +164,4 @@ for t in db_table_names :
     db.table(t).data_format = 'parquet'
 db.create_glue_database()
 ```
+    
