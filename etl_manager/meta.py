@@ -39,7 +39,7 @@ class TableMeta :
         'float' : {'glue' : 'float', 'spark': 'FloatType'},
         'double' : {'glue' : 'double', 'spark': 'DoubleType'},
         'date' : {'glue' : 'date', 'spark': 'DateType'},
-        'datetime' : {'glue' : 'double', 'spark': 'DoubleType'},
+        'datetime' : {'glue' : 'timestamp', 'spark': 'TimestampType'},
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
 
