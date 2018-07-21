@@ -42,9 +42,9 @@ class TableMeta :
         'datetime' : {'glue' : 'double', 'spark': 'DoubleType'},
         'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
     }
-    
+
     def __init__(self, filepath = None, database = None, **kwargs) :
-        if filepath : 
+        if filepath :
             meta = _read_json(filepath)
             self.columns = meta['columns']
             self.name = meta['table_name']
@@ -64,7 +64,7 @@ class TableMeta :
                 self.glue_specific = {}
 
             self.database = database
-        
+
         else :
             self.columns = kwargs['columns'] if 'columns' in kwargs else []
             self.name = kwargs['table_name'] if 'table_name' in kwargs else ''
@@ -309,18 +309,6 @@ class DatabaseMeta :
     def base_folder(self, base_folder) :
         base_folder = _remove_final_slash(base_folder)
         self._base_folder = base_folder
-
-    @property
-    def location(self):
-        """
-        Location of the database. This folder path is relative to the base_folder path. E.g. the database might be in my_database/
-        """
-        return self._location
-
-    @location.setter
-    def location(self, location) :
-        location = _end_with_slash(location)
-        self._location = location
 
 
     @property
