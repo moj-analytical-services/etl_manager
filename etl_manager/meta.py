@@ -103,8 +103,8 @@ class TableMeta :
     def location(self, location) :
         _validate_string(location, allowed_chars="_/")
         if location != '' :
-            if location[0] == '/' or location[-1] != '/':
-                raise ValueError("location should not start with a slash and end with a slash")
+            if location[0] == '/':
+                raise ValueError("location should not start with a slash")
             self._location = location
         else :
             self._location = location
