@@ -96,7 +96,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
         self.assertEqual(db.base_folder, "my_folder")
-        self.assertEqual(db.location, 'database/database1/')
+        self.assertEqual(db.location, 'database/database1')
         self.assertEqual(db.db_suffix, '_dev')
 
         db2 = DatabaseMeta('example/meta_data/db1/', db_suffix='_test')
@@ -114,7 +114,7 @@ class DatabaseMetaTest(unittest.TestCase):
         db.base_folder = 'this/is/a/base/folder/'
         self.assertEqual(db.base_folder, 'this/is/a/base/folder')
         db.location = 'new/folder/location'
-        self.assertEqual(db.location, 'new/folder/location/')
+        self.assertEqual(db.location, 'new/folder/location')
         db.db_suffix = 'new_suffix'
         self.assertEqual(db.db_suffix, 'new_suffix')
 
@@ -134,7 +134,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_s3_database_path(self) :
         db = DatabaseMeta('example/meta_data/db1/')
-        self.assertEqual(db.s3_database_path, 's3://my-bucket/my_folder_dev/database/database1/')
+        self.assertEqual(db.s3_database_path, 's3://my-bucket/my_folder_dev/database/database1')
 
     def test_db_table(self) :
         db = DatabaseMeta('example/meta_data/db1/')
