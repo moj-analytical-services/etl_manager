@@ -245,10 +245,10 @@ class TableMeta :
         f.write("*S3 filepath: {self.s3_database_path}*")
         f.write("\n")
         f.write("### Description")
-        f.write(f"{self.description")
+        f.write(f"{self.description}")
         f.write("\n")
         f.write("### Format")
-        f.write(f"{self.data_format")
+        f.write(f"{self.data_format}")
         f.write("\n")
         f.write("## Columns")
         for c in self.columns :
