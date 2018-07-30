@@ -329,7 +329,6 @@ class DatabaseMeta :
 
         self.name = db_meta['name'] + db_suffix
         self.bucket = db_meta['bucket']
-        self.base_folder = db_meta['base_folder']
         self.location = db_meta['location']
         self.description = db_meta['description']
         self.db_suffix = db_suffix
@@ -356,20 +355,6 @@ class DatabaseMeta :
         self._bucket = bucket
 
     @property
-    def base_folder(self):
-        """
-        The base folder is the path to the database build. This path is relative to the root dir of the bucket. It is also suffixed by db_suffix when creating the glue database.
-        e.g. if db.base_folder = 'v1' denoting the first version of the database build. Then the path to the s3 base folder for this database would be 'v1_dev' providing that db.db_suffix == '_dev'.
-        """
-        return self._base_folder
-
-    @base_folder.setter
-    def base_folder(self, base_folder) :
-        base_folder = _remove_final_slash(base_folder)
-        self._base_folder = base_folder
-
-
-    @property
     def table_names(self) :
         """
         Returns the names of the table objects in the database object.
@@ -393,18 +378,11 @@ class DatabaseMeta :
             self._db_suffix = ''
 
     @property
-    def s3_base_folder(self) :
-        """
-        Returns what the base_folder will be in S3. This is the database object's base_folder plus and db_suffix.
-        """
-        return self.base_folder + self.db_suffix
-
-    @property
     def s3_database_path(self) :
         """
         Returns the s3 path to the database
         """
-        return os.path.join('s3://',self.bucket, self.s3_base_folder, self.location)
+        return os.path.join('s3://', self.bucket, self.location)
 
     @property
     def s3_athena_temp_folder(self) :
@@ -468,7 +446,7 @@ class DatabaseMeta :
         Deletes the data that is in the databases s3_database_path. If tables only is False, then the entire database folder is deleted otherwise the class will only delete folders corresponding to the tables in the database.
         """
         bucket = _s3_resource.Bucket(self.bucket)
-        database_obj_folder = self.s3_base_folder + self.location
+        database_obj_folder = self.location
         if tables_only :
             for t in self.table_names :
                 table_s3_obj_folder = database_obj_folder + self.table(t).location
@@ -507,7 +485,6 @@ class DatabaseMeta :
             "description": self.description,
             "name": self.name,
             "bucket": self.bucket,
-            "base_folder": self.base_folder,
             "location": self.location
         }
         _write_json(db_write_obj, folder_path + 'database.json')
