@@ -95,7 +95,6 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.name, 'workforce_dev')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
-        self.assertEqual(db.base_folder, "my_folder")
         self.assertEqual(db.location, 'database/database1')
         self.assertEqual(db.db_suffix, '_dev')
 
@@ -111,8 +110,6 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.description,'new description')
         db.bucket = 'new-bucket'
         self.assertEqual(db.bucket, 'new-bucket')
-        db.base_folder = 'this/is/a/base/folder/'
-        self.assertEqual(db.base_folder, 'this/is/a/base/folder')
         db.location = 'new/folder/location'
         self.assertEqual(db.location, 'new/folder/location')
         db.db_suffix = 'new_suffix'
@@ -134,7 +131,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_s3_database_path(self) :
         db = DatabaseMeta('example/meta_data/db1/')
-        self.assertEqual(db.s3_database_path, 's3://my-bucket/my_folder_dev/database/database1')
+        self.assertEqual(db.s3_database_path, 's3://my-bucket/database/database1')
 
     def test_db_table(self) :
         db = DatabaseMeta('example/meta_data/db1/')
@@ -161,7 +158,7 @@ class DatabaseMetaTest(unittest.TestCase):
         tbl = db.table('teams')
         gtd = tbl.glue_table_definition()
         location = gtd["StorageDescriptor"]["Location"]
-        self.assertTrue(location == 's3://my-bucket/my_folder_dev/database/database1/teams/')
+        self.assertTrue(location == 's3://my-bucket/database/database1/teams/')
 
     def test_glue_database_creation(self) :
         session = boto3.Session()
