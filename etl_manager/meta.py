@@ -320,7 +320,7 @@ class DatabaseMeta :
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
-    def __init__(self, database_folder_path, db_suffix = '_dev') :
+    def __init__(self, database_folder_path, db_suffix = '') :
 
         self._tables = []
         database_folder_path = _end_with_slash(database_folder_path)
