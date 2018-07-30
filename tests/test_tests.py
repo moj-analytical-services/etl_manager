@@ -90,7 +90,7 @@ class DatabaseMetaTest(unittest.TestCase):
     """
 
     def test_init(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = DatabaseMeta('example/meta_data/db1/', '_dev')
 
         self.assertEqual(db.name, 'workforce_dev')
         self.assertEqual(db.description, 'Example database')
@@ -127,7 +127,10 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_glue_name(self) :
         db = DatabaseMeta('example/meta_data/db1/')
-        self.assertEqual(db.name, 'workforce_dev')
+        self.assertEqual(db.name, 'workforce')
+
+        db_dev = DatabaseMeta('example/meta_data/db1/', '_dev')
+        self.assertEqual(db_dev.name, 'workforce_dev')
 
     def test_db_s3_database_path(self) :
         db = DatabaseMeta('example/meta_data/db1/')
