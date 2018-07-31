@@ -38,11 +38,15 @@ file.csv is a table that looks like this:
 | c    | 42   |
 
 As you can see col1 is a string and col2 is a integer.
-**Notes:**
+
+#### Notes:
+
 - for Athena to work your table should not contain a header. So before file.csv is uploaded to S3 you should make sure it has no header.
 - Tables must be in a folder. I.e. the location of your table (`table.location`) should be the parent folder of where you data exists. See example below.
 
 To create a schema for your data to be queried by Athena you can use the following code:
+
+#### Basic Example
 
 ```python
 from etl_manager.meta import DatabaseMeta, TableMeta
@@ -93,8 +97,8 @@ The employees table has an ID for each employee their name and dob. The table me
 
 ```json
 {
-    "table_name": "employees",
-    "table_desc": "table containing employee information",
+    "name": "employees",
+    "description": "table containing employee information",
     "data_format": "parquet",
     "location": "employees/",
     "columns": [
@@ -121,8 +125,8 @@ The teams table is a list of employee IDs for each team. Showing which employees
 
 ```json
 {
-    "table_name": "teams",
-    "table_desc": "month snapshot of which employee with working in what team",
+    "name": "teams",
+    "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
     "location": "teams/",
     "columns": [
@@ -161,9 +165,9 @@ The teams table is a list of employee IDs for each team. Showing which employees
 The code snippet below creates a database meta object that allows you to manipulate the database and the tables that exist in it
 
 ```python
-from etl_manager.meta import DatabaseMeta
+from etl_manager.meta import read_database_folder
 
-db = DatabaseMeta('example_meta_data/')
+db = read_database_folder('example_meta_data/')
 
 # Database has callable objects
 
@@ -193,4 +197,3 @@ for t in db_table_names :
     db.table(t).data_format = 'parquet'
 db.create_glue_database()
 ```
-    
