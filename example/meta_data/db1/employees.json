@@ -1,7 +1,6 @@
 {
-    "id": "workforce.employees",
-    "table_name": "employees",
-    "table_desc": "table containing employee information",
+    "name": "employees",
+    "description": "table containing employee information",
     "data_format": "parquet",
     "location": "employees/",
     "columns": [
