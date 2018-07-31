@@ -126,7 +126,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_table_names(self) :
         db = read_database_folder('example/meta_data/db1/')
-        t = all(t in ['teams', 'employees'] for t in db.table_names)
+        t = all(t in ['teams', 'employees', 'pay'] for t in db.table_names)
         self.assertTrue(t)
 
     def test_db_glue_name(self) :
@@ -145,16 +145,24 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertTrue(isinstance(db.table('employees'), TableMeta))
         self.assertRaises(ValueError, db.table, 'not_a_table_name')
 
+    def test_glue_specific_table(self):
+        t = read_table_json("example/meta_data/db1/pay.json")
+        glue_def = t.glue_table_definition("db_path")
+        self.assertTrue(t.glue_table_definition("db_path")["Parameters"]['skip.header.line.count'] == '1')
+
+
+
+
     def test_add_remove_table(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertRaises(ValueError, db.remove_table, 'not_a_table')
         db.remove_table('employees')
         tns = db.table_names
-        self.assertEqual(tns[0], 'teams')
+        self.assertEqual(set(tns),set(['teams', 'pay']))
 
         emp_table = read_table_json('example/meta_data/db1/employees.json')
         db.add_table(emp_table)
-        t = all(t in ['teams', 'employees'] for t in db.table_names)
+        t = all(t in ['teams', 'employees', 'pay'] for t in db.table_names)
         self.assertTrue(t)
 
         self.assertRaises(ValueError, db.add_table, 'not a table obj')
@@ -190,13 +198,13 @@ class DatabaseMetaTest(unittest.TestCase):
             print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
             self.assertTrue(True)
 
-class TableMetaTest(unittest.TestCase): 
+class TableMetaTest(unittest.TestCase):
     """
-    Test Table Meta class 
+    Test Table Meta class
     """
     def test_null_init(self) :
         tm = TableMeta('test_name')
-        
+
         self.assertEqual(tm.name, 'test_name')
         self.assertEqual(tm.description, '')
         self.assertEqual(tm.data_format, 'csv')
