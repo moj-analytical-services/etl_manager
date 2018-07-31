@@ -1,0 +1,10 @@
+{
+    "character" : {"glue" : "string", "spark": "StringType"},
+    "int" : {"glue" : "int", "spark": "IntegerType"},
+    "long" : {"glue" : "bigint", "spark": "LongType"},
+    "float" : {"glue" : "float", "spark": "FloatType"},
+    "double" : {"glue" : "double", "spark": "DoubleType"},
+    "date" : {"glue" : "date", "spark": "DateType"},
+    "datetime" : {"glue" : "timestamp", "spark": "TimestampType"},
+    "boolean" : {"glue" : "boolean", "spark": "BooleanType"}
+}

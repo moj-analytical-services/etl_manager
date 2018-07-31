@@ -18,6 +18,8 @@ _template = {
     "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json"))
 }
 
+_agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
+
 def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
@@ -32,48 +34,16 @@ class TableMeta :
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
 
-    _agnostic_to_glue_spark_dict = {
-        'character' : {'glue' : 'string', 'spark': 'StringType'},
-        'int' : {'glue' : 'int', 'spark': 'IntegerType'},
-        'long' : {'glue' : 'bigint', 'spark': 'LongType'},
-        'float' : {'glue' : 'float', 'spark': 'FloatType'},
-        'double' : {'glue' : 'double', 'spark': 'DoubleType'},
-        'date' : {'glue' : 'date', 'spark': 'DateType'},
-        'datetime' : {'glue' : 'timestamp', 'spark': 'TimestampType'},
-        'boolean' : {'glue' : 'boolean', 'spark': 'BooleanType'}
-    }
-
-    def __init__(self, filepath = None, database = None, **kwargs) :
-        if filepath :
-            meta = _read_json(filepath)
-            self.columns = meta['columns']
-            self.name = meta['table_name']
-            self.description = meta['table_desc']
-            self.data_format = meta['data_format']
-            self.id = meta['id']
-            self.location = meta['location']
-
-            if 'partitions' in meta :
-                self.partitions = meta['partitions']
-            else :
-                self.partitions = []
-
-            if "glue_specific" in meta:
-                self.glue_specific = meta['glue_specific']
-            else:
-                self.glue_specific = {}
-
-            self.database = database
-
-        else :
-            self.columns = kwargs['columns'] if 'columns' in kwargs else []
-            self.name = kwargs['table_name'] if 'table_name' in kwargs else ''
-            self.description = kwargs['table_desc'] if 'table_desc' in kwargs else ''
-            self.data_format = kwargs['data_format'] if 'data_format' in kwargs else ''
-            self.id = kwargs['id'] if 'id' in kwargs else ''
-            self.location = kwargs['location'] if 'location' in kwargs else ''
-            self.partitions = kwargs['partitions'] if 'partitions' in kwargs else []
-            self.glue_specific = kwargs['glue_specific'] if 'glue_specific' in kwargs else {}
+    def __init__(self, name, location = '', columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
+       
+        self.name = name
+        self.location = location
+        self.columns = columns
+        self.data_format = data_format
+        self.description = description
+        self.partitions = partitions
+        self.glue_specific = glue_specific
+        self.database = database
 
     @property
     def column_names(self) :
@@ -108,6 +78,19 @@ class TableMeta :
             self._location = location
         else :
             self._location = location
+
+    @property
+    def database(self):
+        """
+        database object table relates to
+        """
+        return self._database
+
+    @database.setter
+    def database(self, database) :
+        if (not database) and (not isinstance(database, DatabaseMeta)) :
+            raise ValueError('database must be a database meta object from the DatabaseMeta class.')
+        self._database = database
 
     def remove_column(self, column_name) :
         self._check_column_exists(column_name)
@@ -320,27 +303,35 @@ class DatabaseMeta :
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
-    def __init__(self, database_folder_path, db_suffix = '') :
+    def __init__(self, name, bucket, location = '', db_suffix = '', description = '') :
 
-        self._tables = []
-        database_folder_path = _end_with_slash(database_folder_path)
+        # Always assigned to database through keyword argument
+        self.db_suffix = kwargs['db_suffix'] if 'db_suffix' in kwargs else ''
 
-        db_meta = _read_json(database_folder_path + 'database.json')
+        if database_folder_path :
+            self._tables = []
+            database_folder_path = _end_with_slash(database_folder_path)
 
-        self.name = db_meta['name'] + db_suffix
-        self.bucket = db_meta['bucket']
-        self.location = db_meta['location']
-        self.description = db_meta['description']
-        self.db_suffix = db_suffix
-        files = os.listdir(database_folder_path)
-        files = set([f for f in files if re.match(".+\.json$", f)])
+            db_meta = _read_json(database_folder_path + 'database.json')
 
-        for f in files :
-            if 'database.json' not in f:
-                table_file_path = os.path.join(database_folder_path, f)
-                tm = TableMeta(table_file_path, database=self)
-                self.add_table(tm)
+            self.name = db_meta['name'] + db_suffix
+            self.bucket = db_meta['bucket']
+            self.location = db_meta['location']
+            self.description = db_meta['description']
+            files = os.listdir(database_folder_path)
+            files = set([f for f in files if re.match(".+\.json$", f)])
 
+            for f in files :
+                if 'database.json' not in f:
+                    table_file_path = os.path.join(database_folder_path, f)
+                    tm = TableMeta(table_file_path, database=self)
+                    self.add_table(tm)
+        else :
+            self.name = db_meta['name'] + db_suffix
+            self.bucket = db_meta['bucket']
+            self.location = db_meta['location']
+            self.description = db_meta['description']
+            self.db_suffix = db_suffix
 
     @property
     def bucket(self):
@@ -496,3 +487,39 @@ class DatabaseMeta :
     def refresh_all_table_partitions(self):
         for table in self._tables:
                 table.refresh_paritions()
+
+def read_table_json(filepath, database = None) :
+    meta = _read_json(filepath)
+    if 'partitions' not in meta :
+        meta['partitions'] = []
+
+    if "glue_specific" not in meta:
+        meta['glue_specific'] = {}
+
+    tab = TableMeta(name = meta['name'],
+        location=meta['location'],
+        columns=meta['columns'],
+        data_format=meta['data_format'],
+        description=meta['description'],
+        partitions=meta['partitions'],
+        glue_specific=meta['glue_specific'],
+        database=database)
+    
+    return tab
+
+def read_database_json(filepath, db_suffix = '') :
+    db_meta = _read_json(filepath)
+    db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], location=db_meta['location'], db_suffix=db_suffix, description=db_meta['description'])
+    return db
+
+def read_database_folder(folderpath, db_suffix = '') :
+    # Always assigned to database through keyword argument
+    db = read_database_json(os.path.join(folderpath, f))
+
+    files = os.listdir(folderpath)
+    files = set([f for f in files if re.match(".+\.json$", f) and f != 'database.json'])
+
+    for f in files :
+        table_file_path = os.path.join(database_folder_path, f)
+        tm = read_table_json(table_file_path, database=self)
+        self.add_table(tm)
