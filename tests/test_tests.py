@@ -6,7 +6,7 @@ Testing DatabaseMeta, TableMeta
 
 import unittest
 from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json
-from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, _read_json, _remove_final_slash
+from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
 
@@ -96,7 +96,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.bucket, 'my-bucket')
         self.assertEqual(db.location, 'database/database1')
 
-    def test_read_json(self) :
+    def testread_json(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
@@ -105,7 +105,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_db_to_dict(self) :
         db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', location = 'database/database1', description='Example database')
-        db_dict = _read_json('example/meta_data/db1/database.json')
+        db_dict = read_json('example/meta_data/db1/database.json')
         self.assertDictEqual(db_dict, db.to_dict())
 
     def test_db_value_properties(self) :
@@ -121,7 +121,7 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_table_to_dict(self) :
         db = read_database_folder('example/meta_data/db1/')
-        test_dict = _read_json('example/meta_data/db1/teams.json')
+        test_dict = read_json('example/meta_data/db1/teams.json')
         self.assertDictEqual(test_dict, db.table('teams').to_dict())
 
     def test_db_table_names(self) :

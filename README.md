@@ -19,21 +19,52 @@ To unit test the package
 python -m unittest tests.test_tests -v
 ```
 
-## Rules
-
-- Package does not need to be able to run on glue. Therefore python 3 is fine.
-- Work from folder e.g. v1
-- Running on dev is default
-- Only the code specifies the dev - you never have meta data or folders renamed locally or on github
-- Every function needs to be unit tested
-- Use data engineering warehouse template as unit tests for functions
-- All of the data dependencies of the job should be ran from s3. Even if the job is ran on python locally code should download data from s3, process it and upload to s3
-
 **Currently supported data types for your columns currently are:**
 
 `character | int | long | float | double | date | datetime |  boolean`
 
 ## Examples
+
+### Basic Use
+
+Let's say I have a single table (a csv file) and I want to query it using Amazon athena. My csv file is in the following S3 path: `s3://my-bucket/my-table-folder/file.csv`.
+
+file.csv is a table that looks like this:
+
+| col1 | col2 |
+|------|------|
+| a    | 1    |
+| b    | 12   |
+| c    | 42   |
+
+As you can see col1 is a string and col2 is a integer.
+**Notes:**
+- for Athena to work your table should not contain a header. So before file.csv is uploaded to S3 you should make sure it has no header.
+- Tables must be in a folder. I.e. the location of your table (`table.location`) should be the parent folder of where you data exists. See example below.
+
+To create a schema for your data to be queried by Athena you can use the following code:
+
+```python
+from etl_manager.meta import DatabaseMeta, TableMeta
+
+# Create database meta object
+db = DatabaseMeta(name = 'my_database', bucket='my-bucket')
+
+# Create table meta object
+tab = TableMeta(name = 'my_table', location = 'my-table-folder')
+
+# Add column defintions to the table
+tab.add_column(name = 'col1', 'character', description = 'column contains a letter')
+tab.add_column(name = 'col2', 'int', description = 'column contains a number')
+
+# Add table to the database
+db.add_table(tab)
+
+# Create the table on AWS glue
+db.create_glue_database()
+```
+
+Now the table can be queried via SQL e.g. `SELECT * FROM my_database.my_table`
 
 ### Agnostic Meta Data
 
@@ -62,7 +93,6 @@ The employees table has an ID for each employee their name and dob. The table me
 
 ```json
 {
-    "id": "workforce.employees",
     "table_name": "employees",
     "table_desc": "table containing employee information",
     "data_format": "parquet",
@@ -91,7 +121,6 @@ The teams table is a list of employee IDs for each team. Showing which employees
 
 ```json
 {
-    "id": "workforce.teams",
     "table_name": "teams",
     "table_desc": "month snapshot of which employee with working in what team",
     "data_format": "parquet",

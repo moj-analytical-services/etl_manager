@@ -37,13 +37,13 @@ def _dict_merge(dct, merge_dct):
             dct[k] = merge_dct[k]
 
 # Read json file
-def _read_json(filename) :
+def read_json(filename) :
     with open(filename) as json_data:
         data = json.load(json_data)
     return data
 
 # Write json file
-def _write_json(data, filename) :
+def write_json(data, filename) :
     with open(filename, 'w+') as outfile:
         json.dump(data, outfile, indent=4, separators=(',', ': '))
 
