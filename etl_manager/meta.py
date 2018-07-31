@@ -88,7 +88,7 @@ class TableMeta :
 
     @database.setter
     def database(self, database) :
-        if (not database) and (not isinstance(database, DatabaseMeta)) :
+        if database and (not isinstance(database, DatabaseMeta)) :
             raise ValueError('database must be a database meta object from the DatabaseMeta class.')
         self._database = database
 
@@ -121,7 +121,7 @@ class TableMeta :
                 new_c = {}
                 new_c["Name"] = c["name"]
                 new_c["Comment"] = c["description"]
-                new_c["Type"] = self._agnostic_to_glue_spark_dict[c['type']]['glue']
+                new_c["Type"] = _agnostic_to_glue_spark_dict[c['type']]['glue']
                 glue_columns.append(new_c)
 
         return glue_columns
@@ -196,9 +196,8 @@ class TableMeta :
 
     def to_dict(self) :
         meta = {
-            "id" : self.id,
-            "table_name" : self.name,
-            "table_desc" : self.description,
+            "name" : self.name,
+            "description" : self.description,
             "data_format" : self.data_format,
             "columns" : self.columns,
             "partitions" : self.partitions,
@@ -303,35 +302,13 @@ class DatabaseMeta :
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
-    def __init__(self, name, bucket, location = '', db_suffix = '', description = '') :
+    def __init__(self, name, bucket, location = '', description = '') :
 
-        # Always assigned to database through keyword argument
-        self.db_suffix = kwargs['db_suffix'] if 'db_suffix' in kwargs else ''
-
-        if database_folder_path :
-            self._tables = []
-            database_folder_path = _end_with_slash(database_folder_path)
-
-            db_meta = _read_json(database_folder_path + 'database.json')
-
-            self.name = db_meta['name'] + db_suffix
-            self.bucket = db_meta['bucket']
-            self.location = db_meta['location']
-            self.description = db_meta['description']
-            files = os.listdir(database_folder_path)
-            files = set([f for f in files if re.match(".+\.json$", f)])
-
-            for f in files :
-                if 'database.json' not in f:
-                    table_file_path = os.path.join(database_folder_path, f)
-                    tm = TableMeta(table_file_path, database=self)
-                    self.add_table(tm)
-        else :
-            self.name = db_meta['name'] + db_suffix
-            self.bucket = db_meta['bucket']
-            self.location = db_meta['location']
-            self.description = db_meta['description']
-            self.db_suffix = db_suffix
+        self._tables = []
+        self.name = name
+        self.bucket = bucket
+        self.location = location
+        self.description = description
 
     @property
     def bucket(self):
@@ -352,21 +329,6 @@ class DatabaseMeta :
         """
         table_names = [t.name for t in self._tables]
         return table_names
-
-    @property
-    def db_suffix(self) :
-        """
-        The suffix that is added to the database. Default is _dev. The suffix is used to create different build of the database in glue.
-        """
-        return self._db_suffix
-
-    @db_suffix.setter
-    def db_suffix(self, db_suffix) :
-        if db_suffix is not None and db_suffix != '' :
-            _validate_string(db_suffix, "_-")
-            self._db_suffix = db_suffix
-        else :
-            self._db_suffix = ''
 
     @property
     def s3_database_path(self) :
@@ -464,6 +426,15 @@ class DatabaseMeta :
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
             _glue_client.create_table(DatabaseName = self.name, TableInput = glue_table_def)
 
+    def to_dict(self) :
+        db_dict = {
+            "description": self.description,
+            "name": self.name,
+            "bucket": self.bucket,
+            "location": self.location
+        }
+        return db_dict
+
     def write_to_json(self, folder_path, write_tables = True) :
         """
         Writes the database object back into the agnostic meta data json files.
@@ -471,14 +442,8 @@ class DatabaseMeta :
         If write_tables is True (default) this method will also write all table objects as an agnostic meta data json.
         The table meta data json will be saved as <table_name>.json where table_name == table.name.
         """
-        folder_path = _end_with_slash(folder_path)
-        db_write_obj = {
-            "description": self.description,
-            "name": self.name,
-            "bucket": self.bucket,
-            "location": self.location
-        }
-        _write_json(db_write_obj, folder_path + 'database.json')
+
+        _write_json(self.to_dict(), os.path.join(folder_path, 'database.json'))
 
         if write_tables :
             for t in self._tables :
@@ -507,19 +472,20 @@ def read_table_json(filepath, database = None) :
     
     return tab
 
-def read_database_json(filepath, db_suffix = '') :
+def read_database_json(filepath) :
     db_meta = _read_json(filepath)
-    db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], location=db_meta['location'], db_suffix=db_suffix, description=db_meta['description'])
+    db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], location=db_meta['location'], description=db_meta['description'])
     return db
 
-def read_database_folder(folderpath, db_suffix = '') :
+def read_database_folder(folderpath) :
     # Always assigned to database through keyword argument
-    db = read_database_json(os.path.join(folderpath, f))
+    db = read_database_json(os.path.join(folderpath, 'database.json'))
 
     files = os.listdir(folderpath)
     files = set([f for f in files if re.match(".+\.json$", f) and f != 'database.json'])
 
     for f in files :
-        table_file_path = os.path.join(database_folder_path, f)
-        tm = read_table_json(table_file_path, database=self)
-        self.add_table(tm)
+        table_file_path = os.path.join(folderpath, f)
+        tm = read_table_json(table_file_path, database=db)
+        db.add_table(tm)
+    return db

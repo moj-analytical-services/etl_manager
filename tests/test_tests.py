@@ -5,7 +5,7 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from etl_manager.meta import DatabaseMeta, TableMeta
+from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json
 from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, _read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
@@ -75,7 +75,7 @@ class GlueTest(unittest.TestCase) :
 class TableTest(unittest.TestCase):
 
     def test_table_init(self):
-        tm = TableMeta("example/meta_data/db1/teams.json")
+        tm = read_table_json("example/meta_data/db1/teams.json")
 
         self.assertTrue(tm.database is None)
 
@@ -90,20 +90,26 @@ class DatabaseMetaTest(unittest.TestCase):
     """
 
     def test_init(self) :
-        db = DatabaseMeta('example/meta_data/db1/', '_dev')
-
-        self.assertEqual(db.name, 'workforce_dev')
+        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', location = 'database/database1', description='Example database')
+        self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
         self.assertEqual(db.location, 'database/database1')
-        self.assertEqual(db.db_suffix, '_dev')
 
-        db2 = DatabaseMeta('example/meta_data/db1/', db_suffix='_test')
-        self.assertEqual(db2.db_suffix, '_test')
+    def test_read_json(self) :
+        db = read_database_folder('example/meta_data/db1/')
+        self.assertEqual(db.name, 'workforce')
+        self.assertEqual(db.description, 'Example database')
+        self.assertEqual(db.bucket, 'my-bucket')
+        self.assertEqual(db.location, 'database/database1')
 
+    def test_db_to_dict(self) :
+        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', location = 'database/database1', description='Example database')
+        db_dict = _read_json('example/meta_data/db1/database.json')
+        self.assertDictEqual(db_dict, db.to_dict())
 
     def test_db_value_properties(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         db.name = 'new_name'
         self.assertEqual(db.name,'new_name')
         db.description = 'new description'
@@ -112,43 +118,41 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.bucket, 'new-bucket')
         db.location = 'new/folder/location'
         self.assertEqual(db.location, 'new/folder/location')
-        db.db_suffix = 'new_suffix'
-        self.assertEqual(db.db_suffix, 'new_suffix')
 
     def test_table_to_dict(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         test_dict = _read_json('example/meta_data/db1/teams.json')
         self.assertDictEqual(test_dict, db.table('teams').to_dict())
 
     def test_db_table_names(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         t = all(t in ['teams', 'employees'] for t in db.table_names)
         self.assertTrue(t)
 
     def test_db_glue_name(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.name, 'workforce')
 
-        db_dev = DatabaseMeta('example/meta_data/db1/', '_dev')
-        self.assertEqual(db_dev.name, 'workforce_dev')
+        db_dev = read_database_folder('example/meta_data/db1/')
+        self.assertEqual(db_dev.name, 'workforce')
 
     def test_db_s3_database_path(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.s3_database_path, 's3://my-bucket/database/database1')
 
     def test_db_table(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         self.assertTrue(isinstance(db.table('employees'), TableMeta))
         self.assertRaises(ValueError, db.table, 'not_a_table_name')
 
     def test_add_remove_table(self) :
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         self.assertRaises(ValueError, db.remove_table, 'not_a_table')
         db.remove_table('employees')
         tns = db.table_names
         self.assertEqual(tns[0], 'teams')
 
-        emp_table = TableMeta('example/meta_data/db1/employees.json')
+        emp_table = read_table_json('example/meta_data/db1/employees.json')
         db.add_table(emp_table)
         t = all(t in ['teams', 'employees'] for t in db.table_names)
         self.assertTrue(t)
@@ -157,7 +161,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertRaises(ValueError, db.add_table, emp_table)
 
     def test_location(self):
-        db = DatabaseMeta('example/meta_data/db1/')
+        db = read_database_folder('example/meta_data/db1/')
         tbl = db.table('teams')
         gtd = tbl.glue_table_definition()
         location = gtd["StorageDescriptor"]["Location"]
@@ -173,7 +177,9 @@ class DatabaseMetaTest(unittest.TestCase):
             has_access_key = False
 
         if has_access_key :
-            db = DatabaseMeta('example/meta_data/db1/', db_suffix = '_unit_test_')
+            db = read_database_folder('example/meta_data/db1/')
+            db_suffix = '_unit_test_'
+            db.name = db.name + db_suffix
             db.create_glue_database()
             resp = _glue_client.get_tables(DatabaseName = db.name)
             test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
@@ -189,22 +195,20 @@ class TableMetaTest(unittest.TestCase):
     Test Table Meta class 
     """
     def test_null_init(self) :
-        tm = TableMeta(None)
+        tm = TableMeta('test_name')
         
-        self.assertEqual(tm.name, '')
+        self.assertEqual(tm.name, 'test_name')
         self.assertEqual(tm.description, '')
-        self.assertEqual(tm.data_format, '')
+        self.assertEqual(tm.data_format, 'csv')
         self.assertEqual(tm.location, '')
         self.assertEqual(tm.columns, [])
         self.assertEqual(tm.partitions, [])
-        self.assertEqual(tm.id, '')
         self.assertEqual(tm.glue_specific, {})
 
 
         kwargs = {
-            "id": "workforce.employees",
-            "table_name": "employees",
-            "table_desc": "table containing employee information",
+            "name": "employees",
+            "description": "table containing employee information",
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
@@ -225,14 +229,15 @@ class TableMetaTest(unittest.TestCase):
             }]
         }
 
-        tm2 = TableMeta(None, **kwargs)
-        self.assertEqual(tm2.name, kwargs['table_name'])
-        self.assertEqual(tm2.description, kwargs['table_desc'])
+        tm2 = TableMeta(**kwargs)
+        self.assertEqual(tm2.name, kwargs['name'])
+        self.assertEqual(tm2.description, kwargs['description'])
         self.assertEqual(tm2.data_format, kwargs['data_format'])
         self.assertEqual(tm2.location, kwargs['location'])
         self.assertEqual(tm2.columns, kwargs["columns"])
-        self.assertEqual(tm2.id, kwargs["id"])
         self.assertEqual(tm2.glue_specific, {})
+        with self.assertRaises(ValueError) :
+            tm2.database = 'not a database obj'
 
 if __name__ == '__main__':
     unittest.main()

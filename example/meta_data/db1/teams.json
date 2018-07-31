@@ -1,7 +1,6 @@
 {
-    "id": "workforce.teams",
-    "table_name": "teams",
-    "table_desc": "month snapshot of which employee with working in what team",
+    "name": "teams",
+    "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
     "location": "teams/",
     "columns": [
