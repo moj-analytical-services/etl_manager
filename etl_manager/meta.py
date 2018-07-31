@@ -1,4 +1,4 @@
-from etl_manager.utils import _read_json, _write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource, _remove_final_slash
+from etl_manager.utils import read_json, write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource, _remove_final_slash
 from copy import copy
 import string
 import json
@@ -206,7 +206,7 @@ class TableMeta :
         return meta
 
     def write_to_json(self, file_path) :
-        _write_json(self.to_dict(), file_path)
+        write_json(self.to_dict(), file_path)
 
     def generate_markdown_doc(self, filepath) :
         """
@@ -443,7 +443,7 @@ class DatabaseMeta :
         The table meta data json will be saved as <table_name>.json where table_name == table.name.
         """
 
-        _write_json(self.to_dict(), os.path.join(folder_path, 'database.json'))
+        write_json(self.to_dict(), os.path.join(folder_path, 'database.json'))
 
         if write_tables :
             for t in self._tables :
@@ -454,7 +454,7 @@ class DatabaseMeta :
                 table.refresh_paritions()
 
 def read_table_json(filepath, database = None) :
-    meta = _read_json(filepath)
+    meta = read_json(filepath)
     if 'partitions' not in meta :
         meta['partitions'] = []
 
@@ -473,7 +473,7 @@ def read_table_json(filepath, database = None) :
     return tab
 
 def read_database_json(filepath) :
-    db_meta = _read_json(filepath)
+    db_meta = read_json(filepath)
     db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], location=db_meta['location'], description=db_meta['description'])
     return db
 
