@@ -90,21 +90,21 @@ class DatabaseMetaTest(unittest.TestCase):
     """
 
     def test_init(self) :
-        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', location = 'database/database1', description='Example database')
+        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', base_folder = 'database/database1', description='Example database')
         self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
-        self.assertEqual(db.location, 'database/database1')
+        self.assertEqual(db.base_folder, 'database/database1')
 
     def testread_json(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
         self.assertEqual(db.bucket, 'my-bucket')
-        self.assertEqual(db.location, 'database/database1')
+        self.assertEqual(db.base_folder, 'database/database1')
 
     def test_db_to_dict(self) :
-        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', location = 'database/database1', description='Example database')
+        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', base_folder = 'database/database1', description='Example database')
         db_dict = read_json('example/meta_data/db1/database.json')
         self.assertDictEqual(db_dict, db.to_dict())
 
@@ -116,8 +116,8 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.description,'new description')
         db.bucket = 'new-bucket'
         self.assertEqual(db.bucket, 'new-bucket')
-        db.location = 'new/folder/location'
-        self.assertEqual(db.location, 'new/folder/location')
+        db.base_folder = 'new/folder/location'
+        self.assertEqual(db.base_folder, 'new/folder/location')
 
     def test_table_to_dict(self) :
         db = read_database_folder('example/meta_data/db1/')
@@ -203,12 +203,12 @@ class TableMetaTest(unittest.TestCase):
     Test Table Meta class
     """
     def test_null_init(self) :
-        tm = TableMeta('test_name')
+        tm = TableMeta('test_name', location = 'folder/')
 
         self.assertEqual(tm.name, 'test_name')
         self.assertEqual(tm.description, '')
         self.assertEqual(tm.data_format, 'csv')
-        self.assertEqual(tm.location, '')
+        self.assertEqual(tm.location, 'folder/')
         self.assertEqual(tm.columns, [])
         self.assertEqual(tm.partitions, [])
         self.assertEqual(tm.glue_specific, {})

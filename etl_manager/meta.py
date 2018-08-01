@@ -34,7 +34,7 @@ class TableMeta :
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
 
-    def __init__(self, name, location = '', columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
+    def __init__(self, name, location, columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
        
         self.name = name
         self.location = location
@@ -72,12 +72,12 @@ class TableMeta :
     @location.setter
     def location(self, location) :
         _validate_string(location, allowed_chars="_/")
-        if location != '' :
+        if location and location != '' :
             if location[0] == '/':
                 raise ValueError("location should not start with a slash")
             self._location = location
         else :
-            self._location = location
+            raise ValueError("Your table must exist inside a folder in S3. Please specify a location.")
 
     @property
     def database(self):
@@ -266,7 +266,7 @@ class TableMeta :
             f.write("\n")
         
         
-    def refresh_paritions(self, temp_athena_staging_dir = None, database_name = None):
+    def refresh_paritions(self, temp_athena_staging_dir = None, database_name = None) :
         """
         Refresh the partitions in a table, if they exist
         """
@@ -302,12 +302,12 @@ class DatabaseMeta :
     This will create a database object that also holds table objects for each table json in the folder it is pointed to.
     The meta data folder used to initialise the database must contain a database.json file.
     """
-    def __init__(self, name, bucket, location = '', description = '') :
+    def __init__(self, name, bucket, base_folder = '', description = '') :
 
         self._tables = []
         self.name = name
         self.bucket = bucket
-        self.location = location
+        self.base_folder = base_folder
         self.description = description
 
     @property
@@ -335,7 +335,7 @@ class DatabaseMeta :
         """
         Returns the s3 path to the database
         """
-        return os.path.join('s3://', self.bucket, self.location)
+        return os.path.join('s3://', self.bucket, self.base_folder)
 
     @property
     def s3_athena_temp_folder(self) :
@@ -399,12 +399,14 @@ class DatabaseMeta :
         Deletes the data that is in the databases s3_database_path. If tables only is False, then the entire database folder is deleted otherwise the class will only delete folders corresponding to the tables in the database.
         """
         bucket = _s3_resource.Bucket(self.bucket)
-        database_obj_folder = self.location
+        database_obj_folder = self.base_folder
         if tables_only :
             for t in self.table_names :
-                table_s3_obj_folder = database_obj_folder + self.table(t).location
+                # Need to end with a / to ensure we don't delete any filepaths that match the same name
+                table_s3_obj_folder = _end_with_slash(os.path.join(database_obj_folder, self.table(t).location))
                 bucket.objects.filter(Prefix=table_s3_obj_folder).delete()
         else :
+            database_obj_folder = database_obj_folder if database_obj_folder == '' else _end_with_slash(database_obj_folder)
             bucket.objects.filter(Prefix=database_obj_folder).delete()
 
     def create_glue_database(self) :
@@ -431,7 +433,7 @@ class DatabaseMeta :
             "description": self.description,
             "name": self.name,
             "bucket": self.bucket,
-            "location": self.location
+            "base_folder": self.base_folder
         }
         return db_dict
 
@@ -453,6 +455,7 @@ class DatabaseMeta :
         for table in self._tables:
                 table.refresh_paritions()
 
+# Create meta objects from json files or directories
 def read_table_json(filepath, database = None) :
     meta = read_json(filepath)
     if 'partitions' not in meta :
@@ -474,7 +477,7 @@ def read_table_json(filepath, database = None) :
 
 def read_database_json(filepath) :
     db_meta = read_json(filepath)
-    db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], location=db_meta['location'], description=db_meta['description'])
+    db = DatabaseMeta(name=db_meta['name'], bucket=db_meta['bucket'], base_folder=db_meta['base_folder'], description=db_meta['description'])
     return db
 
 def read_database_folder(folderpath) :
