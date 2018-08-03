@@ -147,9 +147,9 @@ class TableMeta :
         new_cols = []
         for c in self.columns :
             if c['name'] == column_name :
-                _validate_string(new_name, "_")
 
                 if new_name is not None :
+                    _validate_string(new_name, "_")
                     c['name'] = new_name
 
                 if new_data_type is not None :
