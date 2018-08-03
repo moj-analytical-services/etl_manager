@@ -1,4 +1,5 @@
 {
+    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/schema/etl_manager/specs/table_schema.json",
     "name": "teams",
     "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
