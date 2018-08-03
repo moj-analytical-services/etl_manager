@@ -6,6 +6,7 @@ import os
 import re
 import pkg_resources
 from pyathenajdbc import connect
+import jsonschema
 
 _template = {
     "base":  json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
@@ -20,6 +21,8 @@ _template = {
 
 _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
 
+_table_json_schema = json.load(pkg_resources.resource_stream(__name__, "specs/table_schema.json"))
+
 def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
@@ -33,7 +36,7 @@ class TableMeta :
 
     _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
     _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
-
+    _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/schema/etl_manager/specs/table_schema.json"
     def __init__(self, name, location, columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
        
         self.name = name
@@ -45,6 +48,8 @@ class TableMeta :
         self.glue_specific = glue_specific
         self.database = database
 
+        jsonschema.validate(self.to_dict(), _table_json_schema)
+        
     @property
     def column_names(self) :
         return [c['name'] for c in self.columns]
@@ -196,6 +201,7 @@ class TableMeta :
 
     def to_dict(self) :
         meta = {
+            "$schema": self._web_link_to_table_json_schema,
             "name" : self.name,
             "description" : self.description,
             "data_format" : self.data_format,
