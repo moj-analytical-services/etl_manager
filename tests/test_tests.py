@@ -246,6 +246,72 @@ class TableMetaTest(unittest.TestCase):
         self.assertEqual(tm2.glue_specific, {})
         with self.assertRaises(ValueError) :
             tm2.database = 'not a database obj'
+    
+    def test_column_operations(self) :
+        kwargs = {
+            "name": "employees",
+            "description": "table containing employee information",
+            "data_format": "parquet",
+            "location": "employees/",
+            "columns": [
+            {
+                "name": "employee_id",
+                "type": "int",
+                "description": "an ID for each employee"
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee"
+            }]
+        }
+
+        columns_test = [
+            {
+                "name": "employee_id2",
+                "type": "character",
+                "description": "a new description"
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee"
+            }]
+
+        new_col = {
+                "name": "employee_dob",
+                "type": "date",
+                "description": "date of birth for the employee"
+            }
+
+        tm = TableMeta(**kwargs)
+
+        # Test add
+        tm.add_column(**new_col)
+        new_cols = kwargs["columns"] + [new_col]
+        self.assertEqual(tm.columns, new_cols)
+
+        # Test add failure
+        with self.assertRaises(ValueError) :
+            tm.add_column(name = "test:!@", type = 'something', description = '')
+
+        # Test remove
+        tm.remove_column("employee_dob")
+        self.assertEqual(tm.columns, kwargs['columns'])
+
+        # Test remove failure
+        with self.assertRaises(ValueError) :
+            tm.remove_column('j_cole')
+
+        # Test update column failure
+        tm.update_column('employee_id', new_name='employee_id2', new_type='character', new_description='a new description')
+        self.assertEqual(tm.columns, columns_test)
+        
+        with self.assertRaises(ValueError) :
+            tm.update_column('employee_id2')
+        
+        with self.assertRaises(ValueError) :
+            tm.update_column('j_cole', new_type = 'int')
 
 if __name__ == '__main__':
     unittest.main()
