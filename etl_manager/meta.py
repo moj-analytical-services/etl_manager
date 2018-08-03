@@ -23,6 +23,9 @@ _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__,
 
 _table_json_schema = json.load(pkg_resources.resource_stream(__name__, "specs/table_schema.json"))
 
+_supported_column_types = _table_json_schema['properties']['columns']['items']['properties']["type"]["enum"]
+_supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
+
 def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
@@ -34,8 +37,6 @@ class TableMeta :
     Manipulate the agnostic metadata associated with a table and convert to a Glue spec
     """
 
-    _supported_column_types = ('int', 'character', 'float', 'date', 'datetime', 'boolean', 'long','double')
-    _supported_data_formats = ('avro', 'csv', 'csv_quoted_nodate', 'regex', 'orc', 'par', 'parquet')
     _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/schema/etl_manager/specs/table_schema.json"
     def __init__(self, name, location, columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
        
@@ -49,7 +50,16 @@ class TableMeta :
         self.database = database
 
         jsonschema.validate(self.to_dict(), _table_json_schema)
-        
+
+    @property 
+    def data_format(self) :
+        return self._data_format
+    
+    @data_format.setter
+    def data_format(self, data_format) :
+        self._check_valid_data_format(data_format)
+        self._data_format = data_format
+    
     @property
     def column_names(self) :
         return [c['name'] for c in self.columns]
@@ -131,9 +141,13 @@ class TableMeta :
 
         return glue_columns
 
+    def _check_valid_data_format(self, data_format) :
+        if data_format not in _supported_data_formats :
+            raise ValueError("The data_format provided ({}) must match the supported data_type names: {}".format(data_format, ", ".join(_supported_data_formats)))
+
     def _check_valid_datatype(self, data_type) :
-        if data_type not in self._supported_column_types :
-            raise ValueError("The data_type provided must match the supported data_type names: {}".format(", ".join(self._supported_column_types)))
+        if data_type not in _supported_column_types :
+            raise ValueError("The data_type provided must match the supported data_type names: {}".format(", ".join(_supported_column_types)))
 
     def _check_column_exists(self, column_name) :
         if column_name not in self.column_names :
