@@ -1,5 +1,5 @@
 {
-    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/schema/etl_manager/specs/table_schema.json",
+    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
     "name": "employees",
     "description": "table containing employee information",
     "data_format": "parquet",
