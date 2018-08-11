@@ -20,8 +20,8 @@ _template = {
 }
 
 _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
-
 _table_json_schema = json.load(pkg_resources.resource_stream(__name__, "specs/table_schema.json"))
+_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
 
 _supported_column_types = _table_json_schema['properties']['columns']['items']['properties']["type"]["enum"]
 _supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
@@ -37,7 +37,6 @@ class TableMeta :
     Manipulate the agnostic metadata associated with a table and convert to a Glue spec
     """
 
-    _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/schema/etl_manager/specs/table_schema.json"
     def __init__(self, name, location, columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
        
         self.name = name
@@ -215,7 +214,7 @@ class TableMeta :
 
     def to_dict(self) :
         meta = {
-            "$schema": self._web_link_to_table_json_schema,
+            "$schema": _web_link_to_table_json_schema,
             "name" : self.name,
             "description" : self.description,
             "data_format" : self.data_format,
