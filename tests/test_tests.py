@@ -5,12 +5,13 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json
+from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json, _agnostic_to_glue_spark_dict
 from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
 import tempfile
 import os
+import urllib, json
 
 class UtilsTest(unittest.TestCase) :
     """
@@ -229,6 +230,11 @@ class TableMetaTest(unittest.TestCase):
     """
     Test Table Meta class
     """
+    def test_data_type_conversion_against_gluejobutils(self) :
+        with urllib.request.urlopen("https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/master/gluejobutils/data/data_type_conversion.json") as url:
+            gluejobutils_data = json.loads(url.read().decode())
+        self.assertDictEqual(_agnostic_to_glue_spark_dict, gluejobutils_data)
+
     def test_null_init(self) :
         tm = TableMeta('test_name', location = 'folder/')
 
