@@ -9,6 +9,8 @@ from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read
 from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
+import tempfile
+import os
 
 class UtilsTest(unittest.TestCase) :
     """
@@ -96,7 +98,7 @@ class DatabaseMetaTest(unittest.TestCase):
         self.assertEqual(db.bucket, 'my-bucket')
         self.assertEqual(db.base_folder, 'database/database1')
 
-    def testread_json(self) :
+    def test_read_json(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.name, 'workforce')
         self.assertEqual(db.description, 'Example database')
@@ -107,6 +109,29 @@ class DatabaseMetaTest(unittest.TestCase):
         db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', base_folder = 'database/database1', description='Example database')
         db_dict = read_json('example/meta_data/db1/database.json')
         self.assertDictEqual(db_dict, db.to_dict())
+
+    def test_db_write_to_json(self) :
+        db = DatabaseMeta(name = 'workforce', bucket = 'my-bucket', base_folder = 'database/database1', description='Example database')
+        t = TableMeta(name = 'table1', location = 'somewhere')
+        db.add_table(t)
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            db.write_to_json(tmpdirname)
+            dbr = read_json(os.path.join(tmpdirname, 'database.json'))
+            tr = read_json(os.path.join(tmpdirname, 'table1.json'))
+        
+        self.assertDictEqual(dbr, db.to_dict())
+        self.assertDictEqual(tr, t.to_dict())
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            db.write_to_json(tmpdirname, write_tables=False)
+
+            dbr = read_json(os.path.join(tmpdirname, 'database.json'))
+            self.assertDictEqual(dbr, db.to_dict())
+
+            # Check that only db has been written
+            with self.assertRaises(FileNotFoundError) : 
+                tr = read_json(os.path.join(tmpdirname, 'table1.json'))
 
     def test_db_value_properties(self) :
         db = read_database_folder('example/meta_data/db1/')
@@ -129,6 +154,11 @@ class DatabaseMetaTest(unittest.TestCase):
         t = all(t in ['teams', 'employees', 'pay'] for t in db.table_names)
         self.assertTrue(t)
 
+    def test_db_name_validation(self) :
+        db = read_database_folder('example/meta_data/db1/')
+        with self.assertRaises(ValueError) : 
+            db.name = 'bad-name'
+
     def test_db_glue_name(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertEqual(db.name, 'workforce')
@@ -143,15 +173,12 @@ class DatabaseMetaTest(unittest.TestCase):
     def test_db_table(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertTrue(isinstance(db.table('employees'), TableMeta))
-        self.assertRaises(ValueError, db.table, 'not_a_table_name')
+        self.assertRaises(ValueError, db.table, 'not_a_table_object')
 
     def test_glue_specific_table(self):
         t = read_table_json("example/meta_data/db1/pay.json")
         glue_def = t.glue_table_definition("db_path")
         self.assertTrue(t.glue_table_definition("db_path")["Parameters"]['skip.header.line.count'] == '1')
-
-
-
 
     def test_add_remove_table(self) :
         db = read_database_folder('example/meta_data/db1/')
@@ -247,6 +274,11 @@ class TableMetaTest(unittest.TestCase):
         with self.assertRaises(ValueError) :
             tm2.database = 'not a database obj'
     
+    def test_db_name_validation(self) :
+        tm = TableMeta('test_name', location = 'folder/')
+        with self.assertRaises(ValueError) :
+            tm.name = 'bad-name'
+
     def test_column_operations(self) :
         kwargs = {
             "name": "employees",

@@ -50,6 +50,16 @@ class TableMeta :
 
         jsonschema.validate(self.to_dict(), _table_json_schema)
 
+    @property
+    def name(self) :
+        return self._name
+    
+    # Adding validation as Athena doesn't like names with dashes
+    @name.setter
+    def name(self, name) :
+        _validate_string(name)
+        self._name = name
+
     @property 
     def data_format(self) :
         return self._data_format
@@ -330,6 +340,16 @@ class DatabaseMeta :
         self.description = description
 
     @property
+    def name(self) :
+        return self._name
+    
+    # Adding validation as Athena doesn't like names with dashes
+    @name.setter
+    def name(self, name) :
+        _validate_string(name)
+        self._name = name
+
+    @property
     def bucket(self):
         """
         The s3 bucket in which the database exists.
@@ -468,7 +488,7 @@ class DatabaseMeta :
 
         if write_tables :
             for t in self._tables :
-                t.write_to_json(folder_path + t.name + '.json')
+                t.write_to_json(os.path.join(folder_path, t.name + '.json'))
 
     def refresh_all_table_partitions(self):
         for table in self._tables:
