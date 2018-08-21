@@ -385,12 +385,28 @@ class GlueJob:
 
         return status['JobRun']['JobRunState'].lower()
 
+    def cleanup(self):
+        """
+        Delete the Glue Job resources (the job itself and the S3 objects)
+        """
+
+        self.delete_job()
+        self.delete_s3_job_temp_folder()
+
     def delete_job(self) :
+        """
+        DEPRECATED: Use `cleanup()`
+        """
+
         if self.job_name is None:
             raise JobMisconfigured('Missing "job_name"')
 
         _glue_client.delete_job(JobName=self.job_name)
 
     def delete_s3_job_temp_folder(self) :
+        """
+        DEPRECATED: Use `cleanup()`
+        """
+
         bucket = _s3_resource.Bucket(self.bucket)
         bucket.objects.filter(Prefix=self.s3_job_folder_no_bucket).delete()
