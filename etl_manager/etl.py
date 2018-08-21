@@ -13,7 +13,16 @@ import time
 # Lock it in
 # Run job - check if job exists and lock in temp folder matches
 
-class GlueJob :
+
+class JobMisconfigured(Exception):
+    pass
+
+
+class JobNotStarted(Exception):
+    pass
+
+
+class GlueJob:
     """
     Take a folder structure on local disk.
 
@@ -351,45 +360,34 @@ class GlueJob :
         self._job_run_id = response['JobRunId']
 
     @property
-    def job_status(self) :
-        if self.job_name is None or self.job_run_id is None :
-            response = "Glue Job Obj missing job_name or job_run_id"
-        else :
-            try :
-                response = _glue_client.get_job_run(JobName = self.job_name, RunId = self.job_run_id)
-            except :
-                response = 'No glue job with job_name: {} and job_run_id: {}'.format(self.job_name, self.job_run_id)
-        return response
+    def job_status(self):
+        if self.job_run_id is None:
+            raise JobNotStarted('Missing "job_run_id", have you started the job?')
+
+        if self.job_name is None:
+            raise JobMisconfigured('Missing "job_name"')
+
+        return _glue_client.get_job_run(JobName=self.job_name, RunId=self.job_run_id)
 
     @property
     def is_running(self) :
         is_running = False
         status = self.job_status
-        if isinstance(status, dict) :
-            try :
-                is_running = status['JobRun']['JobRunState'] == 'RUNNING'
-            except :
-                pass
-        return is_running
+
+        return status['JobRun']['JobRunState'] == 'RUNNING'
 
     @property
     def job_run_state(self) :
         state = 'no_run_state'
         status = self.job_status
-        if isinstance(status, dict) :
-            try :
-                state = status['JobRun']['JobRunState'].lower()
-            except :
-                pass
-        return state
+
+        return status['JobRun']['JobRunState'].lower()
 
     def delete_job(self) :
-        if self.job_name is None :
-            raise ValueError("Object has no job_name.")
-        try :
-            _glue_client.delete_job(JobName=self.job_name)
-        except :
-            pass
+        if self.job_name is None:
+            raise JobMisconfigured('Missing "job_name"')
+
+        _glue_client.delete_job(JobName=self.job_name)
 
     def delete_s3_job_temp_folder(self) :
         bucket = _s3_resource.Bucket(self.bucket)
