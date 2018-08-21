@@ -9,6 +9,7 @@ import shutil
 import glob
 import time
 
+
 # Create temp folder - upload to s3
 # Lock it in
 # Run job - check if job exists and lock in temp folder matches
@@ -19,6 +20,14 @@ class JobMisconfigured(Exception):
 
 
 class JobNotStarted(Exception):
+    pass
+
+
+class JobFailed(Exception):
+    pass
+
+
+class JobTimedOut(Exception):
     pass
 
 
@@ -384,6 +393,32 @@ class GlueJob:
         status = self.job_status
 
         return status['JobRun']['JobRunState'].lower()
+
+    def wait_completion(self):
+        """
+        Wait for the job to complete.
+
+        This means it either succeeded or it was manually stopped.
+
+        Raises:
+            JobFailed: When the job failed
+            JobTimedOut: When the job timed out
+        """
+
+        while True:
+            time.sleep(10)
+
+            status = self.job_status
+            status_code = status["JobRun"]["JobRunState"]
+            status_error = status["JobRun"]["ErrorMessage"]
+
+            if status_code in ("SUCCEEDED", "STOPPED"):
+                break
+
+            if status_code == "FAILED":
+                raise JobFailed(status_error)
+            if status_code == "TIMEOUT":
+                raise JobTimedOut(status_error)
 
     def cleanup(self):
         """
