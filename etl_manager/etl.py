@@ -1,13 +1,23 @@
-from etl_manager.utils import read_json, write_json, _dict_merge, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _s3_resource
 from urllib.request import urlretrieve
+import glob
+import json
 import os
 import re
-import json
-import tempfile
-import zipfile
 import shutil
-import glob
+import tempfile
 import time
+import zipfile
+
+from etl_manager.utils import (
+    read_json,
+    write_json,
+    _dict_merge,
+    _validate_string,
+    _glue_client,
+    _unnest_github_zipfile_and_return_new_zip_path,
+    _s3_client,
+    _s3_resource,
+)
 
 
 # Create temp folder - upload to s3
