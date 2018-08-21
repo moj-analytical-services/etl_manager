@@ -51,6 +51,17 @@ class GlueTest(unittest.TestCase) :
 
         self.assertTrue("_GlueJobs_" in g2.job_arguments['--metadata_base_path'])
 
+    def test_glue_param_error(self) :
+        g = GlueJob('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
+        with self.assertRaises(ValueError):
+            g.job_arguments = '--bad_job_argument1'
+        with self.assertRaises(ValueError):
+            g.job_arguments = {'bad_job_argument2' : 'test'}
+        with self.assertRaises(ValueError):
+            g.job_arguments = {'--bad-job-argument3' : 'test'}
+        with self.assertRaises(ValueError):
+            g.job_arguments = {"--JOB_NAME" : "new_job_name"}
+
     def test_db_value_properties(self) :
         g = GlueJob('example/glue_jobs/simple_etl_job/', bucket = 'alpha-everyone', job_role = 'alpha_user_isichei', job_arguments={'--test_arg': 'this is a test'})
 
@@ -61,19 +72,12 @@ class GlueTest(unittest.TestCase) :
         self.assertEqual(g.bucket, "new-bucket")
         with self.assertRaises(ValueError):
             g.bucket = "s3://new-bucket"
-            g.bucket = "new_bucket"
 
         g.job_role = 'alpha_new_user'
         self.assertEqual(g.job_role, 'alpha_new_user')
 
         g.job_arguments = {"--new_args" : "something"}
         self.assertEqual(g.job_arguments["--new_args"], "something")
-
-        with self.assertRaises(ValueError) :
-            g.job_arguments = "not a dict"
-            g.job_arguments = {"--JOB_NAME" : "new_job_name"}
-            g.job_arguments = {"no_dash" : "test"}
-
 
 class TableTest(unittest.TestCase):
 
