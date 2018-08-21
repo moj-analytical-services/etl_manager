@@ -1,13 +1,24 @@
-from etl_manager.utils import read_json, write_json, _dict_merge, _validate_string, _glue_client, _unnest_github_zipfile_and_return_new_zip_path, _s3_client, _s3_resource
 from urllib.request import urlretrieve
+import glob
+import json
 import os
 import re
-import json
-import tempfile
-import zipfile
 import shutil
-import glob
+import tempfile
 import time
+import zipfile
+
+from etl_manager.utils import (
+    read_json,
+    write_json,
+    _dict_merge,
+    _validate_string,
+    _glue_client,
+    _unnest_github_zipfile_and_return_new_zip_path,
+    _s3_client,
+    _s3_resource,
+)
+
 
 # Create temp folder - upload to s3
 # Lock it in
@@ -19,6 +30,14 @@ class JobMisconfigured(Exception):
 
 
 class JobNotStarted(Exception):
+    pass
+
+
+class JobFailed(Exception):
+    pass
+
+
+class JobTimedOut(Exception):
     pass
 
 
@@ -385,12 +404,54 @@ class GlueJob:
 
         return status['JobRun']['JobRunState'].lower()
 
+    def wait_for_completion(self):
+        """
+        Wait for the job to complete.
+
+        This means it either succeeded or it was manually stopped.
+
+        Raises:
+            JobFailed: When the job failed
+            JobTimedOut: When the job timed out
+        """
+
+        while True:
+            time.sleep(10)
+
+            status = self.job_status
+            status_code = status["JobRun"]["JobRunState"]
+            status_error = status["JobRun"]["ErrorMessage"]
+
+            if status_code in ("SUCCEEDED", "STOPPED"):
+                break
+
+            if status_code == "FAILED":
+                raise JobFailed(status_error)
+            if status_code == "TIMEOUT":
+                raise JobTimedOut(status_error)
+
+    def cleanup(self):
+        """
+        Delete the Glue Job resources (the job itself and the S3 objects)
+        """
+
+        self.delete_job()
+        self.delete_s3_job_temp_folder()
+
     def delete_job(self) :
+        """
+        DEPRECATED: Use `cleanup()`
+        """
+
         if self.job_name is None:
             raise JobMisconfigured('Missing "job_name"')
 
         _glue_client.delete_job(JobName=self.job_name)
 
     def delete_s3_job_temp_folder(self) :
+        """
+        DEPRECATED: Use `cleanup()`
+        """
+
         bucket = _s3_resource.Bucket(self.bucket)
         bucket.objects.filter(Prefix=self.s3_job_folder_no_bucket).delete()
