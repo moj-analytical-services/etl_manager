@@ -404,7 +404,7 @@ class GlueJob:
 
         return status['JobRun']['JobRunState'].lower()
 
-    def wait_completion(self):
+    def wait_for_completion(self):
         """
         Wait for the job to complete.
 
