@@ -420,11 +420,7 @@ class GlueJob:
 
             status = self.job_status
             status_code = status["JobRun"]["JobRunState"]
-            status_error = "Unknown"
-            try:
-                status_error = status["JobRun"]["ErrorMessage"]
-            except KeyError:
-                pass
+            status_error = status["JobRun"].get("ErrorMessage", default="Unknown")
 
             if status_code in ("SUCCEEDED", "STOPPED"):
                 break
