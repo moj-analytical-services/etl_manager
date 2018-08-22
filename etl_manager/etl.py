@@ -399,9 +399,7 @@ class GlueJob:
 
     @property
     def job_run_state(self) :
-        state = 'no_run_state'
         status = self.job_status
-
         return status['JobRun']['JobRunState']
 
     def wait_for_completion(self):
