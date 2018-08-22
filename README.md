@@ -87,16 +87,18 @@ database.json is a special json file that holds the meta data for the database. 
 {
     "description": "Example database",
     "name": "workforce",
-    "bucket": "my_bucket",
-    "base_folder": "my_folder/",
-    "location": "database/database1/"
+    "bucket": "my-bucket",
+    "base_folder": "database/database1"
 }
 ```
+
+When you create your database it will have this `name` and `description`. The `bucket` key specifies where the database exists (and therefore where the tables exist) in S3. The `base_folder` is is the initial path to where the tables exist. If your tables are in folders directly in the bucket (e.g. `s3://my-bucket/table1/`) then you can leave base_folder as an empty string (`""`).
 
 The employees table has an ID for each employee their name and dob. The table meta looks like this:
 
 ```json
 {
+    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
     "name": "employees",
     "description": "table containing employee information",
     "data_format": "parquet",
@@ -121,10 +123,13 @@ The employees table has an ID for each employee their name and dob. The table me
 }
 ```
 
-The teams table is a list of employee IDs for each team. Showing which employees are in each team. This table is taken each month (so you can see which employee was in which team each month). Therefore this table is partitioned by each monthly snapshot.
+This is a standard layout for a table metadata json. `$schema` points to another json that validates the structure of out table metadata files. Your table will have this `name` and `description` _(Note: It is strongly suggested that the name of your table matches the name of the metadata json file)_ when the database is created. The `location` is the relative folder path to where your table exists. This path is relative to your database `base_folder`. This means that the full path your table is `s3://<database.bucket>/<database.base_folder>/<table.folder>/`. So in this example the table employees should be in the s3 path `s3://my-bucket/database/database1/employees`. The `data_format` specifies what type of data the table is. Finally your columns is an array of objects. Where each object is a column definition specifying the `name`, `description` and `type` (data type) of the column. Note that the order of the columns listed here should be the order of the columns in the table _(remember that data for a table should not have a header so the data will be queried wrong if the column order does not match up with the actual data)_.
+
+Here is another table in the database called teams. The teams table is a list of employee IDs for each team. Showing which employees are in each team. This table is taken each month (so you can see which employee was in which team each month). Therefore this table is partitioned by each monthly snapshot.
 
 ```json
 {
+    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
     "name": "teams",
     "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
@@ -161,6 +166,14 @@ The teams table is a list of employee IDs for each team. Showing which employees
 ```
 
 ### Using the DatabaseMeta Class
+
+The easiest way to create a database is to run the code below. It reads a database schema based on the json files in a folder and creates this database meta in the glue catalogue. Allowing you to query the data using SQL using Athena.
+
+```python 
+from etl_manager.meta import read_database_folder
+db = read_database_folder('example_meta_data/')
+db.create_glue_database()
+```
 
 The code snippet below creates a database meta object that allows you to manipulate the database and the tables that exist in it
 
