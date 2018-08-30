@@ -40,6 +40,8 @@ class JobFailed(Exception):
 class JobTimedOut(Exception):
     pass
 
+class JobStopped(Exception):
+    pass
 
 class GlueJob:
     """
@@ -404,13 +406,15 @@ class GlueJob:
             status_code = status["JobRun"]["JobRunState"]
             status_error = status["JobRun"].get("ErrorMessage", "Unknown")
 
-            if status_code in ("SUCCEEDED", "STOPPED"):
+            if status_code == "SUCCEEDED" :
                 break
 
             if status_code == "FAILED":
                 raise JobFailed(status_error)
             if status_code == "TIMEOUT":
                 raise JobTimedOut(status_error)
+            if status_code == "STOPPED":
+                raise JobStopped(status_error)
 
     def cleanup(self):
         """
