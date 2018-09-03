@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## v1.0.1 - 2018-08-30
+### Added
+- setup.py now installs package dependencies
+
 ## v1.0.0 - 2018-08-30
 ### Changed
 - wait_for_completion method in GlueJob class now raises error if glue job was manually stopped
