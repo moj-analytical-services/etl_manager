@@ -459,8 +459,6 @@ class DatabaseMeta :
             }
         }
 
-        del_resp = self.delete_glue_database()
-
         _glue_client.create_database(**db)
 
         for tab in self._tables :
