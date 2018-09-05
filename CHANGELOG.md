@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## v1.0.2 - 2018-08-30
+### Change
+- Database meta class will now throw error if database already exists when calling create_glue_database
+
 ## v1.0.1 - 2018-08-30
 ### Added
 - setup.py now installs package dependencies
