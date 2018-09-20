@@ -13,15 +13,20 @@ pip install git+git://github.com/moj-analytical-services/etl_manager.git#egg=etl
 
 If you do not have it installed already you will also need to install boto3.
 
-To unit test the package
+**Currently supported data types for your columns currently are:**
+
+`character | int | long | float | double | date | datetime |  boolean`
+
+## Unit Tests
+
+This package has [unit tests](https://github.com/moj-analytical-services/etl_manager/blob/master/tests/test_tests.py) which can also be used to see functionality.
+
+Unit tests can be ran by:
 
 ```python
 python -m unittest tests.test_tests -v
 ```
 
-**Currently supported data types for your columns currently are:**
-
-`character | int | long | float | double | date | datetime |  boolean`
 
 ## Examples
 
