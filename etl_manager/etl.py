@@ -148,7 +148,7 @@ class GlueJob:
             if not isinstance(job_arguments, dict):
                 raise ValueError("job_arguments must be a dictionary")
             # validate dict keys
-            special_aws_params = ['--JOB_NAME', '--conf', '--debug', '--mode', '--metadata_base_path']
+            special_aws_params = ['--JOB_NAME', '--debug', '--mode', '--metadata_base_path']
             for k in job_arguments.keys():
                 if k[:2] != '--' or k in special_aws_params:
                     raise ValueError("Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(k, ', '.join(special_aws_params)))
