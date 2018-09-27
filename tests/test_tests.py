@@ -58,8 +58,6 @@ class GlueTest(unittest.TestCase) :
         with self.assertRaises(ValueError):
             g.job_arguments = {'bad_job_argument2' : 'test'}
         with self.assertRaises(ValueError):
-            g.job_arguments = {'--bad-job-argument3' : 'test'}
-        with self.assertRaises(ValueError):
             g.job_arguments = {"--JOB_NAME" : "new_job_name"}
 
     def test_db_value_properties(self) :

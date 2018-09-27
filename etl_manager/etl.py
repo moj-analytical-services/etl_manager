@@ -152,8 +152,6 @@ class GlueJob:
             for k in job_arguments.keys():
                 if k[:2] != '--' or k in special_aws_params:
                     raise ValueError("Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(k, ', '.join(special_aws_params)))
-                if '-' in k[2:]:
-                    raise ValueError("Avoid using '-' in job parameter names (use '_' instead). AWS Glue will convert any dash in a glue job parameter name to an underscore - so we stop our users from doing this.")
         self._job_arguments = job_arguments
 
     @property
