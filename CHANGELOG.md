@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## v1.0.4 - 2018-09-17
+### Change
+- removed check that throws error for `-` in job parameter name due to the new Glue parameter `enable-metrics`
+
+## v1.0.3 - 2018-09-20
+### Change
+- `--conf` allowed as job param to enable spark configuration for AWS Glue
+
 ## v1.0.2 - 2018-08-30
 ### Change
 - Database meta class will now throw error if database already exists when calling create_glue_database
