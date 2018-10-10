@@ -1,11 +1,20 @@
-from etl_manager.utils import read_json, write_json, _dict_merge, _end_with_slash, _validate_string, _glue_client, _s3_resource, _remove_final_slash
+from etl_manager.utils import (
+    read_json,
+    write_json,
+    _dict_merge,
+    _end_with_slash,
+    _validate_string,
+    _athena_client,
+    _glue_client,
+    _s3_resource,
+    _remove_final_slash
+)
 from copy import copy
 import string
 import json
 import os
 import re
 import pkg_resources
-from pyathenajdbc import connect
 import jsonschema
 
 _template = {
@@ -307,8 +316,6 @@ class TableMeta :
                 else:
                     raise ValueError("You must provide a path to a directory in s3 for Athena to cache query results")
 
-            conn = connect(s3_staging_dir = temp_athena_staging_dir, region_name = 'eu-west-1')
-
             if not database_name:
                 if self.database:
                     database_name = self.database.name
@@ -317,11 +324,14 @@ class TableMeta :
 
             sql = "MSCK REPAIR TABLE {}.{}".format(database_name, self.name)
 
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(sql)
-            finally:
-                conn.close()
+            response = _athena_client.start_query_execution(
+                QueryString=sql,
+                ResultConfiguration={
+                    'OutputLocation': temp_athena_staging_dir,
+                }
+            )
+
+            return response
 
 
 class DatabaseMeta :

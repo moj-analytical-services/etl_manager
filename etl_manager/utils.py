@@ -9,6 +9,7 @@ import os
 import subprocess
 
 _glue_client = boto3.client('glue', 'eu-west-1')
+_athena_client = boto3.client('athena', 'eu-west-1')
 _s3_client = boto3.client('s3')
 _s3_resource = boto3.resource('s3')
 
