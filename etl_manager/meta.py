@@ -6,6 +6,7 @@ from etl_manager.utils import (
     _validate_string,
     _validate_enum,
     _validate_pattern,
+    _validate_nullable,
     _athena_client,
     _glue_client,
     _s3_resource,
@@ -187,12 +188,12 @@ class TableMeta :
         if column_name in self.column_names :
             raise ValueError("The column name provided ({}) already exists table in meta.".format(column_name))
 
-    def update_column(self, column_name, new_name = None, new_type = None, new_description = None, pattern = None, enum = None, nullable = None) :
+    def update_column(self, column_name, new_name = None, new_type = None, new_description = None, new_pattern = None, new_enum = None, new_nullable = None) :
 
         self._check_column_exists(column_name)
 
-        if new_name is None and new_type is None and new_description is None :
-            raise ValueError("one or more of the function inputs (new_name, new_type and new_description) must be specified.")
+        if new_name is None and new_type is None and new_description is None and new_pattern is None and new_enum is None and new_nullable is None:
+            raise ValueError("one or more of the function inputs (new_name, new_type and new_description, new_pattern, new_enum, new_nullable) must be specified.")
         new_cols = []
         for c in self.columns :
             if c['name'] == column_name :
@@ -209,17 +210,17 @@ class TableMeta :
                     _validate_string(new_description, "_,.")
                     c['description'] = new_description
 
-                if pattern is not None :
-                    _validate_pattern(pattern)
-                    c['pattern'] = pattern
+                if new_pattern is not None :
+                    _validate_pattern(new_pattern)
+                    c['pattern'] = new_pattern
 
-                if enum is not None :
-                    _validate_enum(enum)
-                    c['enum'] = enum
+                if new_enum is not None :
+                    _validate_enum(new_enum)
+                    c['enum'] = new_enum
 
-                if nullable is not None :
-                    _validate_nullable(nullable)
-                    c['nullable'] = nullable
+                if new_nullable is not None :
+                    _validate_nullable(new_nullable)
+                    c['nullable'] = new_nullable
                 
             new_cols.append(c)
 
