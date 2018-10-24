@@ -7,6 +7,7 @@ A python package that manages our data engineering framework and implements them
 The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
 
 To install:
+
 ```bash
 pip install git+git://github.com/moj-analytical-services/etl_manager.git#egg=etl_manager
 ```
@@ -26,7 +27,6 @@ Unit tests can be ran by:
 ```python
 python -m unittest tests.test_tests -v
 ```
-
 
 ## Examples
 
