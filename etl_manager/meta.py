@@ -4,6 +4,8 @@ from etl_manager.utils import (
     _dict_merge,
     _end_with_slash,
     _validate_string,
+    _validate_enum,
+    _validate_pattern,
     _athena_client,
     _glue_client,
     _s3_resource,
@@ -132,12 +134,22 @@ class TableMeta :
         self.columns = new_cols
         self.partitions = new_partitions
 
-    def add_column(self, name, type, description) :
+    def add_column(self, name, type, description, pattern = None, enum = None, nullable = None) :
         self._check_column_does_not_exists(name)
         self._check_valid_datatype(type)
         _validate_string(name)
         cols = self.columns
         cols.append({"name": name, "type": type, "description": description})
+        if enum :
+            _validate_enum(enum)
+            cols[-1]['enum'] = enum
+        if pattern :
+            _validate_pattern(pattern)
+            cols[-1]['pattern'] = pattern
+        if nullable :
+            _validate_nullable(nullable)
+            cols[-1]['nullable'] = nullable
+
         self.columns = cols
 
     def reorder_columns(self, column_name_order) :
@@ -175,7 +187,7 @@ class TableMeta :
         if column_name in self.column_names :
             raise ValueError("The column name provided ({}) already exists table in meta.".format(column_name))
 
-    def update_column(self, column_name, new_name = None, new_type = None, new_description = None) :
+    def update_column(self, column_name, new_name = None, new_type = None, new_description = None, pattern = None, enum = None, nullable = None) :
 
         self._check_column_exists(column_name)
 
@@ -197,6 +209,18 @@ class TableMeta :
                     _validate_string(new_description, "_,.")
                     c['description'] = new_description
 
+                if pattern is not None :
+                    _validate_pattern(pattern)
+                    c['pattern'] = pattern
+
+                if enum is not None :
+                    _validate_enum(enum)
+                    c['enum'] = enum
+
+                if nullable is not None :
+                    _validate_nullable(nullable)
+                    c['nullable'] = nullable
+                
             new_cols.append(c)
 
         self.columns = new_cols

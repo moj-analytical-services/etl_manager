@@ -73,6 +73,18 @@ def _validate_string(s, allowed_chars = "_") :
     if any(char in invalid_chars for char in s) :
         raise ValueError("punctuation excluding ({}) is not allowed in string".format(allowed_chars))
 
+def _validate_enum(enum) :
+    if type(enum) != list :
+        raise TypeError(f'enum must be a list. Not of type {type(enum)}')
+
+def _validate_pattern(pattern) :
+    if type(pattern) != str :
+        raise TypeError(f'pattern must be a string. Not of type {type(pattern)}')
+
+def _validate_nullable(nullable) :
+    if type(nullable) != bool :
+        raise TypeError(f'nullable must be a boolean. Not of type {type(nullable)}')
+        
 def _get_file_from_file_path(file_path) :
     return file_path.split('/')[-1]
 
