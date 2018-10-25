@@ -231,7 +231,7 @@ job.run_job()
 print(job.job_status)
 ```
 
-### Glue Job Folder Structure
+### Glue Job Folder Structure
 
 Glue jobs have the prescribed folder format as follows:
 
@@ -289,7 +289,7 @@ You can also supply a text file with the special name `github_zip_urls.txt`. Thi
 from gluejobutils.s3 import read_json_from_s3
 ```
 
-### shared_job_resources folder
+#### shared_job_resources folder
 
 This a specific folder (must have the name `shared_job_resources`). This folder has the same structure and restrictions as a normal glue job folder but does not have a `job.py` file. Instead anything in the `glue_resources` or `glue_py_resources` folders will also be used (and therefore uploaded to S3) by any other glue job. Take the example below:
 
@@ -352,6 +352,7 @@ job.job_arguments = {"--test_arg" : 'some_string', "--enable-metrics" : ""}
 ```
 
 #### job_arguments
+
 These are strings that can be passed to the glue job script. Below is an example of how these are accessed in the `job.py` script. This code snippit is taken from the `simple_etl_job` found in the `example` folder of this repo.
 
 ```python
