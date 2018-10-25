@@ -37,6 +37,7 @@ _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytic
 
 _supported_column_types = _table_json_schema['properties']['columns']['items']['properties']["type"]["enum"]
 _supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
+_column_properties = list(_table_json_schema['properties']['columns']['items']['properties'].keys())
 
 def _get_spec(spec_name) :
     if spec_name not in _template :
@@ -188,39 +189,40 @@ class TableMeta :
         if column_name in self.column_names :
             raise ValueError("The column name provided ({}) already exists table in meta.".format(column_name))
 
-    def update_column(self, column_name, new_name = None, new_type = None, new_description = None, new_pattern = None, new_enum = None, new_nullable = None) :
+    def update_column(self, column_name, **kwargs) :
 
+        if len([k for k in kwargs.keys() if k in _column_properties]) == 0 :
+            raise ValueError(f"one or more of the function inputs ({', '.join(_column_properties)}) must be specified.")
+        
         self._check_column_exists(column_name)
 
-        if new_name is None and new_type is None and new_description is None and new_pattern is None and new_enum is None and new_nullable is None:
-            raise ValueError("one or more of the function inputs (new_name, new_type and new_description, new_pattern, new_enum, new_nullable) must be specified.")
         new_cols = []
         for c in self.columns :
             if c['name'] == column_name :
 
-                if new_name is not None :
-                    _validate_string(new_name, "_")
-                    c['name'] = new_name
+                if 'name' in kwargs :
+                    _validate_string(kwargs['name'], "_")
+                    c['name'] = kwargs['name']
 
-                if new_type is not None :
-                    self._check_valid_datatype(new_type)
-                    c['type'] = new_type
+                if 'type' in kwargs :
+                    self._check_valid_datatype(kwargs['type'])
+                    c['type'] = kwargs['type']
 
-                if new_description is not None :
-                    _validate_string(new_description, "_,.")
-                    c['description'] = new_description
+                if 'description' in kwargs :
+                    _validate_string(kwargs['description'], "_,.")
+                    c['description'] = kwargs['description']
 
-                if new_pattern is not None :
-                    _validate_pattern(new_pattern)
-                    c['pattern'] = new_pattern
+                if 'pattern' in kwargs :
+                    _validate_pattern(kwargs['pattern'])
+                    c['pattern'] = kwargs['pattern']
 
-                if new_enum is not None :
-                    _validate_enum(new_enum)
-                    c['enum'] = new_enum
+                if 'enum' in kwargs :
+                    _validate_enum(kwargs['enum'])
+                    c['enum'] = kwargs['enum']
 
-                if new_nullable is not None :
-                    _validate_nullable(new_nullable)
-                    c['nullable'] = new_nullable
+                if 'nullable' in kwargs :
+                    _validate_nullable(kwargs['nullable'])
+                    c['nullable'] = kwargs['nullable']
                 
             new_cols.append(c)
 

@@ -347,14 +347,14 @@ class TableMetaTest(unittest.TestCase):
             tm.remove_column('j_cole')
 
         # Test update column failure
-        tm.update_column('employee_id', new_name='employee_id2', new_type='character', new_description='a new description')
+        tm.update_column('employee_id', name='employee_id2', type='character', description='a new description')
         self.assertEqual(tm.columns, columns_test)
         
         with self.assertRaises(ValueError) :
             tm.update_column('employee_id2')
         
         with self.assertRaises(ValueError) :
-            tm.update_column('j_cole', new_type = 'int')
+            tm.update_column('j_cole', type = 'int')
 
         # Test can update col column with pattern, nullable and enum properties
         kwargs2 = {
@@ -391,18 +391,18 @@ class TableMetaTest(unittest.TestCase):
             }]
 
         tm = TableMeta(**kwargs2)
-        tm.update_column("employee_id", new_pattern="\d+")
-        tm.update_column("employee_name", new_enum=["john","sally"], new_nullable=False)
+        tm.update_column("employee_id", pattern="\d+")
+        tm.update_column("employee_name", enum=["john","sally"], nullable=False)
 
         self.assertEqual(tm.columns, columns_test2)
 
         # Test basic validation for pattern, nullable and enum properties
         with self.assertRaises(TypeError) :
-            tm.update_column('employee_id', new_pattern=5)
+            tm.update_column('employee_id', pattern=5)
         with self.assertRaises(TypeError) :
-            tm.update_column('employee_id', new_enum=5)
+            tm.update_column('employee_id', enum=5)
         with self.assertRaises(TypeError) :
-            tm.update_column('employee_id', new_nullable=5)
+            tm.update_column('employee_id', nullable=5)
 
 if __name__ == '__main__':
     unittest.main()
