@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='etl_manager',
-    version='1.0.5',
+    version='2.0.0',
     packages=find_packages(exclude=['tests*']),
     license='MIT',
     description='A python package to manage etl processes on AWS',
