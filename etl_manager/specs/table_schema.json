@@ -25,6 +25,23 @@
               "type": "string",
               "title": "The data type.  We use a limited set of data types for cross compatibility between Spark, R, Pandas etc.  See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
               "enum": ["character","int","long","float","double","date","datetime","boolean"]
+            },
+            "pattern": {
+              "type": "string",
+              "title": "regex pattern that can be used to validate data in this column"
+            },
+            "enum": {
+              "type": "array",
+              "title": "An array of valid values that can exist in this column. Note NULL/None is not required, please use nullable property to define if column is nullable.",
+              "examples": [
+                ["Y", "N"],
+                [0,1,2,3,4],
+                ["England", "Northern Ireland", "Scottland", "Wales"]
+              ]
+            },
+            "nullable" : {
+              "type" : "boolean",
+              "title" : "Specifies if column is nullable (can have missing values) or not (cannot have missing values)"
             }
           }
         }
