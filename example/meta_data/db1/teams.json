@@ -8,7 +8,8 @@
         {
             "name": "team_id",
             "type": "int",
-            "description": "ID given to each team"
+            "description": "ID given to each team",
+            "nullable" : false
         },
         {
             "name": "team_name",
@@ -18,7 +19,8 @@
         {
             "name": "employee_id",
             "type": "int",
-            "description": "primary key for each employee in the employees table"
+            "description": "primary key for each employee in the employees table",
+            "pattern" : "\\d+"
         },
         {
             "name": "snapshot_year",
@@ -28,7 +30,8 @@
         {
             "name": "snapshot_month",
             "type": "int",
-            "description": "month at which snapshot of workforce was taken"
+            "description": "month at which snapshot of workforce was taken",
+            "enum" : [1,2,3,4,5,6,7,8,9,10,11,12]
         }
     ],
     "partitions" : ["snapshot_year", "snapshot_month"]

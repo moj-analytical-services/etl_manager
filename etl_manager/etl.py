@@ -1,4 +1,5 @@
 from urllib.request import urlretrieve
+import datetime
 import glob
 import json
 import os
@@ -386,7 +387,7 @@ class GlueJob:
     def is_running(self):
         return self.job_run_state == 'RUNNING'
 
-    def wait_for_completion(self):
+    def wait_for_completion(self, verbose=False):
         """
         Wait for the job to complete.
 
@@ -404,7 +405,11 @@ class GlueJob:
             status_code = status["JobRun"]["JobRunState"]
             status_error = status["JobRun"].get("ErrorMessage", "Unknown")
 
-            if status_code == "SUCCEEDED" :
+            if verbose:
+                timestamp = datetime.datetime.now().strftime("%Y-%B-%d %H:%M:%S")
+                print("{}: Code: {} | Error: {}".format(timestamp, status_code, status_error))
+
+            if status_code == "SUCCEEDED":
                 break
 
             if status_code == "FAILED":

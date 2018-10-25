@@ -321,7 +321,10 @@ class TableMetaTest(unittest.TestCase):
         new_col = {
                 "name": "employee_dob",
                 "type": "date",
-                "description": "date of birth for the employee"
+                "description": "date of birth for the employee",
+                "nullable" : True,
+                "pattern" : "\d{4}-\d{2}-\d{2}",
+                "enum" : ["a", "b", "c"] # yes enums and patterns can conflict - no validation for this
             }
 
         tm = TableMeta(**kwargs)
@@ -344,14 +347,62 @@ class TableMetaTest(unittest.TestCase):
             tm.remove_column('j_cole')
 
         # Test update column failure
-        tm.update_column('employee_id', new_name='employee_id2', new_type='character', new_description='a new description')
+        tm.update_column('employee_id', name='employee_id2', type='character', description='a new description')
         self.assertEqual(tm.columns, columns_test)
         
         with self.assertRaises(ValueError) :
             tm.update_column('employee_id2')
         
         with self.assertRaises(ValueError) :
-            tm.update_column('j_cole', new_type = 'int')
+            tm.update_column('j_cole', type = 'int')
+
+        # Test can update col column with pattern, nullable and enum properties
+        kwargs2 = {
+            "name": "employees",
+            "description": "table containing employee information",
+            "data_format": "parquet",
+            "location": "employees/",
+            "columns": [
+            {
+                "name": "employee_id",
+                "type": "int",
+                "description": "an ID for each employee"
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee"
+            }]
+        }
+
+        columns_test2 = [
+            {
+                "name": "employee_id",
+                "type": "int",
+                "description": "an ID for each employee",
+                "pattern" : "\d+"
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee",
+                "enum" : ["john","sally"],
+                "nullable" : False
+            }]
+
+        tm = TableMeta(**kwargs2)
+        tm.update_column("employee_id", pattern="\d+")
+        tm.update_column("employee_name", enum=["john","sally"], nullable=False)
+
+        self.assertEqual(tm.columns, columns_test2)
+
+        # Test basic validation for pattern, nullable and enum properties
+        with self.assertRaises(TypeError) :
+            tm.update_column('employee_id', pattern=5)
+        with self.assertRaises(TypeError) :
+            tm.update_column('employee_id', enum=5)
+        with self.assertRaises(TypeError) :
+            tm.update_column('employee_id', nullable=5)
 
 if __name__ == '__main__':
     unittest.main()
