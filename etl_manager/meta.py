@@ -499,9 +499,11 @@ class DatabaseMeta :
 
         if delete_if_exists:
             try:
-                glue_client.delete_database(Name=self.name)
+                glue_client.delete_database(Name="flights_demo")
             except glue_client.exceptions.EntityNotFoundException:
                 pass
+
+        _glue_client.create_database(**db)
 
         for tab in self._tables :
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
