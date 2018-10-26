@@ -499,7 +499,7 @@ class DatabaseMeta :
 
         if delete_if_exists:
             try:
-                _glue_client.delete_database(Name="flights_demo")
+                _glue_client.delete_database(Name=self.name)
             except _glue_client.exceptions.EntityNotFoundException:
                 pass
 
