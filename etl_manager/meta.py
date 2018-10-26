@@ -488,7 +488,7 @@ class DatabaseMeta :
     def create_glue_database(self, delete_if_exists=False) :
         """
         Creates a database in Glue based on the database object calling the method function.
-        By default, will error out if databse exists.
+        By default, will error out if database exists.
         """
         db = {
             "DatabaseInput": {
