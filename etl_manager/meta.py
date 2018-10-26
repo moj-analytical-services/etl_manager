@@ -488,7 +488,6 @@ class DatabaseMeta :
     def create_glue_database(self, delete_if_exists=False) :
         """
         Creates a database in Glue based on the database object calling the method function.
-
         By default, will error out if databse exists.
         """
         db = {
@@ -500,11 +499,9 @@ class DatabaseMeta :
 
         if delete_if_exists:
             try:
-                glue_client.delete_database(Name="flights_demo")
+                glue_client.delete_database(Name=self.name)
             except glue_client.exceptions.EntityNotFoundException:
                 pass
-
-        _glue_client.create_database(**db)
 
         for tab in self._tables :
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
