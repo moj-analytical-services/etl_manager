@@ -52,7 +52,7 @@ class TableMeta :
     """
 
     def __init__(self, name, location, columns = [], data_format = 'csv',  description = '', partitions = [], glue_specific = {}, database = None) :
-       
+
         self.name = name
         self.location = location
         self.columns = columns
@@ -67,22 +67,22 @@ class TableMeta :
     @property
     def name(self) :
         return self._name
-    
+
     # Adding validation as Athena doesn't like names with dashes
     @name.setter
     def name(self, name) :
         _validate_string(name)
         self._name = name
 
-    @property 
+    @property
     def data_format(self) :
         return self._data_format
-    
+
     @data_format.setter
     def data_format(self, data_format) :
         self._check_valid_data_format(data_format)
         self._data_format = data_format
-    
+
     @property
     def column_names(self) :
         return [c['name'] for c in self.columns]
@@ -194,7 +194,7 @@ class TableMeta :
 
         if len([k for k in kwargs.keys() if k in _column_properties]) == 0 :
             raise ValueError(f"one or more of the function inputs ({', '.join(_column_properties)}) must be specified.")
-        
+
         self._check_column_exists(column_name)
 
         new_cols = []
@@ -224,7 +224,7 @@ class TableMeta :
                 if 'nullable' in kwargs :
                     _validate_nullable(kwargs['nullable'])
                     c['nullable'] = kwargs['nullable']
-                
+
             new_cols.append(c)
 
         self.columns = new_cols
@@ -293,7 +293,7 @@ class TableMeta :
             full_s3_path = 'unknown'
 
         partition_text = ', '.join(self.partitions) if self.partitions else 'None'
-        
+
         f = open(filepath, "w")
         f.write(f"# {self.name}")
         f.write(f"\n")
@@ -334,8 +334,8 @@ class TableMeta :
             f.write("\n")
             f.write("***")
             f.write("\n")
-        
-        
+
+
     def refresh_paritions(self, temp_athena_staging_dir = None, database_name = None) :
         """
         Refresh the partitions in a table, if they exist
@@ -384,7 +384,7 @@ class DatabaseMeta :
     @property
     def name(self) :
         return self._name
-    
+
     # Adding validation as Athena doesn't like names with dashes
     @name.setter
     def name(self, name) :
@@ -490,9 +490,10 @@ class DatabaseMeta :
             database_obj_folder = database_obj_folder if database_obj_folder == '' else _end_with_slash(database_obj_folder)
             bucket.objects.filter(Prefix=database_obj_folder).delete()
 
-    def create_glue_database(self) :
+    def create_glue_database(self, delete_if_exists=False) :
         """
-        Creates a database in Glue based on the database object calling the method function. If a database with the same name (db.name) already exists it overwrites it.
+        Creates a database in Glue based on the database object calling the method function.
+        By default, will error out if database exists.
         """
         db = {
             "DatabaseInput": {
@@ -500,6 +501,12 @@ class DatabaseMeta :
                 "Name": self.name,
             }
         }
+
+        if delete_if_exists:
+            try:
+                _glue_client.delete_database(Name=self.name)
+            except _glue_client.exceptions.EntityNotFoundException:
+                pass
 
         _glue_client.create_database(**db)
 
@@ -551,7 +558,7 @@ def read_table_json(filepath, database = None) :
         partitions=meta['partitions'],
         glue_specific=meta['glue_specific'],
         database=database)
-    
+
     return tab
 
 def read_database_json(filepath) :
