@@ -1,0 +1,18 @@
+{
+    "StorageDescriptor": {
+        "InputFormat": "org.apache.hadoop.mapred.TextInputFormat",
+		"OutputFormat": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+        "SerdeInfo": {
+			"SerializationLibrary": "org.openx.data.jsonserde.JsonSerDe",
+			"Parameters": {
+				"paths": ""
+			}
+		},
+        "Parameters": {
+            "classification": "json"
+        }
+    },
+    "Parameters": {
+        "classification": "json"
+    }
+}

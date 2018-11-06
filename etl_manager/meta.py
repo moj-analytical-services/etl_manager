@@ -28,13 +28,14 @@ _template = {
     "regex":  json.load(pkg_resources.resource_stream(__name__, "specs/regex_specific.json")),
     "orc":  json.load(pkg_resources.resource_stream(__name__, "specs/orc_specific.json")),
     "par":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
-    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json"))
+    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
+    "json": json.load(pkg_resources.resource_stream(__name__, "specs/json_specific.json"))
 }
 
 _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
 _table_json_schema = json.load(pkg_resources.resource_stream(__name__, "specs/table_schema.json"))
-_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
-
+# _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
+_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/json-serde/etl_manager/specs/table_schema.json"
 _supported_column_types = _table_json_schema['properties']['columns']['items']['properties']["type"]["enum"]
 _supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
 _column_properties = list(_table_json_schema['properties']['columns']['items']['properties'].keys())
@@ -239,6 +240,10 @@ class TableMeta :
         glue_table_definition["Description"] = self.description
 
         glue_table_definition['StorageDescriptor']['Columns'] = self.generate_glue_columns(exclude_columns = self.partitions)
+
+        if self.data_format == 'json' :
+            non_partition_names = [c for c in self.column_names if c not in self.partitions]
+            glue_table_definition['StorageDescriptor']['SerdeInfo']['Parameters']['paths'] = ','.join(non_partition_names)
 
         if full_database_path:
             glue_table_definition['StorageDescriptor']["Location"] = os.path.join(full_database_path, self.location)
@@ -464,10 +469,12 @@ class DatabaseMeta :
         Deletes a glue database with the same name. Returns a response explaining if it was deleted or didn't delete because database was not found.
         """
         try :
-            _glue_client.delete_database(Name = self.name)
+            _glue_client.delete_database(Name=self.name)
             response = 'database deleted'
-        except :
-            response = 'Cannot delete as database not found in glue catalogue'
+        except _glue_client.exceptions.EntityNotFoundException :
+            response = 'database not found in glue catalogue'
+            pass
+
         return response
 
     def delete_data_in_database(self, tables_only = False) :
@@ -488,7 +495,7 @@ class DatabaseMeta :
     def create_glue_database(self, delete_if_exists=False) :
         """
         Creates a database in Glue based on the database object calling the method function.
-        By default, will error out if database exists.
+        By default, will error out if database exists - unless delete_if_exists is set to True (default is False).
         """
         db = {
             "DatabaseInput": {
@@ -498,10 +505,7 @@ class DatabaseMeta :
         }
 
         if delete_if_exists:
-            try:
-                _glue_client.delete_database(Name=self.name)
-            except _glue_client.exceptions.EntityNotFoundException:
-                pass
+            self.delete_glue_database()
 
         _glue_client.create_database(**db)
 

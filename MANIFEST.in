@@ -5,6 +5,7 @@ include etl_manager/specs/orc_specific.json
 include etl_manager/specs/csv_quoted_nodate_specific.json
 include etl_manager/specs/par_specific.json
 include etl_manager/specs/csv_specific.json
+include etl_manager/specs/json_specific.json
 include etl_manager/specs/regex_specific.json
 include etl_manager/specs/glue_spark_dict.json
 include etl_manager/specs/table_schema.json
