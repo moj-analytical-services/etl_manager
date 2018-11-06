@@ -28,7 +28,8 @@ _template = {
     "regex":  json.load(pkg_resources.resource_stream(__name__, "specs/regex_specific.json")),
     "orc":  json.load(pkg_resources.resource_stream(__name__, "specs/orc_specific.json")),
     "par":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
-    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json"))
+    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
+    "json": json.load(pkg_resources.resource_stream(__name__, "specs/json_specific.json"))
 }
 
 _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
@@ -239,6 +240,10 @@ class TableMeta :
         glue_table_definition["Description"] = self.description
 
         glue_table_definition['StorageDescriptor']['Columns'] = self.generate_glue_columns(exclude_columns = self.partitions)
+
+        if self.data_format == 'json' :
+            non_partition_names = [c for c in self.column_names if c not in self.partitions]
+            glue_table_definition['StorageDescriptor']['SerdeInfo']['Parameters']['paths'] = ','.join(non_partition_names)
 
         if full_database_path:
             glue_table_definition['StorageDescriptor']["Location"] = os.path.join(full_database_path, self.location)
