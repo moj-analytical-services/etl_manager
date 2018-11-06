@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+
+## v2.1.0
+### Change
+- now allows newline json files as athena compatable tables (note still does not support struct or array column types - still on the todo list)
+- Improved `delete_glue_database` method function to only catch/allow specific error (database does not exist)
+
 ## v2.0.0
 ### Change
 - Meta data cols now has `enum`, `pattern` and `nullable` properties
