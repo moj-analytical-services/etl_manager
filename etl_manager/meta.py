@@ -469,10 +469,12 @@ class DatabaseMeta :
         Deletes a glue database with the same name. Returns a response explaining if it was deleted or didn't delete because database was not found.
         """
         try :
-            _glue_client.delete_database(Name = self.name)
+            _glue_client.delete_database(Name=self.name)
             response = 'database deleted'
-        except :
-            response = 'Cannot delete as database not found in glue catalogue'
+        except _glue_client.exceptions.EntityNotFoundException :
+            response = 'database not found in glue catalogue'
+            pass
+
         return response
 
     def delete_data_in_database(self, tables_only = False) :
@@ -493,7 +495,7 @@ class DatabaseMeta :
     def create_glue_database(self, delete_if_exists=False) :
         """
         Creates a database in Glue based on the database object calling the method function.
-        By default, will error out if database exists.
+        By default, will error out if database exists - unless delete_if_exists is set to True (default is False).
         """
         db = {
             "DatabaseInput": {
@@ -503,10 +505,7 @@ class DatabaseMeta :
         }
 
         if delete_if_exists:
-            try:
-                _glue_client.delete_database(Name=self.name)
-            except _glue_client.exceptions.EntityNotFoundException:
-                pass
+            self.delete_glue_database()
 
         _glue_client.create_database(**db)
 
