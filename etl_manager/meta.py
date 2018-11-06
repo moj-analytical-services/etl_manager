@@ -34,8 +34,8 @@ _template = {
 
 _agnostic_to_glue_spark_dict = json.load(pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json"))
 _table_json_schema = json.load(pkg_resources.resource_stream(__name__, "specs/table_schema.json"))
-_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
-
+# _web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
+_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/json-serde/etl_manager/specs/table_schema.json"
 _supported_column_types = _table_json_schema['properties']['columns']['items']['properties']["type"]["enum"]
 _supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
 _column_properties = list(_table_json_schema['properties']['columns']['items']['properties'].keys())

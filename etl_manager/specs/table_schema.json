@@ -57,7 +57,7 @@
       "data_format": {
         "type": "string",
         "title": "The format of the data in s3, and instruction on how to parse, see here https://github.com/moj-analytical-services/dataengineeringutils/blob/ae295caf93c75c80510abf0c74865939c94d3e70/dataengineeringutils/glue.py#L45",
-        "enum": ["avro","csv","csv_quoted_nodate","regex","orc","par","parquet"]
+        "enum": ["avro","csv","csv_quoted_nodate","regex","orc","par","parquet", "json"]
       },
       "location": {
         "type": "string",
