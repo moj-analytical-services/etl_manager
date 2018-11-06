@@ -149,8 +149,14 @@ class DatabaseMetaTest(unittest.TestCase):
 
     def test_table_to_dict(self) :
         db = read_database_folder('example/meta_data/db1/')
-        test_dict = read_json('example/meta_data/db1/teams.json')
-        self.assertDictEqual(test_dict, db.table('teams').to_dict())
+        expected_dict = read_json('example/meta_data/db1/teams.json')
+        test_dict = db.table('teams').to_dict()
+        
+        # Null out schema as may need changing when on branch but still need to unit test
+        expected_dict["$schema"] = ''
+        test_dict["$schema"] = ''
+
+        self.assertDictEqual(test_dict, expected_dict)
 
     def test_db_table_names(self) :
         db = read_database_folder('example/meta_data/db1/')
@@ -223,7 +229,7 @@ class DatabaseMetaTest(unittest.TestCase):
             test_created = all([r['Name'] in db.table_names for r in resp['TableList']])
             self.assertTrue(test_created, msg= "Note this requires user to have correct credentials to create a glue database")
             self.assertEqual(db.delete_glue_database(), 'database deleted')
-            self.assertEqual(db.delete_glue_database(), 'Cannot delete as database not found in glue catalogue')
+            self.assertEqual(db.delete_glue_database(), 'database not found in glue catalogue')
         else :
             print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
             self.assertTrue(True)
