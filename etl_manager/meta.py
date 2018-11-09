@@ -40,6 +40,9 @@ _supported_column_types = _table_json_schema['properties']['columns']['items']['
 _supported_data_formats = _table_json_schema['properties']['data_format']["enum"]
 _column_properties = list(_table_json_schema['properties']['columns']['items']['properties'].keys())
 
+class MetaColumnTypeMismatch(Exception):
+    pass
+
 def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
@@ -539,6 +542,39 @@ class DatabaseMeta :
     def refresh_all_table_partitions(self):
         for table in self._tables:
                 table.refresh_paritions()
+
+    def test_column_types_align(self, exclude_tables = []) :
+        """
+        Tests if all column types across all tables in the database match.
+        Add list of table names in exclude_tables to skip test on particular tables.
+        """
+        # Get all cols
+        all_col_test = {}
+        for t in self.table_names :
+            if t not in exclude_tables :
+                tb = self.table(t)
+                for c in tb.columns :
+                    if c['name'] in all_col_test :
+                        all_col_test[c['name']]['tables'].append(t)
+                        all_col_test[c['name']]['types'].add(c['type'])
+                        all_col_test[c['name']]['traceback_log'] += f"===> {t}: {c['type']}\n"
+                    else :
+                        all_col_test[c['name']] = {'tables' : [t], 'types' : set([c['type']]), 'traceback_log' : f"===> {t}: {c['type']}\n"}
+                    
+        # Run test
+        failure = False
+        error_log = ''
+        for k in all_col_test.keys() :
+            if len(all_col_test[k]['types']) > 1 :
+                error_log += f"ERROR: column {k} has multiple types [{', '.join(list(all_col_test[k]['types']))}]\n------------------\n{all_col_test[k]['traceback_log']}\n"
+                failure = True
+
+        # Check results
+        if failure :
+            raise MetaColumnTypeMismatch(f"Meta data does not align...\n\n{error_log}")
+        
+    
+##### END OF DATABASEMETA CLASS #####
 
 # Create meta objects from json files or directories
 def read_table_json(filepath, database = None) :

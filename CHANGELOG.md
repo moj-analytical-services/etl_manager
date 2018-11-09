@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v2.1.2
+### Added
+- DatabaseMeta method function `test_column_types_align` now tests that all column types match across all tables in database object.
+
 ## v2.1.1
 ### Fix
 - bug meant that new nullable column property was only being set if nullable was True.
