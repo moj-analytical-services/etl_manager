@@ -5,7 +5,7 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json, _agnostic_to_glue_spark_dict
+from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json, _agnostic_to_glue_spark_dict, MetaColumnTypeMismatch
 from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
@@ -233,6 +233,16 @@ class DatabaseMetaTest(unittest.TestCase):
         else :
             print("\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ...")
             self.assertTrue(True)
+
+        def test_db_test_column_types_align(self) :
+            db = read_database_folder('example/meta_data/db1/')
+            # Should pass
+            db.test_column_types_align()
+
+            db.table('pay').update_column('employee_id', "employee_id", type="character")
+
+            with self.assertRaises(MetaColumnTypeMismatch) :
+                db.test_column_types_align()
 
 class TableMetaTest(unittest.TestCase):
     """
