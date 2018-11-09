@@ -149,7 +149,7 @@ class TableMeta :
         if pattern :
             _validate_pattern(pattern)
             cols[-1]['pattern'] = pattern
-        if nullable :
+        if nullable is not None :
             _validate_nullable(nullable)
             cols[-1]['nullable'] = nullable
 
