@@ -242,7 +242,7 @@ class DatabaseMetaTest(unittest.TestCase):
         db.table('pay').update_column(column_name="employee_id", type="character")
 
         # Should pass
-        db.test_column_types_align(exclude_tables='pay')
+        db.test_column_types_align(exclude_tables=['pay'])
 
         # Should fail
         with self.assertRaises(MetaColumnTypeMismatch) :
