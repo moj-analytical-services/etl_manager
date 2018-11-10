@@ -367,21 +367,21 @@ from awsglue.job import Job
 
 from gluejobutils.s3 import read_json_from_s3
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'metadata_path', 'test_arg'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'metadata_base_path', 'test_arg'])
 
 print "JOB SPECS..."
 print "JOB_NAME: ", args["JOB_NAME"]
 print "test argument: ", args["test_arg"]
 
 # Read in meta data json
-meta_employees = read_json_from_s3(os.path.join(args['metadata_path'], "employees.json"))
+meta_employees = read_json_from_s3(os.path.join(args['metadata_base_path'], "employees.json"))
 
 ### etc
 ```
 
 >**Notes:** 
 > - The `test_arg` does not have two dashes in front of it. When specifying job_arguments with the GlueJob class it must be suffixed with `--` but you should remove these when accessing the args in the `job.py` script. 
-> - `metadata_path` is a special parameter that is set by the GlueJob class. It is the S3 path to where the `meta_data` folder is in S3 so that you can read in your agnostic metadata files if you want to use them in your glue job. Note that the [gluejobutils](https://github.com/moj-analytical-services/gluejobutils) package has a lot of functionality with integrating our metadata jsons with spark.
+> - `metadata_base_path` is a special parameter that is set by the GlueJob class. It is the S3 path to where the `meta_data` folder is in S3 so that you can read in your agnostic metadata files if you want to use them in your glue job. Note that the [gluejobutils](https://github.com/moj-analytical-services/gluejobutils) package has a lot of functionality with integrating our metadata jsons with spark.
 > - The GlueJob argument `--enable-metrics` is also a special parameter that enables you to see metrics of your glue job. [See here for more details on enabling metrics](https://docs.aws.amazon.com/en_us/glue/latest/dg/monitor-profile-glue-job-cloudwatch-metrics.html).
 > - Note that `JOB_NAME` is a special parameter that is not set in GlueJob but automatically passed to the AWS Glue when running `job.py`. [See here for more on special parameters](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html).
 
