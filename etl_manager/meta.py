@@ -234,7 +234,7 @@ class TableMeta :
 
     def glue_table_definition(self, full_database_path = None) :
 
-        glue_table_definition = _get_spec('base')
+        glue_table_definition = copy(_get_spec('base'))
         specific = _get_spec(self.data_format)
         _dict_merge(glue_table_definition, specific)
 
