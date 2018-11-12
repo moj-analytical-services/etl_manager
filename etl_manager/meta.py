@@ -273,9 +273,14 @@ class TableMeta :
             "description" : self.description,
             "data_format" : self.data_format,
             "columns" : self.columns,
-            "partitions" : self.partitions,
-            "location" : self.location
+            "location" : self.location,
         }
+        if bool(self.partitions) :
+            meta['partitions'] = self.partitions
+
+        if bool(self.glue_specific) :
+            meta['glue_specific'] = self.glue_specific
+            
         return meta
 
     def write_to_json(self, file_path) :

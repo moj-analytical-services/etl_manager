@@ -158,6 +158,16 @@ class DatabaseMetaTest(unittest.TestCase):
 
         self.assertDictEqual(test_dict, expected_dict)
 
+        # Test file with glue specific
+        expected_dict2 = read_json('example/meta_data/db1/pay.json')
+        test_dict2 = db.table('pay').to_dict()
+        
+        # Null out schema as may need changing when on branch but still need to unit test
+        expected_dict2["$schema"] = ''
+        test_dict2["$schema"] = ''
+
+        self.assertDictEqual(test_dict2, expected_dict2)
+
     def test_db_table_names(self) :
         db = read_database_folder('example/meta_data/db1/')
         t = all(t in ['teams', 'employees', 'pay'] for t in db.table_names)
