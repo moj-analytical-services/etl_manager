@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## v2.2.0
 ### Added
 - Fixed bug where glue_specific would not write to json or be a key in dictionary from TableMeta class `to_dict()` method.
-- Fixed bug where default table ddl templates would be overwritten causing mixed table definitions (see unit test named `test_glue_table_definition_doesnt_overwrite_base_spec` for reproducible error for early versions)
+- Fixed bug where default table ddl templates would be overwritten causing mixed table definitions (see issue no. 80) for specific example and fix.
 - If meta has partition property if none or empty list then this property will no longer be passed to dict (and therefore not to json)
 - If meta has glue_specific property if none or empty dict then this property will no longer be passed to dict (and therefore not to json)
 
