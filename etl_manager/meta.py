@@ -12,7 +12,7 @@ from etl_manager.utils import (
     _s3_resource,
     _remove_final_slash
 )
-from copy import copy
+import copy
 import string
 import json
 import os
@@ -46,7 +46,7 @@ def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
 
-    return _template[spec_name].copy()
+    return copy.deepcopy(_template[spec_name])
 
 class TableMeta :
     """
@@ -233,7 +233,7 @@ class TableMeta :
 
     def glue_table_definition(self, full_database_path = None) :
 
-        glue_table_definition = copy(_get_spec('base'))
+        glue_table_definition = _get_spec('base')
         specific = _get_spec(self.data_format)
         _dict_merge(glue_table_definition, specific)
 
