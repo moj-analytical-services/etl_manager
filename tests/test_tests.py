@@ -5,7 +5,7 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json, _agnostic_to_glue_spark_dict, MetaColumnTypeMismatch
+from etl_manager.meta import DatabaseMeta, TableMeta, read_database_folder, read_table_json, _agnostic_to_glue_spark_dict, MetaColumnTypeMismatch, _get_spec
 from etl_manager.utils import _end_with_slash, _validate_string, _glue_client, read_json, _remove_final_slash
 from etl_manager.etl import GlueJob
 import boto3
@@ -158,6 +158,16 @@ class DatabaseMetaTest(unittest.TestCase):
 
         self.assertDictEqual(test_dict, expected_dict)
 
+        # Test file with glue specific
+        expected_dict2 = read_json('example/meta_data/db1/pay.json')
+        test_dict2 = db.table('pay').to_dict()
+        
+        # Null out schema as may need changing when on branch but still need to unit test
+        expected_dict2["$schema"] = ''
+        test_dict2["$schema"] = ''
+
+        self.assertDictEqual(test_dict2, expected_dict2)
+
     def test_db_table_names(self) :
         db = read_database_folder('example/meta_data/db1/')
         t = all(t in ['teams', 'employees', 'pay'] for t in db.table_names)
@@ -189,6 +199,13 @@ class DatabaseMetaTest(unittest.TestCase):
         glue_def = t.glue_table_definition("db_path")
         self.assertTrue(t.glue_table_definition("db_path")["Parameters"]['skip.header.line.count'] == '1')
 
+    def test_glue_table_definition_doesnt_overwrite_base_spec(self) :
+        expected_dict = _get_spec('base')
+        db = read_database_folder('example/meta_data/db1/')
+        glue_def_dump = db.table('pay').glue_table_definition()
+
+        self.assertDictEqual(expected_dict, _get_spec('base'))
+        
     def test_add_remove_table(self) :
         db = read_database_folder('example/meta_data/db1/')
         self.assertRaises(ValueError, db.remove_table, 'not_a_table')

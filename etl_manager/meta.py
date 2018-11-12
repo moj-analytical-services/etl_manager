@@ -12,7 +12,7 @@ from etl_manager.utils import (
     _s3_resource,
     _remove_final_slash
 )
-from copy import copy
+import copy
 import string
 import json
 import os
@@ -27,8 +27,7 @@ _template = {
     "csv_quoted_nodate":  json.load(pkg_resources.resource_stream(__name__, "specs/csv_quoted_nodate_specific.json")),
     "regex":  json.load(pkg_resources.resource_stream(__name__, "specs/regex_specific.json")),
     "orc":  json.load(pkg_resources.resource_stream(__name__, "specs/orc_specific.json")),
-    "par":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
-    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
+    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/parquet_specific.json")),
     "json": json.load(pkg_resources.resource_stream(__name__, "specs/json_specific.json"))
 }
 
@@ -47,7 +46,7 @@ def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
 
-    return copy(_template[spec_name])
+    return copy.deepcopy(_template[spec_name])
 
 class TableMeta :
     """
@@ -273,9 +272,14 @@ class TableMeta :
             "description" : self.description,
             "data_format" : self.data_format,
             "columns" : self.columns,
-            "partitions" : self.partitions,
-            "location" : self.location
+            "location" : self.location,
         }
+        if bool(self.partitions) :
+            meta['partitions'] = self.partitions
+
+        if bool(self.glue_specific) :
+            meta['glue_specific'] = self.glue_specific
+            
         return meta
 
     def write_to_json(self, file_path) :

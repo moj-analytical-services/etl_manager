@@ -65,6 +65,10 @@
         "examples": [
           "sop_full/"
         ]
+      },
+      "glue_specific" : {
+        "type" : ["null", "object"],
+        "title": "Dict used to add any additional table properties for glue catalogue. For an example see here: https://github.com/moj-analytical-services/etl_manager/blob/master/example/meta_data/db1/pay.json#L19"
       }
     }
   }

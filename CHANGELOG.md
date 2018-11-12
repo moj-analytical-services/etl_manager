@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v2.2.0
+### Added
+- Fixed bug where glue_specific would not write to json or be a key in dictionary from TableMeta class `to_dict()` method.
+- Fixed bug where default table ddl templates would be overwritten causing mixed table definitions (see issue no. 80) for specific example and fix.
+- If meta has partition property if none or empty list then this property will no longer be passed to dict (and therefore not to json)
+- If meta has glue_specific property if none or empty dict then this property will no longer be passed to dict (and therefore not to json)
+
 ## v2.1.2
 ### Added
 - DatabaseMeta method function `test_column_types_align` now tests that all column types match across all tables in database object.
