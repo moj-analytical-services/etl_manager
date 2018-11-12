@@ -27,8 +27,7 @@ _template = {
     "csv_quoted_nodate":  json.load(pkg_resources.resource_stream(__name__, "specs/csv_quoted_nodate_specific.json")),
     "regex":  json.load(pkg_resources.resource_stream(__name__, "specs/regex_specific.json")),
     "orc":  json.load(pkg_resources.resource_stream(__name__, "specs/orc_specific.json")),
-    "par":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
-    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/par_specific.json")),
+    "parquet":  json.load(pkg_resources.resource_stream(__name__, "specs/parquet_specific.json")),
     "json": json.load(pkg_resources.resource_stream(__name__, "specs/json_specific.json"))
 }
 
@@ -47,7 +46,7 @@ def _get_spec(spec_name) :
     if spec_name not in _template :
         raise ValueError("spec_name/data_type requested ({}) is not a valid spec/data_type".format(spec_name))
 
-    return copy(_template[spec_name])
+    return _template[spec_name].copy()
 
 class TableMeta :
     """
