@@ -404,9 +404,9 @@ class GlueJob:
             status = self.job_status
             status_code = status["JobRun"]["JobRunState"]
             status_error = status["JobRun"].get("ErrorMessage", "n/a")
+            exec_time = status["JobRun"].get("ExecutionTime", "n/a")
 
             if verbose:
-                exec_time = t["JobRun"].get("ExecutionTime", "n/a")
                 timestamp = datetime.datetime.now().strftime("%Y-%B-%d %H:%M:%S")
                 print(f"{timestamp}: Code: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
 
