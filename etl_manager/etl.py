@@ -407,8 +407,8 @@ class GlueJob:
             exec_time = status["JobRun"].get("ExecutionTime", "n/a")
 
             if verbose:
-                timestamp = datetime.datetime.now().strftime("%Y-%B-%d %H:%M:%S")
-                print(f"{timestamp}: Code: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"{timestamp}: Job State: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
 
             if status_code == "SUCCEEDED":
                 break
