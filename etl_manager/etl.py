@@ -403,11 +403,12 @@ class GlueJob:
 
             status = self.job_status
             status_code = status["JobRun"]["JobRunState"]
-            status_error = status["JobRun"].get("ErrorMessage", "Unknown")
+            status_error = status["JobRun"].get("ErrorMessage", "n/a")
 
             if verbose:
+                exec_time = t["JobRun"].get("ExecutionTime", "n/a")
                 timestamp = datetime.datetime.now().strftime("%Y-%B-%d %H:%M:%S")
-                print("{}: Code: {} | Error: {}".format(timestamp, status_code, status_error))
+                print(f"{timestamp}: Code: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
 
             if status_code == "SUCCEEDED":
                 break
