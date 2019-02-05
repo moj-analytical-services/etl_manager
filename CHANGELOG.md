@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v2.2.2
+### Added
+- Added argument `wait_seconds` to `GlueJob` class function `wait_for_job_completion()` to set number of seconds between job status checks. Default unchanged.
+
 ## v2.2.1
 ### Change
 - Updated output from `GlueJob` class function `wait_for_job_completion()` (when verbose is set to True), now states how long Glue has been running the job.
