@@ -387,7 +387,7 @@ class GlueJob:
     def is_running(self):
         return self.job_run_state == 'RUNNING'
 
-    def wait_for_completion(self, verbose=False):
+    def wait_for_completion(self, verbose=False, wait_seconds=10):
         """
         Wait for the job to complete.
 
@@ -399,7 +399,7 @@ class GlueJob:
         """
 
         while True:
-            time.sleep(10)
+            time.sleep(wait_seconds)
 
             status = self.job_status
             status_code = status["JobRun"]["JobRunState"]
