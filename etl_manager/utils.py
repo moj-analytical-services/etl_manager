@@ -93,7 +93,6 @@ def _validate_string(s, allowed_chars="_"):
             f"punctuation excluding ({allowed_chars}) is not allowed in string"
         )
 
-
 def _validate_enum(enum):
     if type(enum) != list:
         raise TypeError(f"enum must be a list. Not of type {type(enum)}")
