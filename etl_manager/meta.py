@@ -92,11 +92,11 @@ class TableMeta:
 
         self.name = name
         self.location = location
-        self.columns = columns
+        self.columns = copy.deepcopy(columns)
         self.data_format = data_format
         self.description = description
-        self.partitions = partitions
-        self.glue_specific = glue_specific
+        self.partitions = copy.deepcopy(partitions)
+        self.glue_specific = copy.deepcopy(glue_specific)
         self.database = database
 
         jsonschema.validate(self.to_dict(), _table_json_schema)
@@ -131,7 +131,7 @@ class TableMeta:
 
     @partitions.setter
     def partitions(self, partitions):
-        if partitions:
+        if not partitions:
             self._partitions = []
         else:
             for p in partitions:
@@ -200,9 +200,9 @@ class TableMeta:
         self.columns = cols
 
         # Reorder columns if partitions exist
-        if not self.partitions:
-            new_col_order = [c for c in cols if c not in self.partitions]
-            new_col_order = new_col_order + self.partitions
+        if self.partitions:
+            new_col_order = [c for c in self.column_names if c not in self.partitions]
+            new_col_order = new_col_order + copy.deepcopy(self.partitions)
             self.reorder_columns(new_col_order)
 
     def reorder_columns(self, column_name_order):

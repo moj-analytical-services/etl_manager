@@ -65,18 +65,14 @@ class GlueTest(unittest.TestCase):
         )
         self.assertEqual(
             g.py_resources,
-            [
-                "example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"
-            ],
+            ["example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"],
         )
         self.assertEqual(g.job_name, "simple_etl_job")
         self.assertEqual(g.bucket, "alpha-everyone")
         self.assertEqual(g.job_role, "alpha_user_isichei")
         self.assertEqual(
             g.github_zip_urls,
-            [
-                "https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"
-            ],
+            ["https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"],
         )
         self.assertEqual(g.job_arguments["--test_arg"], "this is a test")
         self.assertEqual(g.github_py_resources, [])
@@ -91,8 +87,7 @@ class GlueTest(unittest.TestCase):
             include_shared_job_resources=False,
         )
         self.assertEqual(
-            g2.resources,
-            ["example/glue_jobs/simple_etl_job/glue_resources/employees.json"],
+            g2.resources, ["example/glue_jobs/simple_etl_job/glue_resources/employees.json"]
         )
         self.assertEqual(g2.py_resources, [])
 
@@ -269,8 +264,7 @@ class DatabaseMetaTest(unittest.TestCase):
         t = read_table_json("example/meta_data/db1/pay.json")
         glue_def = t.glue_table_definition("db_path")
         self.assertTrue(
-            t.glue_table_definition("db_path")["Parameters"]["skip.header.line.count"]
-            == "1"
+            t.glue_table_definition("db_path")["Parameters"]["skip.header.line.count"] == "1"
         )
 
     def test_glue_table_definition_doesnt_overwrite_base_spec(self):
@@ -323,9 +317,7 @@ class DatabaseMetaTest(unittest.TestCase):
                 msg="Note this requires user to have correct credentials to create a glue database",
             )
             self.assertEqual(db.delete_glue_database(), "database deleted")
-            self.assertEqual(
-                db.delete_glue_database(), "database not found in glue catalogue"
-            )
+            self.assertEqual(db.delete_glue_database(), "database not found in glue catalogue")
         else:
             print(
                 "\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ..."
@@ -376,11 +368,7 @@ class TableMetaTest(unittest.TestCase):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {
-                    "name": "employee_id",
-                    "type": "int",
-                    "description": "an ID for each employee",
-                },
+                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -416,11 +404,7 @@ class TableMetaTest(unittest.TestCase):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {
-                    "name": "employee_id",
-                    "type": "int",
-                    "description": "an ID for each employee",
-                },
+                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -430,16 +414,8 @@ class TableMetaTest(unittest.TestCase):
         }
 
         columns_test = [
-            {
-                "name": "employee_id2",
-                "type": "character",
-                "description": "a new description",
-            },
-            {
-                "name": "employee_name",
-                "type": "character",
-                "description": "name of the employee",
-            },
+            {"name": "employee_id2", "type": "character", "description": "a new description"},
+            {"name": "employee_name", "type": "character", "description": "name of the employee"},
         ]
 
         new_col = {
@@ -448,11 +424,7 @@ class TableMetaTest(unittest.TestCase):
             "description": "date of birth for the employee",
             "nullable": True,
             "pattern": "\d{4}-\d{2}-\d{2}",
-            "enum": [
-                "a",
-                "b",
-                "c",
-            ],  # yes enums and patterns can conflict - no validation for this
+            "enum": ["a", "b", "c"],  # yes enums and patterns can conflict - no validation for this
         }
 
         tm = TableMeta(**kwargs)
@@ -476,10 +448,7 @@ class TableMetaTest(unittest.TestCase):
 
         # Test update column failure
         tm.update_column(
-            "employee_id",
-            name="employee_id2",
-            type="character",
-            description="a new description",
+            "employee_id", name="employee_id2", type="character", description="a new description"
         )
         self.assertEqual(tm.columns, columns_test)
 
@@ -496,11 +465,7 @@ class TableMetaTest(unittest.TestCase):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {
-                    "name": "employee_id",
-                    "type": "int",
-                    "description": "an ID for each employee",
-                },
+                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -538,6 +503,18 @@ class TableMetaTest(unittest.TestCase):
             tm.update_column("employee_id", enum=5)
         with self.assertRaises(TypeError):
             tm.update_column("employee_id", nullable=5)
+
+    def test_partion_cols_are_last(self):
+        tb = TableMeta(name="test", location="test")
+
+        tb.add_column("p", "int", "")
+        tb.add_column("a", "int", "")
+
+        tb.partitions = ["p"]
+        self.assertListEqual(tb.column_names, ["a", "p"])
+
+        tb.add_column("b", "int", "")
+        self.assertListEqual(tb.column_names, ["a", "b", "p"])
 
 
 if __name__ == "__main__":
