@@ -90,7 +90,7 @@ def _validate_string(s, allowed_chars="_"):
 
     if any(char in invalid_chars for char in s):
         raise ValueError(
-            "punctuation excluding ({}) is not allowed in string".format(allowed_chars)
+            f"punctuation excluding ({allowed_chars}) is not allowed in string"
         )
 
 

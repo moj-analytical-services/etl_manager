@@ -171,10 +171,9 @@ class GlueJob:
             ]
             for k in job_arguments.keys():
                 if k[:2] != "--" or k in special_aws_params:
+                    awsp = ", ".join(special_aws_params)
                     raise ValueError(
-                        "Found incorrect AWS job argument ({}). All arguments should begin with '--' and cannot be one of the following: {}".format(
-                            k, ", ".join(special_aws_params)
-                        )
+                        f"Found incorrect AWS job argument ({k}). All arguments should begin with '--' and cannot be one of the following: {awsp}"
                     )
         self._job_arguments = job_arguments
 
