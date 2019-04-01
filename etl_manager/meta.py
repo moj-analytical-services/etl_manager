@@ -68,11 +68,7 @@ class MetaColumnTypeMismatch(Exception):
 
 def _get_spec(spec_name):
     if spec_name not in _template:
-        raise ValueError(
-            "spec_name/data_type requested ({}) is not a valid spec/data_type".format(
-                spec_name
-            )
-        )
+        raise ValueError(f"spec_name/data_type requested ({spec_name}) is not a valid spec/data_type")
 
     return copy.deepcopy(_template[spec_name])
 
@@ -135,7 +131,7 @@ class TableMeta:
 
     @partitions.setter
     def partitions(self, partitions):
-        if partitions is None:
+        if partitions:
             self._partitions = []
         else:
             for p in partitions:
@@ -203,14 +199,16 @@ class TableMeta:
 
         self.columns = cols
 
+        # Reorder columns if partitions exist
+        if not self.partitions:
+            new_col_order = [c for c in cols if c not in self.partitions]
+            new_col_order = new_col_order + self.partitions
+            self.reorder_columns(new_col_order)
+
     def reorder_columns(self, column_name_order):
         for c in self.column_names:
             if c not in column_name_order:
-                raise ValueError(
-                    "input column_name_order is missing column ({}) in meta table".format(
-                        c
-                    )
-                )
+                raise ValueError(f"input column_name_order is missing column ({c}) in meta table")
         self.columns = sorted(
             self.columns, key=lambda x: column_name_order.index(x["name"])
         )
@@ -230,34 +228,27 @@ class TableMeta:
 
     def _check_valid_data_format(self, data_format):
         if data_format not in _supported_data_formats:
+            sdf = ", ".join(_supported_data_formats)
             raise ValueError(
-                "The data_format provided ({}) must match the supported data_type names: {}".format(
-                    data_format, ", ".join(_supported_data_formats)
+                f"The data_format provided ({data_format}) must match the supported data_type names: {sdf}"
                 )
-            )
 
     def _check_valid_datatype(self, data_type):
         if data_type not in _supported_column_types:
-            raise ValueError(
-                "The data_type provided must match the supported data_type names: {}".format(
-                    ", ".join(_supported_column_types)
-                )
-            )
+            scf = ", ".join(_supported_column_types)
+            raise ValueError(f"The data_type provided must match the supported data_type names: {scf}")
 
     def _check_column_exists(self, column_name):
         if column_name not in self.column_names:
+            cn = ", ".join(self.column_names)
             raise ValueError(
-                "The column name: {} does not match those existing in meta: {}".format(
-                    column_name, ", ".join(self.column_names)
-                )
+                f"The column name: {column_name} does not match those existing in meta: {cn}"
             )
 
     def _check_column_does_not_exists(self, column_name):
         if column_name in self.column_names:
             raise ValueError(
-                "The column name provided ({}) already exists table in meta.".format(
-                    column_name
-                )
+                f"The column name provided ({column_name}) already exists table in meta."
             )
 
     def update_column(self, column_name, **kwargs):
@@ -450,7 +441,7 @@ class TableMeta:
                         "You must provide a database name, or register a database object against the table"
                     )
 
-            sql = "MSCK REPAIR TABLE {}.{}".format(database_name, self.name)
+            sql = f"MSCK REPAIR TABLE {database_name}.{self.name}"
 
             response = _athena_client.start_query_execution(
                 QueryString=sql,
@@ -525,9 +516,9 @@ class DatabaseMeta:
 
     def _throw_error_check_table(self, table_name, error_on_table_exists=True):
         error_string = (
-            "Table {} already exists.".format(table_name)
+            f"Table {table_name} already exists."
             if error_on_table_exists
-            else "Table {} does not exist.".format(table_name)
+            else f"Table {table_name} does not exist."
         )
         if self._check_table_exists(table_name) == error_on_table_exists:
             raise ValueError(error_string)
