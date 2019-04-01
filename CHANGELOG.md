@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Fixed issue 91 and 92
+- Fixed issue [91](https://github.com/moj-analytical-services/etl_manager/issues/91) and [92](https://github.com/moj-analytical-services/etl_manager/issues/92)
 - Improved python format
 - Refactored to Python 3.6
 - Fixed unknown issue where arguments passed into function were not copied (same memory location)
