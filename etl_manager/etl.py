@@ -516,10 +516,10 @@ class GlueJob:
                         time.sleep(back_off_wait_time)
                     else:
                         if "ThrottlingException" in str(e):
-                        err_str = f"Total number of retries ({back_off_retries}) exceeded - {str(e)}"
-                        raise JobThrottlingExceeded(err_str)
-                    else:
-                        raise e
+                            err_str = f"Total number of retries ({back_off_retries}) exceeded - {str(e)}"
+                            raise JobThrottlingExceeded(err_str)
+                        else:
+                            raise e
                 else:
                     break
 

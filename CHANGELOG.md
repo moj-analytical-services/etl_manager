@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v3.1.0
+
+### Added
+
+- Two new input arguments to GlueJob method function `wait_for_completion`.
+  - Input `back_off_retries` now is the number of retries to boto API to avoid Throttling Error. Retries are done with exponential back off.
+  - `cleanup_if_successful` will delete the glue job if the `wait_for_completion` doesn't raise an error. i.e. Glue job completes successfully.
 ## v3.0.0
 
 ### Added
