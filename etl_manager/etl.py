@@ -482,6 +482,7 @@ class GlueJob:
                     else:
                         raise e
             else:
+                back_off_counter = 0
                 status_code = status["JobRun"]["JobRunState"]
                 status_error = status["JobRun"].get("ErrorMessage", "n/a")
                 exec_time = status["JobRun"].get("ExecutionTime", "n/a")
