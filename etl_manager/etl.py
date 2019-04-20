@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import time
 import zipfile
+from botocore.exceptions import ClientError
 
 from etl_manager.utils import (
     read_json,
@@ -45,6 +46,8 @@ class JobTimedOut(Exception):
 class JobStopped(Exception):
     pass
 
+class JobThrottlingExceeded(Exception):
+    pass
 
 class GlueJob:
     """
@@ -449,7 +452,7 @@ class GlueJob:
     def is_running(self):
         return self.job_run_state == "RUNNING"
 
-    def wait_for_completion(self, verbose=False, wait_seconds=10):
+    def wait_for_completion(self, verbose=False, wait_seconds=10, back_off_retries=5, cleanup_if_successful=False):
         """
         Wait for the job to complete.
 
@@ -460,19 +463,33 @@ class GlueJob:
             JobTimedOut: When the job timed out
         """
 
+        back_off_counter = 0
         while True:
             time.sleep(wait_seconds)
 
-            status = self.job_status
-            status_code = status["JobRun"]["JobRunState"]
-            status_error = status["JobRun"].get("ErrorMessage", "n/a")
-            exec_time = status["JobRun"].get("ExecutionTime", "n/a")
+            try:
+                status = self.job_status
+            except ClientError as e:
+                if "ThrottlingException" in str(e) and back_off_counter < back_off_retries:
+                    back_off_counter += 1
+                    back_off_wait_time = wait_seconds * (2 ** (back_off_counter))
+                    status_code = f"BOTO_CLIENT_RATE_EXCEEDED (waiting {back_off_wait_time}s)"
+                    time.sleep(back_off_wait_time)
+                else:
+                    if "ThrottlingException" in str(e):
+                        err_str = f"Total number of retries ({back_off_retries}) exceeded - {str(e)}"
+                        raise JobThrottlingExceeded(err_str)
+                    else:
+                        raise e
+            else:
+                back_off_counter = 0
+                status_code = status["JobRun"]["JobRunState"]
+                status_error = status["JobRun"].get("ErrorMessage", "n/a")
+                exec_time = status["JobRun"].get("ExecutionTime", "n/a")
 
             if verbose:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                print(
-                    f"{timestamp}: Job State: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}"
-                )
+                print(f"{timestamp}: Job State: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
 
             if status_code == "SUCCEEDED":
                 break
@@ -483,6 +500,28 @@ class GlueJob:
                 raise JobTimedOut(status_error)
             if status_code == "STOPPED":
                 raise JobStopped(status_error)
+
+        if status_code == "SUCCEEDED" and cleanup_if_successful:
+            back_off_counter = 0
+            if verbose:
+                print("JOB SUCCEEDED: Cleaning Up")
+            
+            while True:
+                try:
+                    self.cleanup()
+                except ClientError as e:
+                    if "ThrottlingException" in str(e) and back_off_counter < back_off_retries:
+                        back_off_counter += 1
+                        back_off_wait_time = wait_seconds * (2 ** (back_off_counter))
+                        time.sleep(back_off_wait_time)
+                    else:
+                        if "ThrottlingException" in str(e):
+                            err_str = f"Total number of retries ({back_off_retries}) exceeded - {str(e)}"
+                            raise JobThrottlingExceeded(err_str)
+                        else:
+                            raise e
+                else:
+                    break
 
     def cleanup(self):
         """
