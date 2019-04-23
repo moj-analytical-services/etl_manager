@@ -17,6 +17,7 @@ import string
 import json
 import os
 import re
+import time
 import pkg_resources
 import jsonschema
 
@@ -419,7 +420,7 @@ class TableMeta:
             f.write("***")
             f.write("\n")
 
-    def refresh_paritions(self, temp_athena_staging_dir=None, database_name=None):
+    def refresh_partitions(self, temp_athena_staging_dir=None, database_name=None, timeout=None):
         """
         Refresh the partitions in a table, if they exist
         """
@@ -429,17 +430,13 @@ class TableMeta:
                 if self.database:
                     temp_athena_staging_dir = self.database.s3_athena_temp_folder
                 else:
-                    raise ValueError(
-                        "You must provide a path to a directory in s3 for Athena to cache query results"
-                    )
+                    raise ValueError("You must provide a path to a directory in s3 for Athena to cache query results")
 
             if not database_name:
                 if self.database:
                     database_name = self.database.name
                 else:
-                    raise KeyError(
-                        "You must provide a database name, or register a database object against the table"
-                    )
+                    raise KeyError("You must provide a database name, or register a database object against the table")
 
             sql = f"MSCK REPAIR TABLE {database_name}.{self.name}"
 
@@ -447,6 +444,24 @@ class TableMeta:
                 QueryString=sql,
                 ResultConfiguration={"OutputLocation": temp_athena_staging_dir},
             )
+
+            sleep_time = 2
+            counter = 0
+            while True:
+                athena_status = _athena_client.get_query_execution(QueryExecutionId = response['QueryExecutionId'])
+                if athena_status['QueryExecution']['Status']['State'] == "SUCCEEDED":
+                    break
+                elif athena_status['QueryExecution']['Status']['State'] in ['QUEUED','RUNNING']:
+                    time.sleep(sleep_time)
+                elif athena_status['QueryExecution']['Status']['State'] == 'FAILED':
+                    raise ValueError("athena failed - response error:\n {}".format(athena_status['QueryExecution']['Status']['StateChangeReason']))
+                else:
+                    raise ValueError("athena failed - unknown reason (printing full response):\n {athena_status}".format(athena_status))
+
+                counter += 1
+                if timeout:
+                    if counter*sleep_time > timeout:
+                        raise ValueError('athena timed out')
 
             return response
 
@@ -629,7 +644,7 @@ class DatabaseMeta:
 
     def refresh_all_table_partitions(self):
         for table in self._tables:
-            table.refresh_paritions()
+            table.refresh_partitions()
 
     def test_column_types_align(self, exclude_tables=[]):
         """
