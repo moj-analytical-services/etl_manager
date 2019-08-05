@@ -20,6 +20,8 @@ import re
 import time
 import pkg_resources
 import jsonschema
+import pandas as pd
+from gluejobutils.s3 import get_filepaths_from_s3_folder
 
 _template = {
     "base": json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
@@ -464,7 +466,62 @@ class TableMeta:
                         raise ValueError('athena timed out')
 
             return response
+    
+    def get_pandas_df_from_location(self, filenames=None, filter_by_extension=True):
+        """
+        Reads a pandas dataframe trying to keep it to it's rawest form. Gets the data type and location based off the metadata. 
 
+        For CSV will return every row as a string (dtype=object, low_memory=False)
+        For Parquet will read in using pyarrow
+        For json (aka jsonl) will return every row as a string (dtype=object, low_memory=False)
+
+        filenames: A list or string denoting the filepath (assuming the table.location property as the root dir)
+        to the file you want to read in. If a string only read in one df, if a list read all pandas df 
+        in the list and concatenate them. If None (default) function will return all files in the folder (table.location).
+
+        filter_by_extension: If True (default) then the list of filepaths to read from will only be those that have the
+        matching extension of the table object's data_format parameter (extension of .json and .jsonl are excepted for
+        json formats). If False no filter by extension occurs.
+
+        Currently does not support ORC data.
+        """
+        if self.data_format == 'orc':
+            ValueError(f"Function does not support data_format {self.data_format}")
+
+        if filenames is None:
+            all_file_paths = get_filepaths_from_s3_folder(self.location)
+        elif isinstance(filenames, str):
+            all_file_paths = [os.path.join(self.location, filenames)]
+        elif isinstance(filenames, list):
+            all_file_paths = [os.path.join(self.location, f) for f in filenames]
+        else:
+            err_str = f"""
+            Input parameter filenames must either be None, a string or list. Got {type(filenames)}.
+            See function doc string for more details.
+            """
+            raise TypeError(err_str)
+
+        # Filter out bad files
+        if filter_by_extension:
+            if self.data_format == "json":
+                all_file_paths = [a for a in all_file_paths if (a.endswith('.json') or a.endswith('.jsonl'))]
+            else:
+                all_file_paths = [a for a in all_file_paths if (a.endswith(self.data_format))]
+
+        dfs = []
+        for p in all_file_paths:
+            if self.data_format == 'csv':
+                dfs.append(pd.read_csv(self.location, dtype=object, low_memory=False))
+            elif self.data_format == 'json':
+                dfs.append(pd.read_json(self.location, lines=True))
+            elif self.data_format == 'parquet':
+                dfs.append(pd.read_parquet(self.location))
+            else:
+                raise ValueError(f"Function does not support data_format {self.data_format}")
+            
+            final_df = pd.concat(dfs, sort=True)
+        
+        return final_df
 
 class DatabaseMeta:
     """
