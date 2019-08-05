@@ -488,12 +488,14 @@ class TableMeta:
         if self.data_format == 'orc':
             ValueError(f"Function does not support data_format {self.data_format}")
 
+        s3_table_path = os.path.join(self.database.s3_database_path, self.location)
+        
         if filenames is None:
-            all_file_paths = get_filepaths_from_s3_folder(self.location)
+            all_file_paths = get_filepaths_from_s3_folder(s3_table_path)
         elif isinstance(filenames, str):
-            all_file_paths = [os.path.join(self.location, filenames)]
+            all_file_paths = [os.path.join(s3_table_path, filenames)]
         elif isinstance(filenames, list):
-            all_file_paths = [os.path.join(self.location, f) for f in filenames]
+            all_file_paths = [os.path.join(s3_table_path, f) for f in filenames]
         else:
             err_str = f"""
             Input parameter filenames must either be None, a string or list. Got {type(filenames)}.
