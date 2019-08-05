@@ -513,11 +513,11 @@ class TableMeta:
         dfs = []
         for p in all_file_paths:
             if self.data_format == 'csv':
-                dfs.append(pd.read_csv(self.location, dtype=object, low_memory=False))
+                dfs.append(pd.read_csv(p, dtype=object, low_memory=False))
             elif self.data_format == 'json':
-                dfs.append(pd.read_json(self.location, lines=True))
+                dfs.append(pd.read_json(p, lines=True))
             elif self.data_format == 'parquet':
-                dfs.append(pd.read_parquet(self.location))
+                dfs.append(pd.read_parquet(p))
             else:
                 raise ValueError(f"Function does not support data_format {self.data_format}")
             
