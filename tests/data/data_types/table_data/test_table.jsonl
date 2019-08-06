@@ -1,0 +1,3 @@
+{"entity_id": 1, "test_array": [1,2,3,2,3,4,5,4], "test_struct": {"num":1, "desc": "Description.!"}}
+{"entity_id": 2, "test_array": [8,9,7,8,6,7,8,9,8], "test_struct": {"num":2, "desc": "Explanation.!"}}
+{"entity_id": 3, "test_array": [6], "test_struct": {"num":4, "desc": "Desc.!"}}

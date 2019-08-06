@@ -6,5 +6,7 @@
     "double" : {"glue" : "double", "spark": "DoubleType"},
     "date" : {"glue" : "date", "spark": "DateType"},
     "datetime" : {"glue" : "timestamp", "spark": "TimestampType"},
-    "boolean" : {"glue" : "boolean", "spark": "BooleanType"}
+    "boolean" : {"glue" : "boolean", "spark": "BooleanType"},
+    "array" : {"glue" : "array", "spark": "ArrayType"},
+    "struct" : {"glue" : "struct", "spark": "MapType"}
 }

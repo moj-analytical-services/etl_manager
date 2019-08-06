@@ -1,4 +1,5 @@
 import collections
+import copy
 import json
 import boto3
 import tempfile
@@ -7,6 +8,8 @@ import shutil
 import string
 import os
 import subprocess
+
+import regex
 
 _glue_client = boto3.client("glue", "eu-west-1")
 _athena_client = boto3.client("athena", "eu-west-1")
@@ -140,3 +143,40 @@ def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
         final_output_path = shutil.make_archive(output_path, "zip", nested_path)
 
     return final_output_path
+
+
+COL_TYPE_REGEX = regex.compile(r"(character|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)")
+
+
+def data_type_is_regex(data_type):
+    return bool(regex.match(COL_TYPE_REGEX, data_type))
+
+
+def glue_type_to_dict(data_type):
+    type_dict = {}
+    splits = data_type.split("<", 1)
+    name = splits[0].rstrip(">")
+    if len(splits) > 1:
+        defs = splits[1].rstrip(">")
+        if name == "struct":
+            ntd = {}
+            for data_type in defs.split(","):
+                if ":" in data_type:
+                    nn, dt = data_type.split(':')
+                    ntd[nn] = glue_type_to_dict(dt)
+            type_dict[name] = ntd
+        else:
+            type_dict[name] = glue_type_to_dict(defs)
+        return type_dict
+    return name
+
+
+def trim_complex_type(col_type):
+    return col_type.split("<", 1)[0]
+
+
+def trim_complex_data_types(json_data):
+    updated = copy.deepcopy(json_data)
+    for index, col in enumerate(json_data["columns"]):
+        updated["columns"][index]["type"] = trim_complex_type(col["type"])
+    return updated

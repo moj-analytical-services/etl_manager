@@ -24,7 +24,7 @@
             "type": {
               "type": "string",
               "title": "The data type.  We use a limited set of data types for cross compatibility between Spark, R, Pandas etc.  See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
-              "enum": ["character","int","long","float","double","date","datetime","boolean"]
+              "enum": ["character", "int", "long", "float", "double", "date", "datetime", "boolean", "struct", "array"]
             },
             "pattern": {
               "type": "string",
