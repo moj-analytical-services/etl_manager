@@ -17,6 +17,7 @@
             "name": {
               "type": "string",
               "title": "The column name.  Should be lower case with underscores, not spaces",
+              "pattern": "[a-z0-9_]+",  
               "examples": [
                 "employee_number"
               ]
