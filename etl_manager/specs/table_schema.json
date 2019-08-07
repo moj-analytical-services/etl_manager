@@ -3,12 +3,14 @@
     "type": "object",
     "title": "Metadata",
     "description": "MoJ Data Catalogue Metadata",
+    "required": ["columns"],
     "properties": {
       "columns": {
         "type": "array",
         "title": "The columns in the table.  An array of objects",
         "items": {
           "type": "object",
+          "required": ["name", "type"],
           "properties": {
             "description": {
               "type": "string",
