@@ -1,0 +1,34 @@
+{
+    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
+    "name": "test_table",
+    "description": "table containing columns with each of the data types for testing database creation",
+    "data_format": "json",
+    "location": "test_table/",
+    "columns": [
+        {
+            "name": "entity_id",
+            "type": "int",
+            "description": "an ID for each entity"
+        },
+        {
+            "name": "test_array",
+            "type": "array<int>",
+            "description": "column with array data type"
+        },
+        {
+            "name": "test_array_structs",
+            "type": "array<struct<num:int,desc:character>>",
+            "description": "column with array data type"
+        },
+        {
+            "name": "test_struct",
+            "type": "struct<num:int,desc:character>",
+            "description": "column with struct data type"
+        },
+        {
+            "name": "test_struct_arrays",
+            "type": "struct<arr:array<int>>",
+            "description": "column with struct data type"
+        }
+    ]
+}

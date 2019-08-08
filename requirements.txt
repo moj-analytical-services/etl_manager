@@ -1,3 +1,5 @@
 boto3
 pyathenajdbc
 jsonschema
+parameterized==0.7.0
+regex==2019.6.8

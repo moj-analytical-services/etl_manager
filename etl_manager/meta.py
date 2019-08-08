@@ -11,6 +11,9 @@ from etl_manager.utils import (
     _glue_client,
     _s3_resource,
     _remove_final_slash,
+    trim_complex_data_types,
+    trim_complex_type,
+    data_type_is_regex
 )
 import copy
 import string
@@ -100,7 +103,19 @@ class TableMeta:
         self.glue_specific = copy.deepcopy(glue_specific)
         self.database = database
 
-        jsonschema.validate(self.to_dict(), _table_json_schema)
+        self.validate_json_schema()
+        self.validate_column_types()
+
+    def validate_json_schema(self):
+        jsonschema.validate(
+            trim_complex_data_types(self.to_dict()),
+            _table_json_schema
+        )
+
+    def validate_column_types(self):
+        assert all(
+            data_type_is_regex(c["type"]) for c in self.to_dict()["columns"]
+        )
 
     @property
     def name(self):
@@ -222,7 +237,9 @@ class TableMeta:
                 new_c = {}
                 new_c["Name"] = c["name"]
                 new_c["Comment"] = c["description"]
-                new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]
+                new_c["Type"] = _agnostic_to_glue_spark_dict[
+                    trim_complex_type(c["type"])
+                ]["glue"]
                 glue_columns.append(new_c)
 
         return glue_columns

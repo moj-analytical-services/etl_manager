@@ -1,0 +1,6 @@
+{
+    "description": "Test database",
+    "name": "test_data_types",
+    "bucket": "alpha-test-meta-data",
+    "base_folder": "database/test"
+}
