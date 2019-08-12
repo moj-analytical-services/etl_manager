@@ -83,7 +83,7 @@ class GlueJob:
         job_role,
         job_name=None,
         job_arguments={},
-        include_shared_job_resources=True,
+        include_shared_job_resources=True
     ):
         self.job_id = "{:0.0f}".format(time.time())
 
@@ -119,6 +119,8 @@ class GlueJob:
         self.max_retries = 0
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
+        self._glue_version = "1.0"
+        self._python_version = "3"
 
     @property
     def job_folder(self):
@@ -201,6 +203,33 @@ class GlueJob:
     @property
     def job_run_id(self):
         return self._job_run_id
+
+    @property
+    def glue_version(self):
+        return self._glue_version
+
+    @glue_version.setter
+    def glue_version(self, v):
+        valid_glue_versions = ["1.0", "0.9"]
+        if not isinstance(v, str):
+            raise TypeError(f"glue_version must be of type str (given {type(v)})")
+        if v not in valid_glue_versions:
+            raise ValueError(f"glue_version must be one of {valid_glue_versions} (give {v})")
+        self._python_version = v
+
+    @property
+    def python_version(self):
+        return self._python_version
+
+    @python_version.setter
+    def python_version(self, v):
+        valid_python_versions = ["3", "2"]
+        if not isinstance(v, str):
+            raise TypeError(f"python_version must be of type str (given {type(v)})")
+        if v not in valid_python_versions:
+            raise ValueError(f"python_version must be one of {valid_python_versions} (give {v})")
+        
+        self._python_version = v
 
     def _check_nondup_resources(self, resources_list):
         file_list = [os.path.basename(r) for r in resources_list]
@@ -383,7 +412,7 @@ class GlueJob:
             "Name": self.job_name,
             "Role": self.job_role,
             "ExecutionProperty": {"MaxConcurrentRuns": self.max_concurrent_runs},
-            "Command": {"Name": "glueetl", "ScriptLocation": script_location},
+            "Command": {"Name": "glueetl", "ScriptLocation": script_location, "PythonVersion": self.python_version},
             "DefaultArguments": {
                 "--TempDir": tmp_dir,
                 "--extra-files": "",
@@ -392,8 +421,9 @@ class GlueJob:
             },
             "MaxRetries": self.max_retries,
             "AllocatedCapacity": self.allocated_capacity,
+            "GlueVersion": self.glue_version
         }
-
+        
         if len(self.resources) > 0:
             extra_files = ",".join(
                 [
@@ -419,6 +449,7 @@ class GlueJob:
         return job_definition
 
     def run_job(self, sync_to_s3_before_run=True):
+
         self.delete_job()
 
         if sync_to_s3_before_run:

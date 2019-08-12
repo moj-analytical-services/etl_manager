@@ -8,7 +8,7 @@ setup(
     description="A python package to manage etl processes on AWS",
     long_description=open("README.md").read(),
     install_requires=[
-        "boto3 >= 1.7.4",
+        "boto3 >= 1.9.205",
         "jsonschema >= 2.6.0",
         "parameterized==0.7.0",
         "regex==2019.6.8",
