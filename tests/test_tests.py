@@ -13,6 +13,8 @@ from etl_manager.meta import (
     _agnostic_to_glue_spark_dict,
     MetaColumnTypeMismatch,
     _get_spec,
+    _table_json_schema,
+    _web_link_to_table_json_schema,
 )
 from etl_manager.utils import (
     _end_with_slash,
@@ -516,6 +518,10 @@ class TableMetaTest(unittest.TestCase):
         tb.add_column("b", "int", "")
         self.assertListEqual(tb.column_names, ["a", "b", "p"])
 
+    def test_local_schema_matches_web_schema(self):
+        with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
+            web_schema = json.loads(url.read().decode())
+        self.assertDictEqual(_table_json_schema, web_schema)
 
 if __name__ == "__main__":
     unittest.main()

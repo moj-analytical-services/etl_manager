@@ -55,7 +55,7 @@ _agnostic_to_glue_spark_dict = json.load(
 _table_json_schema = json.load(
     pkg_resources.resource_stream(__name__, "specs/table_schema.json")
 )
-_web_link_to_table_json_schema = "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json"
+_web_link_to_table_json_schema = "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json"
 
 _supported_column_types = _table_json_schema["properties"]["columns"]["items"][
     "properties"
