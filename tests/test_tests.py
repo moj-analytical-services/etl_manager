@@ -5,6 +5,8 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
+import warnings
+
 from etl_manager.meta import (
     DatabaseMeta,
     TableMeta,
@@ -321,8 +323,8 @@ class DatabaseMetaTest(unittest.TestCase):
             self.assertEqual(db.delete_glue_database(), "database deleted")
             self.assertEqual(db.delete_glue_database(), "database not found in glue catalogue")
         else:
-            print(
-                "\n***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ..."
+            warnings.warn(
+                "***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ..."
             )
             self.assertTrue(True)
 
