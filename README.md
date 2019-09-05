@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/moj-analytical-services/etl_manager.svg?branch=master)](https://travis-ci.org/moj-analytical-services/etl_manager)
 
+[![Actions Status](https://github.com/moj-analytical-services/etl_manager/workflows/ETL%20Manager/badge.svg)](https://github.com/moj-analytical-services/etl_manager/actions)
+
 A python package that manages our data engineering framework and implements them on AWS Glue.
 
 The main functionality of this package is to interact with AWS Glue to create meta data catalogues and run Glue jobs.
@@ -84,7 +86,7 @@ The employees table has an ID for each employee their name and dob. The table me
 
 ```json
 {
-    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
+    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json",
     "name": "employees",
     "description": "table containing employee information",
     "data_format": "parquet",
@@ -113,7 +115,7 @@ The employees table has an ID for each employee their name and dob. The table me
 
 `character | int | long | float | double | date | datetime |  boolean`
 
-This is a standard layout for a table metadata json. `$schema` points to another json that validates the structure of out table metadata files. Your table will have this `name` and `description` _(Note: It is strongly suggested that the name of your table matches the name of the metadata json file)_ when the database is created. The `location` is the relative folder path to where your table exists. This path is relative to your database `base_folder`. This means that the full path your table is `s3://<database.bucket>/<database.base_folder>/<table.folder>/`. So in this example the table employees should be in the s3 path `s3://my-bucket/database/database1/employees`. The `data_format` specifies what type of data the table is. Finally your columns is an array of objects. Where each object is a column definition specifying the `name`, `description` and `type` (data type) of the column. Each column can have optional arguments `pattern`, `enum` and `nullable` (see [table_schema.json](https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json) for definition).
+This is a standard layout for a table metadata json. `$schema` points to another json that validates the structure of out table metadata files. Your table will have this `name` and `description` _(Note: It is strongly suggested that the name of your table matches the name of the metadata json file)_ when the database is created. The `location` is the relative folder path to where your table exists. This path is relative to your database `base_folder`. This means that the full path your table is `s3://<database.bucket>/<database.base_folder>/<table.folder>/`. So in this example the table employees should be in the s3 path `s3://my-bucket/database/database1/employees`. The `data_format` specifies what type of data the table is. Finally your columns is an array of objects. Where each object is a column definition specifying the `name`, `description` and `type` (data type) of the column. Each column can have optional arguments `pattern`, `enum` and `nullable` (see [table_schema.json](https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json) for definition).
 
 **Note:** that the order of the columns listed here should be the order of the columns in the table _(remember that data for a table should not have a header so the data will be queried wrong if the column order does not match up with the actual data)_.
 
@@ -121,7 +123,7 @@ Here is another table in the database called teams. The teams table is a list of
 
 ```json
 {
-    "$schema" : "https://raw.githubusercontent.com/moj-analytical-services/etl_manager/master/etl_manager/specs/table_schema.json",
+    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json",
     "name": "teams",
     "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
