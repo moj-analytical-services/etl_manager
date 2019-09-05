@@ -10,6 +10,7 @@ from etl_manager.utils import data_type_is_regex
 
 class ColumnTypesTest(BotoTester):
     @mock.patch("etl_manager.meta._glue_client.create_table")
+    
     def test_can_create_glue_table(self, mock_client_create_table):
         self.skip_test_if_no_creds()
         db = read_database_folder(os.path.join(os.path.dirname(__file__), "data/data_types/"))

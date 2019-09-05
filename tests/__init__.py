@@ -16,7 +16,6 @@ class BotoTester(unittest.TestCase):
 
         cls.has_access_key = has_access_key
 
-    @classmethod
-    def skip_test_if_no_creds(cls):
-        if not cls.has_access_key:
-            cls.skipTest()
+    def skip_test_if_no_creds(self):
+        if not self.has_access_key:
+            self.skipTest("No boto credentials found")
