@@ -1,7 +1,5 @@
 # etl_manager
 
-[![Build Status](https://travis-ci.org/moj-analytical-services/etl_manager.svg?branch=master)](https://travis-ci.org/moj-analytical-services/etl_manager)
-
 [![Actions Status](https://github.com/moj-analytical-services/etl_manager/workflows/ETL%20Manager/badge.svg)](https://github.com/moj-analytical-services/etl_manager/actions)
 
 A python package that manages our data engineering framework and implements them on AWS Glue.
