@@ -1,0 +1,15 @@
+[tool]
+[tool.poetry]
+name = "etl_manager"
+version = "7.0.0"
+description = "A python package to manage etl processes on AWS"
+license = "MIT"
+authors = ["Karik Isichei <karik.isichei@digital.justice.gov.uk>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+boto3 = ">=1.9.205"
+jsonschema = ">=2.6.0"
+parameterized = ">=0.7.0"
+regex = ">= 2019.6.8"
