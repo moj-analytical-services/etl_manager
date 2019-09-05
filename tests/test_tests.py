@@ -5,7 +5,7 @@ Testing DatabaseMeta, TableMeta
 """
 
 import unittest
-import warnings
+from tests import BotoTester
 
 from etl_manager.meta import (
     DatabaseMeta,
@@ -31,8 +31,7 @@ import tempfile
 import os
 import urllib, json
 
-
-class UtilsTest(unittest.TestCase):
+class UtilsTest(BotoTester):
     """
     Test packages utilities functions
     """
@@ -47,7 +46,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(_remove_final_slash("hello"), "hello")
 
 
-class GlueTest(unittest.TestCase):
+class GlueTest(BotoTester):
     """
     Test the GlueJob class
     """
@@ -134,7 +133,7 @@ class GlueTest(unittest.TestCase):
         self.assertEqual(g.job_arguments["--new_args"], "something")
 
 
-class TableTest(unittest.TestCase):
+class TableTest(BotoTester):
     def test_table_init(self):
         tm = read_table_json("example/meta_data/db1/teams.json")
 
@@ -144,7 +143,7 @@ class TableTest(unittest.TestCase):
         self.assertTrue(gtd["StorageDescriptor"]["Location"] == "full_db_path/teams/")
 
 
-class DatabaseMetaTest(unittest.TestCase):
+class DatabaseMetaTest(BotoTester):
     """
     Test the Databasse_Meta class
     """
@@ -300,33 +299,22 @@ class DatabaseMetaTest(unittest.TestCase):
         location = gtd["StorageDescriptor"]["Location"]
         self.assertTrue(location == "s3://my-bucket/database/database1/teams/")
 
-    def test_glue_database_creation(self):
-        session = boto3.Session()
-        credentials = session.get_credentials()
-        has_access_key = True
-        try:
-            ac = credentials.access_key
-        except:
-            has_access_key = False
 
-        if has_access_key:
-            db = read_database_folder("example/meta_data/db1/")
-            db_suffix = "_unit_test_"
-            db.name = db.name + db_suffix
-            db.create_glue_database()
-            resp = _glue_client.get_tables(DatabaseName=db.name)
-            test_created = all([r["Name"] in db.table_names for r in resp["TableList"]])
-            self.assertTrue(
-                test_created,
-                msg="Note this requires user to have correct credentials to create a glue database",
-            )
-            self.assertEqual(db.delete_glue_database(), "database deleted")
-            self.assertEqual(db.delete_glue_database(), "database not found in glue catalogue")
-        else:
-            warnings.warn(
-                "***\nCANNOT RUN THIS UNIT TEST AS DO NOT HAVE ACCESS TO AWS.\n***\nskipping ..."
-            )
-            self.assertTrue(True)
+    def test_glue_database_creation(self):
+        
+        self.skip_test_if_no_creds()
+        db = read_database_folder("example/meta_data/db1/")
+        db_suffix = "_unit_test_"
+        db.name = db.name + db_suffix
+        db.create_glue_database()
+        resp = _glue_client.get_tables(DatabaseName=db.name)
+        test_created = all([r["Name"] in db.table_names for r in resp["TableList"]])
+        self.assertTrue(
+            test_created,
+            msg="Note this requires user to have correct credentials to create a glue database",
+        )
+        self.assertEqual(db.delete_glue_database(), "database deleted")
+        self.assertEqual(db.delete_glue_database(), "database not found in glue catalogue")
 
     def test_db_test_column_types_align(self):
         db = read_database_folder("example/meta_data/db1/")
@@ -343,7 +331,7 @@ class DatabaseMetaTest(unittest.TestCase):
             db.test_column_types_align()
 
 
-class TableMetaTest(unittest.TestCase):
+class TableMetaTest(BotoTester):
     """
     Test Table Meta class
     """
