@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.0.0
+
+### Change
+
+- ETL Manager now points to a web schema for tables (will get schema from package if cannot access schema web link - but will output warning)
+- Updated package setup to `pyproject.toml`
+- Replaced travis for github actions
+
+## v6.0.0
+
+### Change
+
+- Glue jobs now run using Python 3 and Spark 2.4 as default
+
+## v5.0.0
+
+### Added
+
+- ETL manager now allows use of STRUCT and ARRAY col types in your hive metadata tables.
+
 ## v4.0.0
 
 ### Updated
