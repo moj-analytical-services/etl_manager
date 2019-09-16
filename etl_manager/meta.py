@@ -300,7 +300,6 @@ class TableMeta:
                     c["type"] = kwargs["type"]
 
                 if "description" in kwargs:
-                    _validate_string(kwargs["description"], "_,.")
                     c["description"] = kwargs["description"]
 
                 if "pattern" in kwargs:
