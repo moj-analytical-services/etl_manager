@@ -58,7 +58,7 @@ class GlueJob:
       job.py
       glue_py_resources/
         zip and python files
-        github_zip_urls.txt <- file containing urls of additional zip files e.g. on github
+        github_zip_urls.txt <- file containing urls of zip files from github, which will be converted into glue's required format
       glue_resources/
         txt, sql, json, or csv files
 
