@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.0.2
+
+### Change
+
+- GlueJob now sets a timeout parameter for glue jobs. This can set to specific times (in minutes) using the `timeout_override_minutes` property
+- Relaxed package requirements on jsonschema
+- Removed `requirements.txt` as no longer used
+
 ## v7.0.1
 
 ### Change
