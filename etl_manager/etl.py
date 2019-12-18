@@ -83,7 +83,8 @@ class GlueJob:
         job_role,
         job_name=None,
         job_arguments={},
-        include_shared_job_resources=True
+        include_shared_job_resources=True,
+        timeout_override_minutes=None
     ):
         self.job_id = "{:0.0f}".format(time.time())
 
@@ -112,6 +113,8 @@ class GlueJob:
 
         self.job_arguments = job_arguments
 
+        self.timeout_override_minutes = timeout_override_minutes
+
         self.github_py_resources = []
 
         # Set as default can change using standard getters and setters (except _job_run_id only has getter)
@@ -119,8 +122,20 @@ class GlueJob:
         self.max_retries = 0
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
+
+
         self._glue_version = "1.0"
         self._python_version = "3"
+
+
+    @property
+    def timeout(self):
+        if self.timeout_override_minutes is None:
+            # 20 dollar limit, at 44 cents per worker per hour
+            return int(60 * (20 /(0.44 * self.allocated_capacity)))
+        else:
+            return int(self.timeout_override_minutes)
+
 
     @property
     def job_folder(self):
@@ -200,6 +215,12 @@ class GlueJob:
         _validate_string(job_name, allowed_chars="-_:")
         self._job_name = job_name
 
+    @job_name.setter
+    def job_name(self, job_name):
+        _validate_string(job_name, allowed_chars="-_:")
+        self._job_name = job_name
+
+
     @property
     def job_run_id(self):
         return self._job_run_id
@@ -228,7 +249,7 @@ class GlueJob:
             raise TypeError(f"python_version must be of type str (given {type(v)})")
         if v not in valid_python_versions:
             raise ValueError(f"python_version must be one of {valid_python_versions} (give {v})")
-        
+
         self._python_version = v
 
     def _check_nondup_resources(self, resources_list):
@@ -421,9 +442,10 @@ class GlueJob:
             },
             "MaxRetries": self.max_retries,
             "AllocatedCapacity": self.allocated_capacity,
-            "GlueVersion": self.glue_version
+            "GlueVersion": self.glue_version,
+            "Timeout": self.timeout
         }
-        
+
         if len(self.resources) > 0:
             extra_files = ",".join(
                 [
@@ -536,7 +558,7 @@ class GlueJob:
             back_off_counter = 0
             if verbose:
                 print("JOB SUCCEEDED: Cleaning Up")
-            
+
             while True:
                 try:
                     self.cleanup()

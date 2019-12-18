@@ -133,6 +133,39 @@ class GlueTest(BotoTester):
         self.assertEqual(g.job_arguments["--new_args"], "something")
 
 
+    def test_timeout(self):
+        g = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+            job_arguments={"--test_arg": "this is a test"},
+        )
+
+        self.assertEqual(g._job_definition()["Timeout"], 1363)
+
+        g.allocated_capacity = 10
+
+        self.assertEqual(g._job_definition()["Timeout"], 272)
+
+        g.allocated_capacity = 40
+
+        self.assertEqual(g._job_definition()["Timeout"], 68)
+
+        g = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+            job_arguments={"--test_arg": "this is a test"},
+            timeout_override_minutes = 2880
+        )
+
+        g.allocated_capacity = 40
+
+        self.assertEqual(g._job_definition()["Timeout"], 2880)
+
+
+
+
 class TableTest(BotoTester):
     def test_table_init(self):
         tm = read_table_json("example/meta_data/db1/teams.json")
@@ -301,7 +334,7 @@ class DatabaseMetaTest(BotoTester):
 
 
     def test_glue_database_creation(self):
-        
+
         self.skip_test_if_no_creds()
         db = read_database_folder("example/meta_data/db1/")
         db_suffix = "_unit_test_"
