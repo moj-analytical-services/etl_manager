@@ -10,7 +10,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.6"
 boto3 = ">=1.9.205"
-jsonschema = "3.0.*"
+jsonschema = ">=3.0.0"
 parameterized = "0.7.*"
 regex = "2019.6.*"
 
