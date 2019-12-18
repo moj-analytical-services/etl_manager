@@ -133,7 +133,7 @@ class GlueJob:
     @property
     def timeout(self):
         if self.timeout_override_minutes is None:
-            # 20 dollar limit, at 44 cents per worker per hour
+            # 60 because timeout is in munites, whereas glue worker cost is in hours
             return int(60 * (self.MAXIMUM_COST_TIMEOUT  /(self.GLUE_WORKER_HOURLY_COST * self.allocated_capacity)))
         else:
             return int(self.timeout_override_minutes)
