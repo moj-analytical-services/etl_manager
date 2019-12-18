@@ -86,6 +86,8 @@ class GlueJob:
         include_shared_job_resources=True,
         timeout_override_minutes=None
     ):
+        self.GLUE_WORKER_HOURLY_COST = 0.44 # i.e. 44 cents per worker per hour
+        self.MAXIMUM_COST_TIMEOUT = 20 # i.e by default, jobs will timeout if they cost > 20 dollars
         self.job_id = "{:0.0f}".format(time.time())
 
         job_folder = os.path.normpath(job_folder)
@@ -132,7 +134,7 @@ class GlueJob:
     def timeout(self):
         if self.timeout_override_minutes is None:
             # 20 dollar limit, at 44 cents per worker per hour
-            return int(60 * (20 /(0.44 * self.allocated_capacity)))
+            return int(60 * (self.MAXIMUM_COST_TIMEOUT  /(self.GLUE_WORKER_HOURLY_COST * self.allocated_capacity)))
         else:
             return int(self.timeout_override_minutes)
 
