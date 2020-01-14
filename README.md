@@ -173,7 +173,7 @@ From the above you can see this has additional properties `enum`, `pattern`, `nu
 
 The easiest way to create a database is to run the code below. It reads a database schema based on the json files in a folder and creates this database meta in the glue catalogue. Allowing you to query the data using SQL using Athena.
 
-```python 
+```python
 from etl_manager.meta import read_database_folder
 db = read_database_folder('example_meta_data/')
 db.create_glue_database()
@@ -245,6 +245,8 @@ Glue jobs have the prescribed folder format as follows:
 |   |   └── glue_py_resources/
 |   |       ├── my_python_functions.zip
 |   |       └── github_zip_urls.txt
+|   |   └── glue_jars/
+|   |       └── my_jar.jar
 |   |
 │   ├── job2/
 │   |   ├── job.py
@@ -255,6 +257,8 @@ Glue jobs have the prescribed folder format as follows:
 │   |   ├── glue_resources/
 |   |   |   └── meta_data_dictionary.json
 │   |   └── glue_py_resources/
+|   |   └── glue_jars/
+|   |       └── my_other_jar.jar
 ```
 
 Every glue job folder must have a `job.py` script in that folder. That is the only required file everything else is optional. When you want to create a glue job object you point the GlueJob class to the parent folder of the `job.py` script you want to run. There are two additional folders you can add to this parent folder :
@@ -322,7 +326,7 @@ This glue job would not only have access the the python script `job1_specific_fu
 
 ### Using the Glue Job class
 
-Returning to the initial example: 
+Returning to the initial example:
 
 ```python
 from etl_manager.etl import GlueJob
@@ -379,8 +383,8 @@ meta_employees = read_json_from_s3(os.path.join(args['metadata_base_path'], "emp
 ### etc
 ```
 
->**Notes:** 
-> - The `test_arg` does not have two dashes in front of it. When specifying job_arguments with the GlueJob class it must be suffixed with `--` but you should remove these when accessing the args in the `job.py` script. 
+>**Notes:**
+> - The `test_arg` does not have two dashes in front of it. When specifying job_arguments with the GlueJob class it must be suffixed with `--` but you should remove these when accessing the args in the `job.py` script.
 > - `metadata_base_path` is a special parameter that is set by the GlueJob class. It is the S3 path to where the `meta_data` folder is in S3 so that you can read in your agnostic metadata files if you want to use them in your glue job. Note that the [gluejobutils](https://github.com/moj-analytical-services/gluejobutils) package has a lot of functionality with integrating our metadata jsons with spark.
 > - The GlueJob argument `--enable-metrics` is also a special parameter that enables you to see metrics of your glue job. [See here for more details on enabling metrics](https://docs.aws.amazon.com/en_us/glue/latest/dg/monitor-profile-glue-job-cloudwatch-metrics.html).
 > - Note that `JOB_NAME` is a special parameter that is not set in GlueJob but automatically passed to the AWS Glue when running `job.py`. [See here for more on special parameters](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html).
