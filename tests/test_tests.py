@@ -70,6 +70,14 @@ class GlueTest(BotoTester):
             g.py_resources,
             ["example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"],
         )
+
+        self.assertEqual(
+            set(g.jars),
+            set([
+             "example/glue_jobs/simple_etl_job/glue_jars/j1.jar",
+             "example/glue_jobs/simple_etl_job/glue_jars/j2.jar"
+            ])
+        )
         self.assertEqual(g.job_name, "simple_etl_job")
         self.assertEqual(g.bucket, "alpha-everyone")
         self.assertEqual(g.job_role, "alpha_user_isichei")
@@ -82,6 +90,9 @@ class GlueTest(BotoTester):
         self.assertEqual(g.max_retries, 0)
         self.assertEqual(g.max_concurrent_runs, 1)
         self.assertEqual(g.allocated_capacity, 2)
+
+        jobdef = g._job_definition()
+        self.assertTrue("j2.jar" in jobdef["DefaultArguments"]["--extra-jars"])
 
         g2 = GlueJob(
             "example/glue_jobs/simple_etl_job/",
