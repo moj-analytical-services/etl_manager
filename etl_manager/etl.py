@@ -507,7 +507,7 @@ class GlueJob:
             )
             job_definition["DefaultArguments"]["--extra-jars"] = extra_jars
         else:
-            job_definition["DefaultArguments"].pop("--extra-fars", None)
+            job_definition["DefaultArguments"].pop("--extra-jars", None)
 
         return job_definition
 
