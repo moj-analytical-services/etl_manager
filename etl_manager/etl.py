@@ -61,6 +61,8 @@ class GlueJob:
         github_zip_urls.txt <- file containing urls of zip files from github, which will be converted into glue's required format
       glue_resources/
         txt, sql, json, or csv files
+      glue_jars/
+        jar files
 
     Can then run jobs on aws glue using this class.
 
@@ -72,6 +74,8 @@ class GlueJob:
           zip, python and zip_urls
         glue_resources/
           txt, sql, json, or csv files
+        glue_jars/
+            jar files
       job_folder
         etc...
     """
@@ -108,6 +112,7 @@ class GlueJob:
         self.include_shared_job_resources = include_shared_job_resources
         self.py_resources = self._get_py_resources()
         self.resources = self._get_resources()
+        self.jars = self._get_jars()
         self.all_meta_data_paths = (
             self._get_metadata_paths()
         )  # Within a glue job, it's sometimes useful to be able to access the agnostic metdata
@@ -342,6 +347,28 @@ class GlueJob:
 
         return resource_listing
 
+    def _get_jars(self):
+        # Upload all the .jar files in the jars folder
+        # Check existence of folder, otherwise skip
+
+        resource_folder = "glue_jars"
+        regex = ".+(\.jar)$"
+
+        resources_path = os.path.join(self.job_folder, resource_folder)
+        shared_resources_path = os.path.join(
+            self.job_parent_folder, "shared_job_resources", resource_folder
+        )
+
+        resource_listing = self._list_folder_with_regex(resources_path, regex)
+
+        if self.include_shared_job_resources:
+            shared_resource_listing = self._list_folder_with_regex(
+                shared_resources_path, regex
+            )
+            resource_listing = resource_listing + shared_resource_listing
+
+        return resource_listing
+
     def _get_metadata_paths(self):
         """
         Enumerate the relative path for all metadata json files
@@ -399,6 +426,7 @@ class GlueJob:
             self.github_py_resources
             + self.py_resources
             + self.resources
+            + self.jars
             + [self.job_path]
         )
         self._check_nondup_resources(files_to_sync)
@@ -469,6 +497,17 @@ class GlueJob:
             job_definition["DefaultArguments"]["--extra-py-files"] = extra_py_files
         else:
             job_definition["DefaultArguments"].pop("--extra-py-files", None)
+
+        if len(self.jars) > 0:
+            extra_jars = ",".join(
+                [
+                    os.path.join(self.s3_job_folder_inc_bucket, os.path.basename(f))
+                    for f in (self.jars)
+                ]
+            )
+            job_definition["DefaultArguments"]["--extra-jars"] = extra_jars
+        else:
+            job_definition["DefaultArguments"].pop("--extra-fars", None)
 
         return job_definition
 
