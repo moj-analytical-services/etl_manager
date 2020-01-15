@@ -393,11 +393,7 @@ class GlueJob:
             myzip.extractall(td)
             nested_folder_to_unnest = os.listdir(td)[0]
             nested_path = os.path.join(td, nested_folder_to_unnest)
-            name = [
-                d
-                for d in os.listdir(nested_path)
-                if os.path.isdir(os.path.join(nested_path, d))
-            ][0]
+            name = url.split("/")[4]
             output_path = os.path.join(original_dir, name)
             final_output_path = shutil.make_archive(output_path, "zip", nested_path)
 
