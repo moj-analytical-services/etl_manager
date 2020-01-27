@@ -9,10 +9,8 @@ The main functionality of this package is to interact with AWS Glue to create me
 To install:
 
 ```bash
-pip install git+git://github.com/moj-analytical-services/etl_manager.git#egg=etl_manager
+pip install etl_manager
 ```
-
-If you do not have it installed already you will also need to install boto3.
 
 ## Meta Data
 
