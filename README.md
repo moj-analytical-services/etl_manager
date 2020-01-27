@@ -9,7 +9,7 @@ The main functionality of this package is to interact with AWS Glue to create me
 To install:
 
 ```bash
-pip install etl-manager
+pip install etl_manager
 ```
 
 ## Meta Data
