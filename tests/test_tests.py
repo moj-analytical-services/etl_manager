@@ -4,8 +4,11 @@
 Testing DatabaseMeta, TableMeta
 """
 
+import tempfile
+import os
+import urllib
+import json
 import unittest
-from tests import BotoTester
 
 from etl_manager.meta import (
     DatabaseMeta,
@@ -26,10 +29,8 @@ from etl_manager.utils import (
     _remove_final_slash,
 )
 from etl_manager.etl import GlueJob
-import boto3
-import tempfile
-import os
-import urllib, json
+
+from tests import BotoTester
 
 
 class UtilsTest(BotoTester):
@@ -70,7 +71,8 @@ class GlueTest(BotoTester):
         self.assertEqual(
             g.py_resources,
             [
-                "example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"
+                "example/glue_jobs/shared_job_resources/glue_py_resources/"
+                "my_dummy_utils.zip"
             ],
         )
 
@@ -89,7 +91,8 @@ class GlueTest(BotoTester):
         self.assertEqual(
             g.github_zip_urls,
             [
-                "https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"
+                "https://github.com/moj-analytical-services/gluejobutils/archive/"
+                "master.zip"
             ],
         )
         self.assertEqual(g.job_arguments["--test_arg"], "this is a test")
@@ -182,7 +185,6 @@ class GlueTest(BotoTester):
         self.assertEqual(g._job_definition()["Timeout"], 2880)
 
 
-
 class TableTest(BotoTester):
     def test_table_init(self):
         tm = read_table_json("example/meta_data/db1/teams.json")
@@ -271,7 +273,8 @@ class DatabaseMetaTest(BotoTester):
         expected_dict = read_json("example/meta_data/db1/teams.json")
         test_dict = db.table("teams").to_dict()
 
-        # Null out schema as may need changing when on branch but still need to unit test
+        # Null out schema as may need changing when on branch but still need to unit
+        # test
         expected_dict["$schema"] = ""
         test_dict["$schema"] = ""
 
@@ -281,7 +284,8 @@ class DatabaseMetaTest(BotoTester):
         expected_dict2 = read_json("example/meta_data/db1/pay.json")
         test_dict2 = db.table("pay").to_dict()
 
-        # Null out schema as may need changing when on branch but still need to unit test
+        # Null out schema as may need changing when on branch but still need to unit
+        # test
         expected_dict2["$schema"] = ""
         test_dict2["$schema"] = ""
 
@@ -390,7 +394,8 @@ class TableMetaTest(BotoTester):
 
     def test_data_type_conversion_against_gluejobutils(self):
         with urllib.request.urlopen(
-            "https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/master/gluejobutils/data/data_type_conversion.json"
+            "https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/"
+            "master/gluejobutils/data/data_type_conversion.json"
         ) as url:
             gluejobutils_data = json.loads(url.read().decode())
         self.assertDictEqual(_agnostic_to_glue_spark_dict, gluejobutils_data)
