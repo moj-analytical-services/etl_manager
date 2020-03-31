@@ -31,6 +31,7 @@ import tempfile
 import os
 import urllib, json
 
+
 class UtilsTest(BotoTester):
     """
     Test packages utilities functions
@@ -68,22 +69,28 @@ class GlueTest(BotoTester):
         )
         self.assertEqual(
             g.py_resources,
-            ["example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"],
+            [
+                "example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"
+            ],
         )
 
         self.assertEqual(
             set(g.jars),
-            set([
-             "example/glue_jobs/simple_etl_job/glue_jars/j1.jar",
-             "example/glue_jobs/simple_etl_job/glue_jars/j2.jar"
-            ])
+            set(
+                [
+                    "example/glue_jobs/simple_etl_job/glue_jars/j1.jar",
+                    "example/glue_jobs/simple_etl_job/glue_jars/j2.jar",
+                ]
+            ),
         )
         self.assertEqual(g.job_name, "simple_etl_job")
         self.assertEqual(g.bucket, "alpha-everyone")
         self.assertEqual(g.job_role, "alpha_user_isichei")
         self.assertEqual(
             g.github_zip_urls,
-            ["https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"],
+            [
+                "https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"
+            ],
         )
         self.assertEqual(g.job_arguments["--test_arg"], "this is a test")
         self.assertEqual(g.github_py_resources, [])
@@ -101,7 +108,8 @@ class GlueTest(BotoTester):
             include_shared_job_resources=False,
         )
         self.assertEqual(
-            g2.resources, ["example/glue_jobs/simple_etl_job/glue_resources/employees.json"]
+            g2.resources,
+            ["example/glue_jobs/simple_etl_job/glue_resources/employees.json"],
         )
         self.assertEqual(g2.py_resources, [])
 
@@ -143,7 +151,6 @@ class GlueTest(BotoTester):
         g.job_arguments = {"--new_args": "something"}
         self.assertEqual(g.job_arguments["--new_args"], "something")
 
-
     def test_timeout(self):
         g = GlueJob(
             "example/glue_jobs/simple_etl_job/",
@@ -167,13 +174,12 @@ class GlueTest(BotoTester):
             bucket="alpha-everyone",
             job_role="alpha_user_isichei",
             job_arguments={"--test_arg": "this is a test"},
-            timeout_override_minutes = 2880
+            timeout_override_minutes=2880,
         )
 
         g.allocated_capacity = 40
 
         self.assertEqual(g._job_definition()["Timeout"], 2880)
-
 
 
 
@@ -311,7 +317,8 @@ class DatabaseMetaTest(BotoTester):
         t = read_table_json("example/meta_data/db1/pay.json")
         glue_def = t.glue_table_definition("db_path")
         self.assertTrue(
-            t.glue_table_definition("db_path")["Parameters"]["skip.header.line.count"] == "1"
+            t.glue_table_definition("db_path")["Parameters"]["skip.header.line.count"]
+            == "1"
         )
 
     def test_glue_table_definition_doesnt_overwrite_base_spec(self):
@@ -343,7 +350,6 @@ class DatabaseMetaTest(BotoTester):
         location = gtd["StorageDescriptor"]["Location"]
         self.assertTrue(location == "s3://my-bucket/database/database1/teams/")
 
-
     def test_glue_database_creation(self):
 
         self.skip_test_if_no_creds()
@@ -358,7 +364,9 @@ class DatabaseMetaTest(BotoTester):
             msg="Note this requires user to have correct credentials to create a glue database",
         )
         self.assertEqual(db.delete_glue_database(), "database deleted")
-        self.assertEqual(db.delete_glue_database(), "database not found in glue catalogue")
+        self.assertEqual(
+            db.delete_glue_database(), "database not found in glue catalogue"
+        )
 
     def test_db_test_column_types_align(self):
         db = read_database_folder("example/meta_data/db1/")
@@ -397,6 +405,8 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm.columns, [])
         self.assertEqual(tm.partitions, [])
         self.assertEqual(tm.glue_specific, {})
+        self.assertEqual(tm.personal_data, bool())
+        self.assertEqual(tm.special_category_data, bool())
 
         kwargs = {
             "name": "employees",
@@ -404,7 +414,11 @@ class TableMetaTest(BotoTester):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
+                {
+                    "name": "employee_id",
+                    "type": "int",
+                    "description": "an ID for each employee",
+                },
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -424,7 +438,10 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm2.data_format, kwargs["data_format"])
         self.assertEqual(tm2.location, kwargs["location"])
         self.assertEqual(tm2.columns, kwargs["columns"])
+        self.assertEqual(tm2.partitions, [])
         self.assertEqual(tm2.glue_specific, {})
+        self.assertEqual(tm2.personal_data, bool())
+        self.assertEqual(tm2.special_category_data, bool())
         with self.assertRaises(ValueError):
             tm2.database = "not a database obj"
 
@@ -440,7 +457,11 @@ class TableMetaTest(BotoTester):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
+                {
+                    "name": "employee_id",
+                    "type": "int",
+                    "description": "an ID for each employee",
+                },
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -450,8 +471,16 @@ class TableMetaTest(BotoTester):
         }
 
         columns_test = [
-            {"name": "employee_id2", "type": "character", "description": "a new description"},
-            {"name": "employee_name", "type": "character", "description": "name of the employee"},
+            {
+                "name": "employee_id2",
+                "type": "character",
+                "description": "a new description",
+            },
+            {
+                "name": "employee_name",
+                "type": "character",
+                "description": "name of the employee",
+            },
         ]
 
         new_col = {
@@ -460,7 +489,13 @@ class TableMetaTest(BotoTester):
             "description": "date of birth for the employee",
             "nullable": True,
             "pattern": "\d{4}-\d{2}-\d{2}",
-            "enum": ["a", "b", "c"],  # yes enums and patterns can conflict - no validation for this
+            "enum": [
+                "a",
+                "b",
+                "c",
+            ],  # yes enums and patterns can conflict - no validation for this
+            "personal_data": True,
+            "special_category_data": False,
         }
 
         tm = TableMeta(**kwargs)
@@ -484,7 +519,10 @@ class TableMetaTest(BotoTester):
 
         # Test update column failure
         tm.update_column(
-            "employee_id", name="employee_id2", type="character", description="a new description"
+            "employee_id",
+            name="employee_id2",
+            type="character",
+            description="a new description",
         )
         self.assertEqual(tm.columns, columns_test)
 
@@ -501,7 +539,11 @@ class TableMetaTest(BotoTester):
             "data_format": "parquet",
             "location": "employees/",
             "columns": [
-                {"name": "employee_id", "type": "int", "description": "an ID for each employee"},
+                {
+                    "name": "employee_id",
+                    "type": "int",
+                    "description": "an ID for each employee",
+                },
                 {
                     "name": "employee_name",
                     "type": "character",
@@ -539,6 +581,10 @@ class TableMetaTest(BotoTester):
             tm.update_column("employee_id", enum=5)
         with self.assertRaises(TypeError):
             tm.update_column("employee_id", nullable=5)
+        with self.assertRaises(TypeError):
+            tm.update_column("employee_id", personal_data=5)
+        with self.assertRaises(TypeError):
+            tm.update_column("employee_id", special_category_data=5)
 
     def test_partion_cols_are_last(self):
         tb = TableMeta(name="test", location="test")
@@ -556,6 +602,7 @@ class TableMetaTest(BotoTester):
         with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
             web_schema = json.loads(url.read().decode())
         self.assertDictEqual(_table_json_schema, web_schema)
+
 
 if __name__ == "__main__":
     unittest.main()
