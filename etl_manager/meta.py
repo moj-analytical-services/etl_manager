@@ -7,6 +7,8 @@ from etl_manager.utils import (
     _validate_enum,
     _validate_pattern,
     _validate_nullable,
+    _validate_personal_data,
+    _validate_special_category_data,
     _athena_client,
     _glue_client,
     _s3_resource,
@@ -108,6 +110,8 @@ class TableMeta:
         description="",
         partitions=[],
         glue_specific={},
+        personal_data=bool(),
+        special_category_data=bool(),
         database=None,
     ):
 
@@ -118,6 +122,8 @@ class TableMeta:
         self.description = description
         self.partitions = copy.deepcopy(partitions)
         self.glue_specific = copy.deepcopy(glue_specific)
+        self.personal_data = personal_data
+        self.special_category_data = special_category_data
         self.database = database
 
         self.validate_json_schema()
@@ -186,6 +192,26 @@ class TableMeta:
             )
 
     @property
+    def personal_data(self):
+        return self._personal_data
+
+    @personal_data.setter
+    def personal_data(self, personal_data):
+        if personal_data is not None:
+            _validate_personal_data(personal_data)
+            self._personal_data = personal_data
+
+    @property
+    def special_category_data(self):
+        return self._special_category_data
+
+    @special_category_data.setter
+    def special_category_data(self, special_category_data):
+        if special_category_data is not None:
+            _validate_special_category_data(special_category_data)
+            self._special_category_data = special_category_data
+
+    @property
     def database(self):
         """
         database object table relates to
@@ -208,7 +234,15 @@ class TableMeta:
         self.partitions = new_partitions
 
     def add_column(
-        self, name, type, description, pattern=None, enum=None, nullable=None
+        self,
+        name,
+        type,
+        description,
+        pattern=None,
+        enum=None,
+        nullable=None,
+        personal_data=None,
+        special_category_data=None,
     ):
         self._check_column_does_not_exists(name)
         self._check_valid_datatype(type)
@@ -224,6 +258,12 @@ class TableMeta:
         if nullable is not None:
             _validate_nullable(nullable)
             cols[-1]["nullable"] = nullable
+        if personal_data is not None:
+            _validate_personal_data(personal_data)
+            cols[-1]["personal_data"] = personal_data
+        if special_category_data is not None:
+            _validate_special_category_data(special_category_data)
+            cols[-1]["special_category_data"] = special_category_data
 
         self.columns = cols
 
@@ -331,6 +371,14 @@ class TableMeta:
                 if "nullable" in kwargs:
                     _validate_nullable(kwargs["nullable"])
                     c["nullable"] = kwargs["nullable"]
+
+                if "personal_data" in kwargs:
+                    _validate_personal_data(kwargs["personal_data"])
+                    c["personal_data"] = kwargs["personal_data"]
+
+                if "special_category_data" in kwargs:
+                    _validate_special_category_data(kwargs["special_category_data"])
+                    c["special_category_data"] = kwargs["special_category_data"]
 
             new_cols.append(c)
 
@@ -792,6 +840,12 @@ def read_table_json(filepath, database=None):
     if "glue_specific" not in meta:
         meta["glue_specific"] = {}
 
+    if "personal_data" not in meta:
+        meta["personal_data"] = None
+
+    if "special_category_data" not in meta:
+        meta["special_category_data"] = None
+
     tab = TableMeta(
         name=meta["name"],
         location=meta["location"],
@@ -800,6 +854,8 @@ def read_table_json(filepath, database=None):
         description=meta["description"],
         partitions=meta["partitions"],
         glue_specific=meta["glue_specific"],
+        personal_data=meta["personal_data"],
+        special_category_data=meta["special_category_data"],
         database=database,
     )
 

@@ -112,6 +112,21 @@ def _validate_nullable(nullable):
         raise TypeError(f"nullable must be a boolean. Not of type {type(nullable)}")
 
 
+def _validate_personal_data(personal_data):
+    if not isinstance(personal_data, bool):
+        raise TypeError(
+            f"personal_data must be a boolean. Not of type {type(personal_data)}"
+        )
+
+
+def _validate_special_category_data(special_category_data):
+    if not isinstance(special_category_data, bool):
+        raise TypeError(
+            f"special_category_data must be a boolean. "
+            f"Not of type {type(special_category_data)}"
+        )
+
+
 def _get_file_from_file_path(file_path):
     return file_path.split("/")[-1]
 

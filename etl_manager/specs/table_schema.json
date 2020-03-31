@@ -45,6 +45,14 @@
             "nullable" : {
               "type" : "boolean",
               "title" : "Specifies if column is nullable (can have missing values) or not (cannot have missing values)"
+            },
+            "personal_data": {
+              "type": "boolean",
+              "title": "Specifies if the column contains data considered personal data under the GDPR or DPA"
+            },
+            "special_category_data": {
+              "type":"boolean",
+              "title": "Specifies if the column contains data considered special category data under the GDPR or DPA"
             }
           }
         }
@@ -72,6 +80,14 @@
       "glue_specific" : {
         "type" : ["null", "object"],
         "title": "Dict used to add any additional table properties for glue catalogue. For an example see here: https://github.com/moj-analytical-services/etl_manager/blob/master/example/meta_data/db1/pay.json#L19"
+      },
+      "personal_data": {
+        "type": "boolean",
+        "title": "Specifies if the table contains data considered personal data under the GDPR or DPA"
+      },
+      "special_category_data": {
+        "type": "boolean",
+        "title": "Specifies if the table contains data considered special category data under the GDPR or DPA"
       }
     }
   }
