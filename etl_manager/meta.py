@@ -247,9 +247,14 @@ class TableMeta:
                 new_c = {}
                 new_c["Name"] = c["name"]
                 new_c["Comment"] = c["description"]
-                new_c["Type"] = _agnostic_to_glue_spark_dict[
-                    trim_complex_type(c["type"])
-                ]["glue"]
+
+                b1 = c["type"].startswith("array")
+                b2 = c["type"].startswith("struct")
+
+                if b1 or b2:
+                    new_c["Type"] = c["type"]
+                else:
+                    new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]
                 glue_columns.append(new_c)
 
         return glue_columns
@@ -364,7 +369,7 @@ class TableMeta:
             )
 
             glue_table_definition["PartitionKeys"] = glue_partition_cols
-
+        print(glue_table_definition)
         return glue_table_definition
 
     def to_dict(self):

@@ -17,12 +17,12 @@
         },
         {
             "name": "test_array_structs",
-            "type": "array<struct<num:int,desc:character>>",
+            "type": "array<struct<num:int,desc:string>>",
             "description": "column with array data type"
         },
         {
             "name": "test_struct",
-            "type": "struct<num:int,desc:character>",
+            "type": "struct<num:int,desc:string>",
             "description": "column with struct data type"
         },
         {

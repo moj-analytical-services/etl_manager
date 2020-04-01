@@ -145,7 +145,7 @@ def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
     return final_output_path
 
 
-COL_TYPE_REGEX = regex.compile(r"(character|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)")
+COL_TYPE_REGEX = regex.compile(r"(character|string|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)")
 
 
 def data_type_is_regex(data_type):
