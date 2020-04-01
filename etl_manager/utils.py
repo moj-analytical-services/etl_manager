@@ -144,7 +144,8 @@ def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
 
     return final_output_path
 
-
+# Note the ?R recursive.  We only allow 'character' (the agnostic type), in a non-complex type, but must allow string within complex types.
+# User will still get an error for string as non-complex type from the schema.
 COL_TYPE_REGEX = regex.compile(r"(character|string|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)")
 
 
