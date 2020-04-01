@@ -13,7 +13,8 @@ from etl_manager.utils import (
     _remove_final_slash,
     trim_complex_data_types,
     trim_complex_type,
-    data_type_is_regex
+    data_type_is_regex,
+    COL_TYPE_REGEX
 )
 import copy
 import string
@@ -261,7 +262,7 @@ class TableMeta:
                 )
 
     def _check_valid_datatype(self, data_type):
-        if data_type not in _supported_column_types:
+        if not data_type_is_regex(data_type):
             scf = ", ".join(_supported_column_types)
             raise ValueError(f"The data_type provided must match the supported data_type names: {scf}")
 
