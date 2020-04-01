@@ -369,7 +369,7 @@ class TableMeta:
             )
 
             glue_table_definition["PartitionKeys"] = glue_partition_cols
-        print(glue_table_definition)
+
         return glue_table_definition
 
     def to_dict(self):
