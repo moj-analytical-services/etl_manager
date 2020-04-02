@@ -13,7 +13,8 @@ from etl_manager.utils import (
     _remove_final_slash,
     trim_complex_data_types,
     trim_complex_type,
-    data_type_is_regex
+    data_type_is_regex,
+    s3_path_to_bucket_key
 )
 import copy
 import string
@@ -644,6 +645,32 @@ class DatabaseMeta:
             glue_table_def = tab.glue_table_definition(self.s3_database_path)
             _glue_client.create_table(DatabaseName=self.name, TableInput=glue_table_def)
 
+    def update_glue_database(self, update_database_metadata=True, update_tables_if_exist=False):
+
+        """
+        Updates a database in Glue based on the database object calling the method function.
+        """
+        db = {"Name": self.name, "DatabaseInput": {"Description": self.description, "Name": self.name}}
+        
+        if update_database_metadata:
+            _glue_client.update_database(**db)
+
+        for tab in self._tables:
+            try:
+                _glue_client.get_table(Name=tab.name, DatabaseName=self.name)
+                table_exists = True
+            except _glue_client.exceptions.EntityNotFoundException:
+                table_exists = False
+
+            if not table_exists:
+                glue_table_def = tab.glue_table_definition(self.s3_database_path)
+                _glue_client.create_table(DatabaseName=self.name, TableInput=glue_table_def)
+                
+            if table_exists and update_tables_if_exist:
+                glue_table_def = tab.glue_table_definition(self.s3_database_path)
+                _glue_client.update_table(DatabaseName=self.name, TableInput=glue_table_def)      
+
+
     def to_dict(self):
         db_dict = {
             "description": self.description,
@@ -756,3 +783,16 @@ def read_database_folder(folderpath):
         tm = read_table_json(table_file_path, database=db)
         db.add_table(tm)
     return db
+
+def get_existing_database_from_glue_catalogue(database_name):
+    glue_db = _glue_client.get_database(Name=database_name)
+    database_description = glue_db["Database"]["Description"]
+    tables = _glue_client.get_tables(DatabaseName="test_data_types")["TableList"]
+    try:
+        s3_path = tables[0]["StorageDescriptor"]["Location"]
+    except IndexError:
+        raise Error("There are no tables in this database, so there's not enough metadata to create an etl_manager db for you")
+    bucket = s3_path_to_bucket_key(s3_path)[0]
+    db = DatabaseMeta(name = database_name, bucket=bucket, description=database_description)
+    return db
+    
