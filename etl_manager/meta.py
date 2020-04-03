@@ -251,8 +251,8 @@ class TableMeta:
                 new_c["Name"] = c["name"]
                 new_c["Comment"] = c["description"]
 
-                b1 = c["type"].startswith("array")
-                b2 = c["type"].startswith("struct")
+                b1 = c["type"].lower().startswith("array")
+                b2 = c["type"].lower().startswith("struct")
 
                 if b1 or b2:
                     # Replace agnostic meta type with Athena type anywhere in string

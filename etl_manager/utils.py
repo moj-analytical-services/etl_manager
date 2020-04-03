@@ -96,6 +96,7 @@ def _validate_string(s, allowed_chars="_"):
             f"punctuation excluding ({allowed_chars}) is not allowed in string"
         )
 
+
 def _validate_enum(enum):
     if type(enum) != list:
         raise TypeError(f"enum must be a list. Not of type {type(enum)}")
@@ -144,9 +145,12 @@ def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
 
     return final_output_path
 
+
 # Note the ?R recursive.  We only allow 'character' (the agnostic type), in a non-complex type, but must allow string within complex types.
 # User will still get an error for string as non-complex type from the schema.
-COL_TYPE_REGEX = regex.compile(r"(character|string|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)")
+COL_TYPE_REGEX = regex.compile(
+    r"(character|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z]+):((?R)(,?)))+>|array<(?R)>)"
+)
 
 
 def data_type_is_regex(data_type):
@@ -163,7 +167,7 @@ def glue_type_to_dict(data_type):
             ntd = {}
             for data_type in defs.split(","):
                 if ":" in data_type:
-                    nn, dt = data_type.split(':')
+                    nn, dt = data_type.split(":")
                     ntd[nn] = glue_type_to_dict(dt)
             type_dict[name] = ntd
         else:
