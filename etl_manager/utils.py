@@ -185,3 +185,9 @@ def trim_complex_data_types(json_data):
     for index, col in enumerate(json_data["columns"]):
         updated["columns"][index]["type"] = trim_complex_type(col["type"])
     return updated
+
+def s3_path_to_bucket_key(s3_path):
+    """
+    Splits out s3 file path to bucket key combination
+    """
+    return s3_path.replace("s3://", "").split("/", 1)
