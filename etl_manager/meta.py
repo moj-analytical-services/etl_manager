@@ -14,7 +14,7 @@ from etl_manager.utils import (
     trim_complex_data_types,
     trim_complex_type,
     data_type_is_regex,
-    COL_TYPE_REGEX
+    COL_TYPE_REGEX,
 )
 import copy
 import string
@@ -56,13 +56,17 @@ _agnostic_to_glue_spark_dict = json.load(
     pkg_resources.resource_stream(__name__, "specs/glue_spark_dict.json")
 )
 
-_web_link_to_table_json_schema = "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json"
+_web_link_to_table_json_schema = (
+    "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json"
+)
 
 try:
     with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
         _table_json_schema = json.loads(url.read().decode())
 except urllib.error.URLError as e:
-    warnings.warn("Could not get schema from URL. Reading schema from package instead...")
+    warnings.warn(
+        "Could not get schema from URL. Reading schema from package instead..."
+    )
     _table_json_schema = json.load(
         pkg_resources.resource_stream(__name__, "specs/table_schema.json")
     )
@@ -82,7 +86,9 @@ class MetaColumnTypeMismatch(Exception):
 
 def _get_spec(spec_name):
     if spec_name not in _template:
-        raise ValueError(f"spec_name/data_type requested ({spec_name}) is not a valid spec/data_type")
+        raise ValueError(
+            f"spec_name/data_type requested ({spec_name}) is not a valid spec/data_type"
+        )
 
     return copy.deepcopy(_template[spec_name])
 
@@ -117,15 +123,10 @@ class TableMeta:
         self.validate_column_types()
 
     def validate_json_schema(self):
-        jsonschema.validate(
-            trim_complex_data_types(self.to_dict()),
-            _table_json_schema
-        )
+        jsonschema.validate(trim_complex_data_types(self.to_dict()), _table_json_schema)
 
     def validate_column_types(self):
-        assert all(
-            data_type_is_regex(c["type"]) for c in self.to_dict()["columns"]
-        )
+        assert all(data_type_is_regex(c["type"]) for c in self.to_dict()["columns"])
 
     @property
     def name(self):
@@ -234,7 +235,9 @@ class TableMeta:
     def reorder_columns(self, column_name_order):
         for c in self.column_names:
             if c not in column_name_order:
-                raise ValueError(f"input column_name_order is missing column ({c}) in meta table")
+                raise ValueError(
+                    f"input column_name_order is missing column ({c}) in meta table"
+                )
         self.columns = sorted(
             self.columns, key=lambda x: column_name_order.index(x["name"])
         )
@@ -257,7 +260,7 @@ class TableMeta:
                     this_type = c["type"]
                     for key in _agnostic_to_glue_spark_dict.keys():
                         replacement_type = _agnostic_to_glue_spark_dict[key]["glue"]
-                        this_type  = this_type.replace(key, replacement_type)
+                        this_type = this_type.replace(key, replacement_type)
                     new_c["Type"] = this_type
                 else:
                     new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]
@@ -270,12 +273,14 @@ class TableMeta:
             sdf = ", ".join(_supported_data_formats)
             raise ValueError(
                 f"The data_format provided ({data_format}) must match the supported data_type names: {sdf}"
-                )
+            )
 
     def _check_valid_datatype(self, data_type):
         if not data_type_is_regex(data_type):
             scf = ", ".join(_supported_column_types)
-            raise ValueError(f"The data_type provided must match the supported data_type names: {scf}")
+            raise ValueError(
+                f"The data_type provided must match the supported data_type names: {scf}"
+            )
 
     def _check_column_exists(self, column_name):
         if column_name not in self.column_names:
@@ -457,7 +462,9 @@ class TableMeta:
             f.write("***")
             f.write("\n")
 
-    def refresh_partitions(self, temp_athena_staging_dir=None, database_name=None, timeout=None):
+    def refresh_partitions(
+        self, temp_athena_staging_dir=None, database_name=None, timeout=None
+    ):
         """
         Refresh the partitions in a table, if they exist
         """
@@ -467,13 +474,17 @@ class TableMeta:
                 if self.database:
                     temp_athena_staging_dir = self.database.s3_athena_temp_folder
                 else:
-                    raise ValueError("You must provide a path to a directory in s3 for Athena to cache query results")
+                    raise ValueError(
+                        "You must provide a path to a directory in s3 for Athena to cache query results"
+                    )
 
             if not database_name:
                 if self.database:
                     database_name = self.database.name
                 else:
-                    raise KeyError("You must provide a database name, or register a database object against the table")
+                    raise KeyError(
+                        "You must provide a database name, or register a database object against the table"
+                    )
 
             sql = f"MSCK REPAIR TABLE {database_name}.{self.name}"
 
@@ -485,20 +496,35 @@ class TableMeta:
             sleep_time = 2
             counter = 0
             while True:
-                athena_status = _athena_client.get_query_execution(QueryExecutionId = response['QueryExecutionId'])
-                if athena_status['QueryExecution']['Status']['State'] == "SUCCEEDED":
+                athena_status = _athena_client.get_query_execution(
+                    QueryExecutionId=response["QueryExecutionId"]
+                )
+                if athena_status["QueryExecution"]["Status"]["State"] == "SUCCEEDED":
                     break
-                elif athena_status['QueryExecution']['Status']['State'] in ['QUEUED','RUNNING']:
+                elif athena_status["QueryExecution"]["Status"]["State"] in [
+                    "QUEUED",
+                    "RUNNING",
+                ]:
                     time.sleep(sleep_time)
-                elif athena_status['QueryExecution']['Status']['State'] == 'FAILED':
-                    raise ValueError("athena failed - response error:\n {}".format(athena_status['QueryExecution']['Status']['StateChangeReason']))
+                elif athena_status["QueryExecution"]["Status"]["State"] == "FAILED":
+                    raise ValueError(
+                        "athena failed - response error:\n {}".format(
+                            athena_status["QueryExecution"]["Status"][
+                                "StateChangeReason"
+                            ]
+                        )
+                    )
                 else:
-                    raise ValueError("athena failed - unknown reason (printing full response):\n {athena_status}".format(athena_status))
+                    raise ValueError(
+                        "athena failed - unknown reason (printing full response):\n {athena_status}".format(
+                            athena_status
+                        )
+                    )
 
                 counter += 1
                 if timeout:
-                    if counter*sleep_time > timeout:
-                        raise ValueError('athena timed out')
+                    if counter * sleep_time > timeout:
+                        raise ValueError("athena timed out")
 
             return response
 
