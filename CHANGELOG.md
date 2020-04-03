@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Change
 
+- Added the ability to update an existing database with new tables - see `` and `meta.get_existing_database_from_glue_catalogue` and `DatabaseMeta.update_glue_database`
 - Fixed bug that meant the use of complex types (arrays and structs) didn't actually work in Athena
 
 
