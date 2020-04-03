@@ -14,7 +14,8 @@ from etl_manager.utils import (
     trim_complex_data_types,
     trim_complex_type,
     data_type_is_regex,
-    s3_path_to_bucket_key,
+    COL_TYPE_REGEX,
+    s3_path_to_bucket_key
 )
 import copy
 import string
@@ -250,9 +251,20 @@ class TableMeta:
                 new_c = {}
                 new_c["Name"] = c["name"]
                 new_c["Comment"] = c["description"]
-                new_c["Type"] = _agnostic_to_glue_spark_dict[
-                    trim_complex_type(c["type"])
-                ]["glue"]
+
+                b1 = c["type"].lower().startswith("array")
+                b2 = c["type"].lower().startswith("struct")
+
+                if b1 or b2:
+                    # Replace agnostic meta type with Athena type anywhere in string
+                    # (user provides agnostic types, but we need Athena/glue type)
+                    this_type = c["type"]
+                    for key in _agnostic_to_glue_spark_dict.keys():
+                        replacement_type = _agnostic_to_glue_spark_dict[key]["glue"]
+                        this_type = this_type.replace(key, replacement_type)
+                    new_c["Type"] = this_type
+                else:
+                    new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]
                 glue_columns.append(new_c)
 
         return glue_columns
@@ -265,7 +277,7 @@ class TableMeta:
             )
 
     def _check_valid_datatype(self, data_type):
-        if data_type not in _supported_column_types:
+        if not data_type_is_regex(data_type):
             scf = ", ".join(_supported_column_types)
             raise ValueError(
                 f"The data_type provided must match the supported data_type names: {scf}"
