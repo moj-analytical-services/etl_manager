@@ -840,7 +840,7 @@ def get_existing_database_from_glue_catalogue(database_name):
     """
     glue_db = _glue_client.get_database(Name=database_name)
     database_description = glue_db["Database"]["Description"]
-    tables = _glue_client.get_tables(DatabaseName="test_data_types")["TableList"]
+    tables = _glue_client.get_tables(DatabaseName=database_name)["TableList"]
     try:
         s3_path = tables[0]["StorageDescriptor"]["Location"]
     except IndexError:
