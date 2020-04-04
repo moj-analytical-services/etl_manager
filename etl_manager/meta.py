@@ -883,6 +883,7 @@ def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
     # Convert etl_manager agnostic types to glue/athena datatypes
     for key, value in _agnostic_to_glue_spark_dict.items():
         type_string = type_string.replace(value["glue"], key)
+    type_string = type_string.replace("integer", "int")
 
     return type_string
 
