@@ -87,6 +87,8 @@ class CreateUpdateTest(BotoTester):
 
     def test_table_from_parquet(self):
 
+        self.skip_test_if_no_creds()
+
         db = get_existing_database_from_glue_catalogue("test_data_types")
 
         json_path = os.path.join(os.path.dirname(__file__), "data/data_types/table_data/parquet_metadata_json.json")
