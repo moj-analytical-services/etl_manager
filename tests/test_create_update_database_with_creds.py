@@ -101,7 +101,7 @@ class CreateUpdateTest(BotoTester):
 
         db.add_table(tab)
 
-        db.update_glue_database()
+        db.update_glue_database(update_tables_if_exist=True)
 
         sql = """
         select * from test_data_types.parquet_test_table
