@@ -1,13 +1,15 @@
+import json
 import os
 import unittest
 
 from tests import BotoTester
 from parameterized import parameterized
 
-from etl_manager.meta import read_database_folder, get_existing_database_from_glue_catalogue, TableMeta
+from etl_manager.meta import read_database_folder, get_existing_database_from_glue_catalogue, TableMeta, tablemeta_from_parquet_meta
 from etl_manager.utils import data_type_is_regex
 import time
 import boto3
+
 
 def run_athena_sql(sql):
     athena_client = boto3.client("athena", "eu-west-1")
@@ -67,12 +69,13 @@ class CreateUpdateTest(BotoTester):
         select * from test_data_types.test_table
         """
 
-        # run_athena_sql(sql)
+        run_athena_sql(sql)
 
         db = get_existing_database_from_glue_catalogue("test_data_types")
 
         tab = TableMeta(name = 'test_table_2', location = 'database/test/test_table/', data_format="json")
-        tab.add_column("robin_entity_id", "int", description = "an ID for each entity")
+        
+        tab.add_column("robin_entity_id", "struct<arr_key:array<character>,dict_key:struct<nest_arr:array<long>,nest_dict:struct<a_key:character,b_key:character>>>", description = "an ID for each entity")
         db.add_table(tab)
 
         db.update_glue_database()
@@ -81,6 +84,31 @@ class CreateUpdateTest(BotoTester):
         select * from test_data_types.test_table_2
         """
         run_athena_sql(sql)
+
+    def test_table_from_parquet(self):
+
+        self.skip_test_if_no_creds()
+
+        db = get_existing_database_from_glue_catalogue("test_data_types")
+
+        json_path = os.path.join(os.path.dirname(__file__), "data/data_types/table_data/parquet_metadata_json.json")
+        with open(json_path) as file:
+            pmeta_json = file.read()
+
+        db = get_existing_database_from_glue_catalogue("test_data_types")
+
+        tab = tablemeta_from_parquet_meta(pmeta_json, name="parquet_test_table", location="database/test/test_parquet/")
+
+        db.add_table(tab)
+
+        db.update_glue_database(update_tables_if_exist=True)
+
+        sql = """
+        select * from test_data_types.parquet_test_table
+        """
+        run_athena_sql(sql)
+
+
 
 
 

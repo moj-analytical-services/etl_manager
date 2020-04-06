@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.0.5
+
+### Change
+
+- Added the ability to automatically generate a TableMeta object from parquet metadata, using `tablemeta_from_parquet_meta`
 
 ## v7.0.4
 

@@ -15,7 +15,7 @@ from etl_manager.utils import (
     trim_complex_type,
     data_type_is_regex,
     COL_TYPE_REGEX,
-    s3_path_to_bucket_key
+    s3_path_to_bucket_key,
 )
 import copy
 import string
@@ -840,7 +840,7 @@ def get_existing_database_from_glue_catalogue(database_name):
     """
     glue_db = _glue_client.get_database(Name=database_name)
     database_description = glue_db["Database"]["Description"]
-    tables = _glue_client.get_tables(DatabaseName="test_data_types")["TableList"]
+    tables = _glue_client.get_tables(DatabaseName=database_name)["TableList"]
     try:
         s3_path = tables[0]["StorageDescriptor"]["Location"]
     except IndexError:
@@ -852,3 +852,66 @@ def get_existing_database_from_glue_catalogue(database_name):
         name=database_name, bucket=bucket, description=database_description
     )
     return db
+
+
+def _convert_etl_manager_agnostic_type_to_glue_type(type_string):
+    # Convert etl_manager agnostic types to glue/athena datatypes
+    for key, value in _agnostic_to_glue_spark_dict.items():
+        type_string = type_string.replace(value["glue"], key)
+    type_string = type_string.replace("integer", "int")
+    return type_string
+
+def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
+    """
+    Convert a field from parquet metadata dictionary to a etl_manager type string 
+    """
+
+    if type(pmeta_type) == str:
+        type_string = _convert_etl_manager_agnostic_type_to_glue_type(pmeta_type)
+
+    # If it's not a string, it's a complex type
+    elif pmeta_type["type"] == "struct":
+        fields = pmeta_type["fields"]
+        type_items = []
+        for field in fields:
+            key = field["name"]
+            # each field can itself be a struct or array, so recurse
+            etl_type = _parquet_metadata_type_to_etl_mgr_type(field["type"])
+            type_items.append(f"{key}:{etl_type}")
+        type_items_string = ",".join(type_items)
+        type_string = f"struct<{type_items_string}>"
+
+    elif pmeta_type["type"] == "array":
+        element_type = pmeta_type["elementType"]
+        # elements of an array can themselves be a struct or array, so recurse
+        et_string = _parquet_metadata_type_to_etl_mgr_type(element_type)
+        type_string = f"array<{et_string}>"
+
+
+
+    return type_string
+
+
+def tablemeta_from_parquet_meta(pmeta_json, name, location):
+    """
+    Create a TableMeta object from a parquet metadata dictionary
+    i.e. the result of either:
+
+    df = spark.read.parquet("path_to_parquet")
+    pmeta_json = df.schema.json()  
+
+    or
+
+    from pyarrow.parquet import ParquetFile
+    md = ParquetFile("test_nest.parquet").metadata
+    pmeta_json = md.metadata[b"org.apache.spark.sql.parquet.row.metadata"]
+    """
+
+    pmeta_dict = json.loads(pmeta_json)
+
+    tab = TableMeta(name=name, location=location, data_format="parquet")
+    for field in pmeta_dict["fields"]:
+        data_type_string = _parquet_metadata_type_to_etl_mgr_type(field["type"])
+        tab.add_column(field["name"], data_type_string, description="")
+
+    return tab
