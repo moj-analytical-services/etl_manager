@@ -854,13 +854,20 @@ def get_existing_database_from_glue_catalogue(database_name):
     return db
 
 
+def _convert_etl_manager_agnostic_type_to_glue_type(type_string):
+    # Convert etl_manager agnostic types to glue/athena datatypes
+    for key, value in _agnostic_to_glue_spark_dict.items():
+        type_string = type_string.replace(value["glue"], key)
+    type_string = type_string.replace("integer", "int")
+    return type_string
+
 def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
     """
     Convert a field from parquet metadata dictionary to a etl_manager type string 
     """
 
     if type(pmeta_type) == str:
-        type_string = pmeta_type
+        type_string = _convert_etl_manager_agnostic_type_to_glue_type(pmeta_type)
 
     # If it's not a string, it's a complex type
     elif pmeta_type["type"] == "struct":
@@ -880,10 +887,7 @@ def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
         et_string = _parquet_metadata_type_to_etl_mgr_type(element_type)
         type_string = f"array<{et_string}>"
 
-    # Convert etl_manager agnostic types to glue/athena datatypes
-    for key, value in _agnostic_to_glue_spark_dict.items():
-        type_string = type_string.replace(value["glue"], key)
-    type_string = type_string.replace("integer", "int")
+
 
     return type_string
 
