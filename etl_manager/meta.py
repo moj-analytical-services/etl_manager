@@ -17,8 +17,9 @@ from etl_manager.utils import (
     _validate_enum,
     _validate_pattern,
     _validate_nullable,
-    _validate_personal_data,
-    _validate_special_category_data,
+    _validate_column_sensitivity,
+    _validate_table_sensitivity,
+    _validate_redacted,
     _athena_client,
     _glue_client,
     _s3_resource,
@@ -77,6 +78,9 @@ _supported_column_types = _table_json_schema["properties"]["columns"]["items"][
     "properties"
 ]["type"]["enum"]
 _supported_data_formats = _table_json_schema["properties"]["data_format"]["enum"]
+_supported_sensitivities = _table_json_schema["properties"]["columns"]["items"][
+    "properties"
+]["sensitivity"]["enum"]
 _column_properties = list(
     _table_json_schema["properties"]["columns"]["items"]["properties"].keys()
 )
@@ -109,8 +113,7 @@ class TableMeta:
         description="",
         partitions=[],
         glue_specific={},
-        personal_data=bool(),
-        special_category_data=bool(),
+        sensitivity=[],
         database=None,
     ):
 
@@ -121,8 +124,7 @@ class TableMeta:
         self.description = description
         self.partitions = copy.deepcopy(partitions)
         self.glue_specific = copy.deepcopy(glue_specific)
-        self.personal_data = personal_data
-        self.special_category_data = special_category_data
+        self.sensitivity = copy.deepcopy(sensitivity)
         self.database = database
 
         self.validate_json_schema()
@@ -192,24 +194,25 @@ class TableMeta:
             )
 
     @property
-    def personal_data(self):
-        return self._personal_data
+    def sensitivity(self):
+        return self._sensitivity
 
-    @personal_data.setter
-    def personal_data(self, personal_data):
-        if personal_data is not None:
-            _validate_personal_data(personal_data)
-            self._personal_data = personal_data
-
-    @property
-    def special_category_data(self):
-        return self._special_category_data
-
-    @special_category_data.setter
-    def special_category_data(self, special_category_data):
-        if special_category_data is not None:
-            _validate_special_category_data(special_category_data)
-            self._special_category_data = special_category_data
+    @sensitivity.setter
+    def sensitivity(self, sensitivity):
+        if not sensitivity:
+            column_sensitivities = {
+                column["sensitivity"]
+                for column in self.columns
+                if "sensitivity" in column
+            }
+            if column_sensitivities:
+                self._sensitivity = sorted(list(column_sensitivities))
+            else:
+                self._sensitivity = []
+        else:
+            _validate_table_sensitivity(sensitivity)
+            self._check_valid_table_sensitivity(sensitivity)
+            self._sensitivity = sorted(list(set(sensitivity)))
 
     @property
     def database(self):
@@ -231,6 +234,7 @@ class TableMeta:
         new_cols = [c for c in self.columns if c["name"] != column_name]
         new_partitions = [p for p in self.partitions if p != column_name]
         self.columns = new_cols
+        self.sensitivity = []
         self.partitions = new_partitions
 
     def add_column(
@@ -241,8 +245,8 @@ class TableMeta:
         pattern=None,
         enum=None,
         nullable=None,
-        personal_data=None,
-        special_category_data=None,
+        sensitivity=None,
+        redacted=None,
     ):
         self._check_column_does_not_exists(name)
         self._check_valid_datatype(type)
@@ -258,14 +262,18 @@ class TableMeta:
         if nullable is not None:
             _validate_nullable(nullable)
             cols[-1]["nullable"] = nullable
-        if personal_data is not None:
-            _validate_personal_data(personal_data)
-            cols[-1]["personal_data"] = personal_data
-        if special_category_data is not None:
-            _validate_special_category_data(special_category_data)
-            cols[-1]["special_category_data"] = special_category_data
+        if sensitivity is not None:
+            _validate_column_sensitivity(sensitivity)
+            self._check_valid_column_sensitivity(sensitivity)
+            cols[-1]["sensitivity"] = sensitivity
+        if redacted is not None:
+            _validate_redacted(redacted)
+            cols[-1]["redacted"] = redacted
 
         self.columns = cols
+
+        # Update table sensitivity
+        self.sensitivity = []
 
         # Reorder columns if partitions exist
         if self.partitions:
@@ -325,6 +333,39 @@ class TableMeta:
                 f"{scf}"
             )
 
+    def _check_valid_column_sensitivity(self, sensitivity):
+        if sensitivity not in _supported_sensitivities:
+            ss = ", ".join(_supported_sensitivities)
+            raise ValueError(
+                f"The sensitivity provided must match the supported "
+                f"sensitivity names: {ss}"
+            )
+
+    def _check_valid_table_sensitivity(self, sensitivity):
+        uss = {s for s in sensitivity if s not in _supported_sensitivities}
+        if uss:
+            ss = ", ".join(_supported_sensitivities)
+            raise ValueError(
+                f"The sensitivity provided must only contain the "
+                f"supported sensitivity names: {ss}\n"
+                f"The following unsupported names were provided: {uss}"
+            )
+        cs = sorted(
+            list(
+                {
+                    column["sensitivity"]
+                    for column in self.columns
+                    if "sensitivity" in column
+                }
+            )
+        )
+        if sorted(list(set(sensitivity))) != cs:
+            raise ValueError(
+                f"Mismatch between the sensitivity of the table and the "
+                f"sensitivity of its columns. The inferred table sensitivity is {cs} "
+                f"whereas {sensitivity} was provided."
+            )
+
     def _check_column_exists(self, column_name):
         if column_name not in self.column_names:
             cn = ", ".join(self.column_names)
@@ -377,17 +418,21 @@ class TableMeta:
                     _validate_nullable(kwargs["nullable"])
                     c["nullable"] = kwargs["nullable"]
 
-                if "personal_data" in kwargs:
-                    _validate_personal_data(kwargs["personal_data"])
-                    c["personal_data"] = kwargs["personal_data"]
+                if "sensitivity" in kwargs:
+                    _validate_column_sensitivity(kwargs["sensitivity"])
+                    self._check_valid_column_sensitivity(kwargs["sensitivity"])
+                    c["sensitivity"] = kwargs["sensitivity"]
 
-                if "special_category_data" in kwargs:
-                    _validate_special_category_data(kwargs["special_category_data"])
-                    c["special_category_data"] = kwargs["special_category_data"]
+                if "redacted" in kwargs:
+                    _validate_redacted(kwargs["redacted"])
+                    c["redacted"] = kwargs["redacted"]
 
             new_cols.append(c)
 
         self.columns = new_cols
+
+        # Update table sensitivity
+        self.sensitivity = []
 
     def glue_table_definition(self, full_database_path=None):
 
@@ -447,6 +492,9 @@ class TableMeta:
             "columns": self.columns,
             "location": self.location,
         }
+        if bool(self.sensitivity):
+            meta["sensitivity"] = self.sensitivity
+
         if bool(self.partitions):
             meta["partitions"] = self.partitions
 
@@ -847,7 +895,11 @@ class DatabaseMeta:
         error_log = ""
         for k in all_col_test.keys():
             if len(all_col_test[k]["types"]) > 1:
-                error_log += f"ERROR: column {k} has multiple types [{', '.join(list(all_col_test[k]['types']))}]\n------------------\n{all_col_test[k]['traceback_log']}\n"
+                error_log += (
+                    f"ERROR: column {k} has multiple types "
+                    f"[{', '.join(list(all_col_test[k]['types']))}]\n"
+                    f"------------------\n{all_col_test[k]['traceback_log']}\n"
+                )
                 failure = True
 
         # Check results
@@ -856,7 +908,6 @@ class DatabaseMeta:
 
 
 ##### END OF DATABASEMETA CLASS #####
-
 
 # Create meta objects from json files or directories
 def read_table_json(filepath, database=None):
@@ -867,11 +918,8 @@ def read_table_json(filepath, database=None):
     if "glue_specific" not in meta:
         meta["glue_specific"] = {}
 
-    if "personal_data" not in meta:
-        meta["personal_data"] = None
-
-    if "special_category_data" not in meta:
-        meta["special_category_data"] = None
+    if "sensitivity" not in meta:
+        meta["sensitivity"] = None
 
     tab = TableMeta(
         name=meta["name"],
@@ -881,8 +929,7 @@ def read_table_json(filepath, database=None):
         description=meta["description"],
         partitions=meta["partitions"],
         glue_specific=meta["glue_specific"],
-        personal_data=meta["personal_data"],
-        special_category_data=meta["special_category_data"],
+        sensitivity=meta["sensitivity"],
         database=database,
     )
 
@@ -946,6 +993,7 @@ def _convert_etl_manager_agnostic_type_to_glue_type(type_string):
     type_string = type_string.replace("integer", "int")
     return type_string
 
+
 def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
     """
     Convert a field from parquet metadata dictionary to a etl_manager type string 
@@ -971,8 +1019,6 @@ def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
         # elements of an array can themselves be a struct or array, so recurse
         et_string = _parquet_metadata_type_to_etl_mgr_type(element_type)
         type_string = f"array<{et_string}>"
-
-
 
     return type_string
 

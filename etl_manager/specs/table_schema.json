@@ -1,93 +1,147 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "title": "Metadata",
-    "description": "MoJ Data Catalogue Metadata",
-    "required": ["columns"],
-    "properties": {
-      "columns": {
-        "type": "array",
-        "title": "The columns in the table.  An array of objects",
-        "items": {
-          "type": "object",
-          "required": ["name", "type"],
-          "properties": {
-            "description": {
-              "type": "string",
-              "title": "A description of this field"
-            },
-            "name": {
-              "type": "string",
-              "title": "The column name.  Should be lower case with underscores, not spaces",
-              "pattern": "[a-z0-9_]+",
-              "examples": [
-                "employee_number"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Metadata",
+  "description": "MoJ Data Catalogue Metadata",
+  "required": [
+    "columns"
+  ],
+  "properties": {
+    "columns": {
+      "type": "array",
+      "title": "The columns in the table.  An array of objects",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "title": "A description of this field"
+          },
+          "name": {
+            "type": "string",
+            "title": "The column name.  Should be lower case with underscores, not spaces",
+            "pattern": "[a-z0-9_]+",
+            "examples": [
+              "employee_number"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "title": "The data type.  We use a limited set of data types for cross compatibility between Spark, R, Pandas etc.  See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
+            "enum": [
+              "character",
+              "int",
+              "long",
+              "float",
+              "double",
+              "date",
+              "datetime",
+              "boolean",
+              "struct",
+              "array"
+            ]
+          },
+          "pattern": {
+            "type": "string",
+            "title": "regex pattern that can be used to validate data in this column"
+          },
+          "enum": {
+            "type": "array",
+            "title": "An array of valid values that can exist in this column. Note NULL/None is not required, please use nullable property to define if column is nullable.",
+            "examples": [
+              [
+                "Y",
+                "N"
+              ],
+              [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              [
+                "England",
+                "Northern Ireland",
+                "Scottland",
+                "Wales"
               ]
-            },
-            "type": {
-              "type": "string",
-              "title": "The data type.  We use a limited set of data types for cross compatibility between Spark, R, Pandas etc.  See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
-              "enum": ["character", "int", "long", "float", "double", "date", "datetime", "boolean", "struct", "array"]
-            },
-            "pattern": {
-              "type": "string",
-              "title": "regex pattern that can be used to validate data in this column"
-            },
-            "enum": {
-              "type": "array",
-              "title": "An array of valid values that can exist in this column. Note NULL/None is not required, please use nullable property to define if column is nullable.",
-              "examples": [
-                ["Y", "N"],
-                [0,1,2,3,4],
-                ["England", "Northern Ireland", "Scottland", "Wales"]
-              ]
-            },
-            "nullable" : {
-              "type" : "boolean",
-              "title" : "Specifies if column is nullable (can have missing values) or not (cannot have missing values)"
-            },
-            "personal_data": {
-              "type": "boolean",
-              "title": "Specifies if the column contains data considered personal data under the GDPR or DPA"
-            },
-            "special_category_data": {
-              "type":"boolean",
-              "title": "Specifies if the column contains data considered special category data under the GDPR or DPA"
-            }
+            ]
+          },
+          "nullable": {
+            "type": "boolean",
+            "title": "Specifies if column is nullable (can have missing values) or not (cannot have missing values)"
+          },
+          "sensitivity": {
+            "type": "string",
+            "title": "Specifies if the column contains personal data or special category data",
+            "enum": [
+              "personal_data",
+              "special_category_data"
+            ]
+          },
+          "redacted": {
+            "type": "boolean",
+            "title": "Specifies if the column is redacted or removed in non-sensitive versions of the table"
           }
         }
-      },
-      "description": {
-        "type": "string",
-        "title": "A description of what this table contains "
-      },
-      "name": {
-        "type": "string",
-        "title": "The name of the table in the database"
-      },
-      "data_format": {
-        "type": "string",
-        "title": "The format of the data in s3, and instruction on how to parse, see here https://github.com/moj-analytical-services/dataengineeringutils/blob/ae295caf93c75c80510abf0c74865939c94d3e70/dataengineeringutils/glue.py#L45",
-        "enum": ["avro","csv","csv_quoted_nodate","regex","orc","par","parquet", "json"]
-      },
-      "location": {
-        "type": "string",
-        "title": "The path to the data in s3.  Usually, you should use path relative to the database root directory, unless the database contains tables spread across mutliple buckets or directories",
-        "examples": [
-          "sop_full/"
-        ]
-      },
-      "glue_specific" : {
-        "type" : ["null", "object"],
-        "title": "Dict used to add any additional table properties for glue catalogue. For an example see here: https://github.com/moj-analytical-services/etl_manager/blob/master/example/meta_data/db1/pay.json#L19"
-      },
-      "personal_data": {
-        "type": "boolean",
-        "title": "Specifies if the table contains data considered personal data under the GDPR or DPA"
-      },
-      "special_category_data": {
-        "type": "boolean",
-        "title": "Specifies if the table contains data considered special category data under the GDPR or DPA"
       }
+    },
+    "description": {
+      "type": "string",
+      "title": "A description of what this table contains "
+    },
+    "name": {
+      "type": "string",
+      "title": "The name of the table in the database"
+    },
+    "data_format": {
+      "type": "string",
+      "title": "The format of the data in s3, and instruction on how to parse, see here https://github.com/moj-analytical-services/dataengineeringutils/blob/ae295caf93c75c80510abf0c74865939c94d3e70/dataengineeringutils/glue.py#L45",
+      "enum": [
+        "avro",
+        "csv",
+        "csv_quoted_nodate",
+        "regex",
+        "orc",
+        "par",
+        "parquet",
+        "json"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "title": "The path to the data in s3.  Usually, you should use path relative to the database root directory, unless the database contains tables spread across mutliple buckets or directories",
+      "examples": [
+        "sop_full/"
+      ]
+    },
+    "glue_specific": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "title": "Dict used to add any additional table properties for glue catalogue. For an example see here: https://github.com/moj-analytical-services/etl_manager/blob/master/example/meta_data/db1/pay.json#L19"
+    },
+    "sensitivity": {
+      "type": "array",
+      "title": "Specifies which types of sensitive data, if any, are contained in the table",
+      "examples": [
+        [
+          "personal_data"
+        ],
+        [
+          "special_category_data"
+        ],
+        [
+          "personal_data",
+          "special_category_data"
+        ]
+      ]
     }
   }
+}

@@ -109,19 +109,21 @@ def _validate_nullable(nullable):
         raise TypeError(f"nullable must be a boolean. Not of type {type(nullable)}")
 
 
-def _validate_personal_data(personal_data):
-    if not isinstance(personal_data, bool):
+def _validate_column_sensitivity(sensitivity):
+    if not isinstance(sensitivity, str):
         raise TypeError(
-            f"personal_data must be a boolean. Not of type {type(personal_data)}"
+            f"sensitivity must be a string. Not of type {type(sensitivity)}"
         )
 
 
-def _validate_special_category_data(special_category_data):
-    if not isinstance(special_category_data, bool):
-        raise TypeError(
-            f"special_category_data must be a boolean. "
-            f"Not of type {type(special_category_data)}"
-        )
+def _validate_table_sensitivity(sensitivity):
+    if not isinstance(sensitivity, list):
+        raise TypeError(f"sensitivity must be a list. Not of type {type(sensitivity)}")
+
+
+def _validate_redacted(redacted):
+    if not isinstance(redacted, bool):
+        raise TypeError(f"redacted must be a boolean. Not of type {type(redacted)}")
 
 
 def _get_file_from_file_path(file_path):
