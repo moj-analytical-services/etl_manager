@@ -17,16 +17,13 @@ from etl_manager.utils import (
     _validate_enum,
     _validate_pattern,
     _validate_nullable,
-    _validate_column_sensitivity,
-    _validate_table_sensitivity,
+    _validate_sensitivity,
     _validate_redacted,
     _athena_client,
     _glue_client,
     _s3_resource,
     trim_complex_data_types,
-    trim_complex_type,
     data_type_is_regex,
-    COL_TYPE_REGEX,
     s3_path_to_bucket_key,
 )
 
@@ -78,7 +75,7 @@ _supported_column_types = _table_json_schema["properties"]["columns"]["items"][
     "properties"
 ]["type"]["enum"]
 _supported_data_formats = _table_json_schema["properties"]["data_format"]["enum"]
-_supported_sensitivities = _table_json_schema["properties"]["columns"]["items"][
+_supported_column_sensitivity = _table_json_schema["properties"]["columns"]["items"][
     "properties"
 ]["sensitivity"]["enum"]
 _column_properties = list(
@@ -113,7 +110,6 @@ class TableMeta:
         description="",
         partitions=[],
         glue_specific={},
-        sensitivity=[],
         database=None,
     ):
 
@@ -124,8 +120,9 @@ class TableMeta:
         self.description = description
         self.partitions = copy.deepcopy(partitions)
         self.glue_specific = copy.deepcopy(glue_specific)
-        self.sensitivity = copy.deepcopy(sensitivity)
         self.database = database
+
+        self._update_sensitivity()
 
         self.validate_json_schema()
         self.validate_column_types()
@@ -197,22 +194,14 @@ class TableMeta:
     def sensitivity(self):
         return self._sensitivity
 
-    @sensitivity.setter
-    def sensitivity(self, sensitivity):
-        if not sensitivity:
-            column_sensitivities = {
-                column["sensitivity"]
-                for column in self.columns
-                if "sensitivity" in column
-            }
-            if column_sensitivities:
-                self._sensitivity = sorted(list(column_sensitivities))
-            else:
-                self._sensitivity = []
+    def _update_sensitivity(self):
+        column_sensitivities = {
+            column["sensitivity"] for column in self.columns if "sensitivity" in column
+        }
+        if column_sensitivities:
+            self._sensitivity = sorted(list(column_sensitivities))
         else:
-            _validate_table_sensitivity(sensitivity)
-            self._check_valid_table_sensitivity(sensitivity)
-            self._sensitivity = sorted(list(set(sensitivity)))
+            self._sensitivity = []
 
     @property
     def database(self):
@@ -234,8 +223,8 @@ class TableMeta:
         new_cols = [c for c in self.columns if c["name"] != column_name]
         new_partitions = [p for p in self.partitions if p != column_name]
         self.columns = new_cols
-        self.sensitivity = []
         self.partitions = new_partitions
+        self._update_sensitivity()
 
     def add_column(
         self,
@@ -263,7 +252,6 @@ class TableMeta:
             _validate_nullable(nullable)
             cols[-1]["nullable"] = nullable
         if sensitivity is not None:
-            _validate_column_sensitivity(sensitivity)
             self._check_valid_column_sensitivity(sensitivity)
             cols[-1]["sensitivity"] = sensitivity
         if redacted is not None:
@@ -272,14 +260,13 @@ class TableMeta:
 
         self.columns = cols
 
-        # Update table sensitivity
-        self.sensitivity = []
-
         # Reorder columns if partitions exist
         if self.partitions:
             new_col_order = [c for c in self.column_names if c not in self.partitions]
             new_col_order = new_col_order + copy.deepcopy(self.partitions)
             self.reorder_columns(new_col_order)
+
+        self._update_sensitivity()
 
     def reorder_columns(self, column_name_order):
         for c in self.column_names:
@@ -334,36 +321,12 @@ class TableMeta:
             )
 
     def _check_valid_column_sensitivity(self, sensitivity):
-        if sensitivity not in _supported_sensitivities:
-            ss = ", ".join(_supported_sensitivities)
+        _validate_sensitivity(sensitivity)
+        if sensitivity not in _supported_column_sensitivity:
+            ss = ", ".join(_supported_column_sensitivity)
             raise ValueError(
                 f"The sensitivity provided must match the supported "
                 f"sensitivity names: {ss}"
-            )
-
-    def _check_valid_table_sensitivity(self, sensitivity):
-        uss = {s for s in sensitivity if s not in _supported_sensitivities}
-        if uss:
-            ss = ", ".join(_supported_sensitivities)
-            raise ValueError(
-                f"The sensitivity provided must only contain the "
-                f"supported sensitivity names: {ss}\n"
-                f"The following unsupported names were provided: {uss}"
-            )
-        cs = sorted(
-            list(
-                {
-                    column["sensitivity"]
-                    for column in self.columns
-                    if "sensitivity" in column
-                }
-            )
-        )
-        if sorted(list(set(sensitivity))) != cs:
-            raise ValueError(
-                f"Mismatch between the sensitivity of the table and the "
-                f"sensitivity of its columns. The inferred table sensitivity is {cs} "
-                f"whereas {sensitivity} was provided."
             )
 
     def _check_column_exists(self, column_name):
@@ -419,7 +382,6 @@ class TableMeta:
                     c["nullable"] = kwargs["nullable"]
 
                 if "sensitivity" in kwargs:
-                    _validate_column_sensitivity(kwargs["sensitivity"])
                     self._check_valid_column_sensitivity(kwargs["sensitivity"])
                     c["sensitivity"] = kwargs["sensitivity"]
 
@@ -430,9 +392,7 @@ class TableMeta:
             new_cols.append(c)
 
         self.columns = new_cols
-
-        # Update table sensitivity
-        self.sensitivity = []
+        self._update_sensitivity()
 
     def glue_table_definition(self, full_database_path=None):
 
@@ -492,8 +452,6 @@ class TableMeta:
             "columns": self.columns,
             "location": self.location,
         }
-        if bool(self.sensitivity):
-            meta["sensitivity"] = self.sensitivity
 
         if bool(self.partitions):
             meta["partitions"] = self.partitions
@@ -918,9 +876,6 @@ def read_table_json(filepath, database=None):
     if "glue_specific" not in meta:
         meta["glue_specific"] = {}
 
-    if "sensitivity" not in meta:
-        meta["sensitivity"] = None
-
     tab = TableMeta(
         name=meta["name"],
         location=meta["location"],
@@ -929,7 +884,6 @@ def read_table_json(filepath, database=None):
         description=meta["description"],
         partitions=meta["partitions"],
         glue_specific=meta["glue_specific"],
-        sensitivity=meta["sensitivity"],
         database=database,
     )
 

@@ -4,9 +4,6 @@
     "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
     "location": "teams/",
-    "sensitivity": [
-        "personal_data"
-    ],
     "columns": [
         {
             "name": "team_id",

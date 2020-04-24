@@ -109,16 +109,11 @@ def _validate_nullable(nullable):
         raise TypeError(f"nullable must be a boolean. Not of type {type(nullable)}")
 
 
-def _validate_column_sensitivity(sensitivity):
+def _validate_sensitivity(sensitivity):
     if not isinstance(sensitivity, str):
         raise TypeError(
             f"sensitivity must be a string. Not of type {type(sensitivity)}"
         )
-
-
-def _validate_table_sensitivity(sensitivity):
-    if not isinstance(sensitivity, list):
-        raise TypeError(f"sensitivity must be a list. Not of type {type(sensitivity)}")
 
 
 def _validate_redacted(redacted):

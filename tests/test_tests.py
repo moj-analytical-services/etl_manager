@@ -410,7 +410,6 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm.columns, [])
         self.assertEqual(tm.partitions, [])
         self.assertEqual(tm.glue_specific, {})
-        self.assertEqual(tm.sensitivity, [])
 
         kwargs = {
             "name": "employees",
@@ -444,7 +443,6 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm2.columns, kwargs["columns"])
         self.assertEqual(tm2.partitions, [])
         self.assertEqual(tm2.glue_specific, {})
-        self.assertEqual(tm2.sensitivity, [])
         with self.assertRaises(ValueError):
             tm2.database = "not a database obj"
 
@@ -626,15 +624,13 @@ class TableMetaTest(BotoTester):
             web_schema = json.loads(url.read().decode())
         self.assertDictEqual(_table_json_schema, web_schema)
 
-    def test_set_table_sensitivity(self):
+    def test_table_sensitivity(self):
         tm = TableMeta(name="test", location="test")
 
-        self.assertEqual(tm.sensitivity, [])
+        with self.assertRaises(AttributeError):
+            tm.sensitivity = ["personal_data"]
 
-        with self.assertRaises(TypeError):
-            tm.sensitivity = "personal_data"
-        with self.assertRaises(ValueError):
-            tm.sensitivity = ["non-sensitive"]
+        self.assertEqual(tm.sensitivity, [])
 
         tm.add_column(
             name="employee_name",
@@ -642,9 +638,6 @@ class TableMetaTest(BotoTester):
             description="The name of the employee",
             sensitivity="personal_data",
         )
-        self.assertEqual(tm.sensitivity, ["personal_data"])
-
-        tm.sensitivity = ["personal_data", "personal_data"]
         self.assertEqual(tm.sensitivity, ["personal_data"])
 
         tm.add_column(
@@ -655,9 +648,6 @@ class TableMetaTest(BotoTester):
         )
         self.assertEqual(tm.sensitivity, ["personal_data", "special_category_data"])
 
-        tm.sensitivity = ["special_category_data", "personal_data"]
-        self.assertEqual(tm.sensitivity, ["personal_data", "special_category_data"])
-
         tm.update_column(
             column_name="employee_ethnicity", sensitivity="personal_data",
         )
@@ -666,36 +656,6 @@ class TableMetaTest(BotoTester):
         for column_name in ["employee_name", "employee_ethnicity"]:
             tm.remove_column(column_name)
         self.assertEqual(tm.sensitivity, [])
-
-        kwargs = {
-            "name": "employees",
-            "description": "table containing employee information",
-            "data_format": "parquet",
-            "location": "employees/",
-            "sensitivity": ["personal_data"],
-            "columns": [
-                {
-                    "name": "employee_id",
-                    "type": "int",
-                    "description": "an ID for each employee",
-                },
-                {
-                    "name": "employee_name",
-                    "type": "character",
-                    "description": "name of the employee",
-                    "sensitivity": "personal_data",
-                },
-                {
-                    "name": "employee_ethnicity",
-                    "type": "character",
-                    "description": "The ethnicity of the employee",
-                    "sensitivity": "special_category_data",
-                },
-            ],
-        }
-
-        with self.assertRaises(ValueError):
-            TableMeta(**kwargs)
 
 
 if __name__ == "__main__":
