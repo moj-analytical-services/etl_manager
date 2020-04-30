@@ -861,6 +861,7 @@ def _convert_etl_manager_agnostic_type_to_glue_type(type_string):
     type_string = type_string.replace("integer", "int")
     return type_string
 
+
 def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
     """
     Convert a field from parquet metadata dictionary to a etl_manager type string 
@@ -886,8 +887,6 @@ def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
         # elements of an array can themselves be a struct or array, so recurse
         et_string = _parquet_metadata_type_to_etl_mgr_type(element_type)
         type_string = f"array<{et_string}>"
-
-
 
     return type_string
 
