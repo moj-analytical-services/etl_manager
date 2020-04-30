@@ -103,7 +103,11 @@ class GlueJob:
 
         if not os.path.exists(self.job_path):
             raise ValueError(
-                f"Could not find job.py in base directory provided ({job_folder}), stopping.\nOnly folder allowed to have no job.py is a folder named shared_job_resources"
+                (
+                    f"Could not find job.py in base directory provided "
+                    f"({job_folder}), stopping.\nOnly folder allowed to "
+                    f"have no job.py is a folder named shared_job_resources"
+                )
             )
 
         self.bucket = bucket
@@ -207,7 +211,11 @@ class GlueJob:
                 if k[:2] != "--" or k in special_aws_params:
                     awsp = ", ".join(special_aws_params)
                     raise ValueError(
-                        f"Found incorrect AWS job argument ({k}). All arguments should begin with '--' and cannot be one of the following: {awsp}"
+                        (
+                            f"Found incorrect AWS job argument ({k}). All "
+                            f"arguments should begin with '--' and cannot be "
+                            f"one of the following: {awsp}"
+                        )
                     )
         self._job_arguments = job_arguments
 
@@ -273,7 +281,11 @@ class GlueJob:
         file_list = [os.path.basename(r) for r in resources_list]
         if len(file_list) != len(set(file_list)):
             raise ValueError(
-                "There are duplicate file names in your supplied resources. A file in job resources might share the same name as a file in the shared resources folders."
+                (
+                    "There are duplicate file names in your supplied "
+                    "resources. A file in job resources might share the "
+                    "same name as a file in the shared resources folders."
+                )
             )
 
     def _get_github_resource_list(self):
@@ -605,7 +617,10 @@ class GlueJob:
             if verbose:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 print(
-                    f"{timestamp}: Job State: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}"
+                    (
+                        f"{timestamp}: Job State: {status_code} | "
+                        f"Execution Time: {exec_time} (s) | Error: {status_error}"
+                    )
                 )
 
             if status_code == "SUCCEEDED":
