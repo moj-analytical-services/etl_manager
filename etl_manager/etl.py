@@ -46,8 +46,10 @@ class JobTimedOut(Exception):
 class JobStopped(Exception):
     pass
 
+
 class JobThrottlingExceeded(Exception):
     pass
+
 
 class GlueJob:
     """
@@ -88,10 +90,12 @@ class GlueJob:
         job_name=None,
         job_arguments={},
         include_shared_job_resources=True,
-        timeout_override_minutes=None
+        timeout_override_minutes=None,
     ):
-        self.GLUE_WORKER_HOURLY_COST = 0.44 # i.e. 44 cents per worker per hour
-        self.MAXIMUM_COST_TIMEOUT = 20 # i.e by default, jobs will timeout if they cost > 20 dollars
+        self.GLUE_WORKER_HOURLY_COST = 0.44  # i.e. 44 cents per worker per hour
+        self.MAXIMUM_COST_TIMEOUT = (
+            20  # i.e by default, jobs will timeout if they cost > 20 dollars
+        )
         self.job_id = "{:0.0f}".format(time.time())
 
         job_folder = os.path.normpath(job_folder)
@@ -99,7 +103,11 @@ class GlueJob:
 
         if not os.path.exists(self.job_path):
             raise ValueError(
-                f"Could not find job.py in base directory provided ({job_folder}), stopping.\nOnly folder allowed to have no job.py is a folder named shared_job_resources"
+                (
+                    f"Could not find job.py in base directory provided "
+                    f"({job_folder}), stopping.\nOnly folder allowed to "
+                    f"have no job.py is a folder named shared_job_resources"
+                )
             )
 
         self.bucket = bucket
@@ -130,19 +138,22 @@ class GlueJob:
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
 
-
         self._glue_version = "1.0"
         self._python_version = "3"
-
 
     @property
     def timeout(self):
         if self.timeout_override_minutes is None:
             # 60 because timeout is in munites, whereas glue worker cost is in hours
-            return int(60 * (self.MAXIMUM_COST_TIMEOUT  /(self.GLUE_WORKER_HOURLY_COST * self.allocated_capacity)))
+            return int(
+                60
+                * (
+                    self.MAXIMUM_COST_TIMEOUT
+                    / (self.GLUE_WORKER_HOURLY_COST * self.allocated_capacity)
+                )
+            )
         else:
             return int(self.timeout_override_minutes)
-
 
     @property
     def job_folder(self):
@@ -200,7 +211,11 @@ class GlueJob:
                 if k[:2] != "--" or k in special_aws_params:
                     awsp = ", ".join(special_aws_params)
                     raise ValueError(
-                        f"Found incorrect AWS job argument ({k}). All arguments should begin with '--' and cannot be one of the following: {awsp}"
+                        (
+                            f"Found incorrect AWS job argument ({k}). All "
+                            f"arguments should begin with '--' and cannot be "
+                            f"one of the following: {awsp}"
+                        )
                     )
         self._job_arguments = job_arguments
 
@@ -227,7 +242,6 @@ class GlueJob:
         _validate_string(job_name, allowed_chars="-_:")
         self._job_name = job_name
 
-
     @property
     def job_run_id(self):
         return self._job_run_id
@@ -242,7 +256,9 @@ class GlueJob:
         if not isinstance(v, str):
             raise TypeError(f"glue_version must be of type str (given {type(v)})")
         if v not in valid_glue_versions:
-            raise ValueError(f"glue_version must be one of {valid_glue_versions} (give {v})")
+            raise ValueError(
+                f"glue_version must be one of {valid_glue_versions} (give {v})"
+            )
         self._python_version = v
 
     @property
@@ -255,7 +271,9 @@ class GlueJob:
         if not isinstance(v, str):
             raise TypeError(f"python_version must be of type str (given {type(v)})")
         if v not in valid_python_versions:
-            raise ValueError(f"python_version must be one of {valid_python_versions} (give {v})")
+            raise ValueError(
+                f"python_version must be one of {valid_python_versions} (give {v})"
+            )
 
         self._python_version = v
 
@@ -263,7 +281,11 @@ class GlueJob:
         file_list = [os.path.basename(r) for r in resources_list]
         if len(file_list) != len(set(file_list)):
             raise ValueError(
-                "There are duplicate file names in your supplied resources. A file in job resources might share the same name as a file in the shared resources folders."
+                (
+                    "There are duplicate file names in your supplied "
+                    "resources. A file in job resources might share the "
+                    "same name as a file in the shared resources folders."
+                )
             )
 
     def _get_github_resource_list(self):
@@ -459,7 +481,11 @@ class GlueJob:
             "Name": self.job_name,
             "Role": self.job_role,
             "ExecutionProperty": {"MaxConcurrentRuns": self.max_concurrent_runs},
-            "Command": {"Name": "glueetl", "ScriptLocation": script_location, "PythonVersion": self.python_version},
+            "Command": {
+                "Name": "glueetl",
+                "ScriptLocation": script_location,
+                "PythonVersion": self.python_version,
+            },
             "DefaultArguments": {
                 "--TempDir": tmp_dir,
                 "--extra-files": "",
@@ -469,7 +495,7 @@ class GlueJob:
             "MaxRetries": self.max_retries,
             "AllocatedCapacity": self.allocated_capacity,
             "GlueVersion": self.glue_version,
-            "Timeout": self.timeout
+            "Timeout": self.timeout,
         }
 
         if len(self.resources) > 0:
@@ -542,7 +568,13 @@ class GlueJob:
     def is_running(self):
         return self.job_run_state == "RUNNING"
 
-    def wait_for_completion(self, verbose=False, wait_seconds=10, back_off_retries=5, cleanup_if_successful=False):
+    def wait_for_completion(
+        self,
+        verbose=False,
+        wait_seconds=10,
+        back_off_retries=5,
+        cleanup_if_successful=False,
+    ):
         """
         Wait for the job to complete.
 
@@ -560,10 +592,15 @@ class GlueJob:
             try:
                 status = self.job_status
             except ClientError as e:
-                if "ThrottlingException" in str(e) and back_off_counter < back_off_retries:
+                if (
+                    "ThrottlingException" in str(e)
+                    and back_off_counter < back_off_retries
+                ):
                     back_off_counter += 1
                     back_off_wait_time = wait_seconds * (2 ** (back_off_counter))
-                    status_code = f"BOTO_CLIENT_RATE_EXCEEDED (waiting {back_off_wait_time}s)"
+                    status_code = (
+                        f"BOTO_CLIENT_RATE_EXCEEDED (waiting {back_off_wait_time}s)"
+                    )
                     time.sleep(back_off_wait_time)
                 else:
                     if "ThrottlingException" in str(e):
@@ -579,7 +616,12 @@ class GlueJob:
 
             if verbose:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                print(f"{timestamp}: Job State: {status_code} | Execution Time: {exec_time} (s) | Error: {status_error}")
+                print(
+                    (
+                        f"{timestamp}: Job State: {status_code} | "
+                        f"Execution Time: {exec_time} (s) | Error: {status_error}"
+                    )
+                )
 
             if status_code == "SUCCEEDED":
                 break
@@ -600,7 +642,10 @@ class GlueJob:
                 try:
                     self.cleanup()
                 except ClientError as e:
-                    if "ThrottlingException" in str(e) and back_off_counter < back_off_retries:
+                    if (
+                        "ThrottlingException" in str(e)
+                        and back_off_counter < back_off_retries
+                    ):
                         back_off_counter += 1
                         back_off_wait_time = wait_seconds * (2 ** (back_off_counter))
                         time.sleep(back_off_wait_time)
