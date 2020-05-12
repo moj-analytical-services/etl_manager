@@ -9,7 +9,7 @@
   "properties": {
     "columns": {
       "type": "array",
-      "title": "The columns in the table.  An array of objects",
+      "title": "The columns in the table. An array of objects",
       "items": {
         "type": "object",
         "required": [
@@ -23,7 +23,7 @@
           },
           "name": {
             "type": "string",
-            "title": "The column name.  Should be lower case with underscores, not spaces",
+            "title": "The column name. Should be lower case with underscores, not spaces",
             "pattern": "[a-z0-9_]+",
             "examples": [
               "employee_number"
@@ -31,7 +31,7 @@
           },
           "type": {
             "type": "string",
-            "title": "The data type.  We use a limited set of data types for cross compatibility between Spark, R, Pandas etc.  See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
+            "title": "The data type. We use a limited set of data types for cross compatibility between Spark, R, Pandas etc. See lookup here: https://github.com/moj-analytical-services/dataengineeringutils/blob/master/dataengineeringutils/data/data_type_conversion.csv",
             "enum": [
               "character",
               "int",
@@ -67,7 +67,7 @@
               [
                 "England",
                 "Northern Ireland",
-                "Scottland",
+                "Scotland",
                 "Wales"
               ]
             ]
@@ -93,7 +93,7 @@
     },
     "description": {
       "type": "string",
-      "title": "A description of what this table contains "
+      "title": "A description of what this table contains"
     },
     "name": {
       "type": "string",
@@ -115,7 +115,7 @@
     },
     "location": {
       "type": "string",
-      "title": "The path to the data in s3.  Usually, you should use path relative to the database root directory, unless the database contains tables spread across mutliple buckets or directories",
+      "title": "The path to the data in s3. Usually, you should use path relative to the database root directory, unless the database contains tables spread across multiple buckets or directories",
       "examples": [
         "sop_full/"
       ]

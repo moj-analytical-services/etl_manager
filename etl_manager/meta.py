@@ -237,7 +237,7 @@ class TableMeta:
         sensitivity=None,
         redacted=None,
     ):
-        self._check_column_does_not_exists(name)
+        self._check_column_does_not_exist(name)
         self._check_valid_datatype(type)
         _validate_string(name)
         cols = self.columns
@@ -337,10 +337,10 @@ class TableMeta:
                 f"meta: {cn}"
             )
 
-    def _check_column_does_not_exists(self, column_name):
+    def _check_column_does_not_exist(self, column_name):
         if column_name in self.column_names:
             raise ValueError(
-                f"The column name provided ({column_name}) already exists table in "
+                f"The column name provided ({column_name}) already exists in table in "
                 f"meta."
             )
 
@@ -681,11 +681,11 @@ class DatabaseMeta:
     def add_table(self, table):
         """
         Adds a table object to the database object.
-        table must be a table object
-        e.g. table = TableMeta(example_meta_data/employees.json)
+        table must be of type TableMeta
+        For example, table = TableMeta(example_meta_data/employees.json)
         """
         if not isinstance(table, TableMeta):
-            raise ValueError("table must an object of TableMeta class")
+            raise ValueError("table must be of type TableMeta")
         self._throw_error_check_table(table.name)
 
         if not table.database:
