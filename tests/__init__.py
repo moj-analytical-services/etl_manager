@@ -2,8 +2,8 @@ import unittest
 import boto3
 from botocore.exceptions import NoCredentialsError
 
+
 class BotoTester(unittest.TestCase):
-    
     @classmethod
     def setUpClass(cls):
         session = boto3.Session()
