@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.0.6
+
+### Change
+
+- Added `sensitivity` and `redacted` properties to column metadata
+- Added `sensitivity` property to table metadata
+
 ## v7.0.5
 
 ### Change

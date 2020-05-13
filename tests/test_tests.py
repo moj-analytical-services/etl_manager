@@ -4,8 +4,11 @@
 Testing DatabaseMeta, TableMeta
 """
 
+import tempfile
+import os
+import urllib
+import json
 import unittest
-from tests import BotoTester
 
 from etl_manager.meta import (
     DatabaseMeta,
@@ -26,10 +29,9 @@ from etl_manager.utils import (
     _remove_final_slash,
 )
 from etl_manager.etl import GlueJob
-import boto3
-import tempfile
-import os
-import urllib, json
+
+from tests import BotoTester
+
 
 
 class UtilsTest(BotoTester):
@@ -70,7 +72,8 @@ class GlueTest(BotoTester):
         self.assertEqual(
             g.py_resources,
             [
-                "example/glue_jobs/shared_job_resources/glue_py_resources/my_dummy_utils.zip"
+                "example/glue_jobs/shared_job_resources/glue_py_resources/"
+                "my_dummy_utils.zip"
             ],
         )
 
@@ -89,7 +92,8 @@ class GlueTest(BotoTester):
         self.assertEqual(
             g.github_zip_urls,
             [
-                "https://github.com/moj-analytical-services/gluejobutils/archive/master.zip"
+                "https://github.com/moj-analytical-services/gluejobutils/archive/"
+                "master.zip"
             ],
         )
         self.assertEqual(g.job_arguments["--test_arg"], "this is a test")
@@ -270,7 +274,8 @@ class DatabaseMetaTest(BotoTester):
         expected_dict = read_json("example/meta_data/db1/teams.json")
         test_dict = db.table("teams").to_dict()
 
-        # Null out schema as may need changing when on branch but still need to unit test
+        # Null out schema as may need changing when on branch but still need to unit
+        # test
         expected_dict["$schema"] = ""
         test_dict["$schema"] = ""
 
@@ -280,7 +285,8 @@ class DatabaseMetaTest(BotoTester):
         expected_dict2 = read_json("example/meta_data/db1/pay.json")
         test_dict2 = db.table("pay").to_dict()
 
-        # Null out schema as may need changing when on branch but still need to unit test
+        # Null out schema as may need changing when on branch but still need to unit
+        # test
         expected_dict2["$schema"] = ""
         test_dict2["$schema"] = ""
 
@@ -314,7 +320,6 @@ class DatabaseMetaTest(BotoTester):
 
     def test_glue_specific_table(self):
         t = read_table_json("example/meta_data/db1/pay.json")
-        glue_def = t.glue_table_definition("db_path")
         self.assertTrue(
             t.glue_table_definition("db_path")["Parameters"]["skip.header.line.count"]
             == "1"
@@ -322,8 +327,6 @@ class DatabaseMetaTest(BotoTester):
 
     def test_glue_table_definition_doesnt_overwrite_base_spec(self):
         expected_dict = _get_spec("base")
-        db = read_database_folder("example/meta_data/db1/")
-        glue_def_dump = db.table("pay").glue_table_definition()
 
         self.assertDictEqual(expected_dict, _get_spec("base"))
 
@@ -360,7 +363,10 @@ class DatabaseMetaTest(BotoTester):
         test_created = all([r["Name"] in db.table_names for r in resp["TableList"]])
         self.assertTrue(
             test_created,
-            msg="Note this requires user to have correct credentials to create a glue database",
+            msg=(
+                "Note this requires user to have correct credentials to create a glue "
+                "database"
+            ),
         )
         self.assertEqual(db.delete_glue_database(), "database deleted")
         self.assertEqual(
@@ -389,7 +395,8 @@ class TableMetaTest(BotoTester):
 
     def test_data_type_conversion_against_gluejobutils(self):
         with urllib.request.urlopen(
-            "https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/master/gluejobutils/data/data_type_conversion.json"
+            "https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/"
+            "master/gluejobutils/data/data_type_conversion.json"
         ) as url:
             gluejobutils_data = json.loads(url.read().decode())
         self.assertDictEqual(_agnostic_to_glue_spark_dict, gluejobutils_data)
@@ -435,6 +442,7 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm2.data_format, kwargs["data_format"])
         self.assertEqual(tm2.location, kwargs["location"])
         self.assertEqual(tm2.columns, kwargs["columns"])
+        self.assertEqual(tm2.partitions, [])
         self.assertEqual(tm2.glue_specific, {})
         with self.assertRaises(ValueError):
             tm2.database = "not a database obj"
@@ -488,6 +496,8 @@ class TableMetaTest(BotoTester):
                 "b",
                 "c",
             ],  # yes enums and patterns can conflict - no validation for this
+            "sensitivity": "personal_data",
+            "redacted": False,
         }
 
         tm = TableMeta(**kwargs)
@@ -524,7 +534,8 @@ class TableMetaTest(BotoTester):
         with self.assertRaises(ValueError):
             tm.update_column("j_cole", type="int")
 
-        # Test can update col column with pattern, nullable and enum properties
+        # Test can update col column with pattern, nullable, enum, sensitivity and
+        # redacted properties
         kwargs2 = {
             "name": "employees",
             "description": "table containing employee information",
@@ -540,6 +551,11 @@ class TableMetaTest(BotoTester):
                     "name": "employee_name",
                     "type": "character",
                     "description": "name of the employee",
+                },
+                {
+                    "name": "employee_ethnicity",
+                    "type": "character",
+                    "description": "ethnicity of the employee",
                 },
             ],
         }
@@ -558,21 +574,39 @@ class TableMetaTest(BotoTester):
                 "enum": ["john", "sally"],
                 "nullable": False,
             },
+            {
+                "name": "employee_ethnicity",
+                "type": "character",
+                "description": "ethnicity of the employee",
+                "sensitivity": "special_category_data",
+                "redacted": False,
+            },
         ]
 
         tm = TableMeta(**kwargs2)
         tm.update_column("employee_id", pattern="\d+")
         tm.update_column("employee_name", enum=["john", "sally"], nullable=False)
+        tm.update_column(
+            "employee_ethnicity", sensitivity="special_category_data", redacted=False
+        )
 
         self.assertEqual(tm.columns, columns_test2)
 
-        # Test basic validation for pattern, nullable and enum properties
+        # Test basic validation for pattern, nullable, enum, sensitivity and redacted
+        # properties
         with self.assertRaises(TypeError):
             tm.update_column("employee_id", pattern=5)
         with self.assertRaises(TypeError):
             tm.update_column("employee_id", enum=5)
         with self.assertRaises(TypeError):
             tm.update_column("employee_id", nullable=5)
+        with self.assertRaises(TypeError):
+            tm.update_column("employee_id", sensitivity=5)
+        with self.assertRaises(TypeError):
+            tm.update_column("employee_id", redacted=5)
+
+        with self.assertRaises(ValueError):
+            tm.update_column("employee_id", sensitivity="non-sensitive")
 
     def test_partion_cols_are_last(self):
         tb = TableMeta(name="test", location="test")
@@ -590,6 +624,39 @@ class TableMetaTest(BotoTester):
         with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
             web_schema = json.loads(url.read().decode())
         self.assertDictEqual(_table_json_schema, web_schema)
+
+    def test_table_sensitivity(self):
+        tm = TableMeta(name="test", location="test")
+
+        with self.assertRaises(AttributeError):
+            tm.sensitivity = ["personal_data"]
+
+        self.assertEqual(tm.sensitivity, [])
+
+        tm.add_column(
+            name="employee_name",
+            type="character",
+            description="The name of the employee",
+            sensitivity="personal_data",
+        )
+        self.assertEqual(tm.sensitivity, ["personal_data"])
+
+        tm.add_column(
+            name="employee_ethnicity",
+            type="character",
+            description="The ethnicity of the employee",
+            sensitivity="special_category_data",
+        )
+        self.assertEqual(tm.sensitivity, ["personal_data", "special_category_data"])
+
+        tm.update_column(
+            column_name="employee_ethnicity", sensitivity="personal_data",
+        )
+        self.assertEqual(tm.sensitivity, ["personal_data"])
+
+        for column_name in ["employee_name", "employee_ethnicity"]:
+            tm.remove_column(column_name)
+        self.assertEqual(tm.sensitivity, [])
 
 
 if __name__ == "__main__":

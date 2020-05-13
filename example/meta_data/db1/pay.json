@@ -1,5 +1,5 @@
 {
-    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json",
+    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json",
     "name": "pay",
     "description": "Check glue specific works",
     "data_format": "csv",

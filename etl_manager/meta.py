@@ -1,3 +1,13 @@
+import json
+import os
+import re
+import urllib
+import time
+import pkg_resources
+import jsonschema
+import warnings
+import copy
+
 from etl_manager.utils import (
     read_json,
     write_json,
@@ -7,26 +17,15 @@ from etl_manager.utils import (
     _validate_enum,
     _validate_pattern,
     _validate_nullable,
+    _validate_sensitivity,
+    _validate_redacted,
     _athena_client,
     _glue_client,
     _s3_resource,
-    _remove_final_slash,
     trim_complex_data_types,
-    trim_complex_type,
     data_type_is_regex,
-    COL_TYPE_REGEX,
     s3_path_to_bucket_key,
 )
-import copy
-import string
-import json
-import os
-import re
-import urllib
-import time
-import pkg_resources
-import jsonschema
-import warnings
 
 _template = {
     "base": json.load(pkg_resources.resource_stream(__name__, "specs/base.json")),
@@ -58,13 +57,13 @@ _agnostic_to_glue_spark_dict = json.load(
 )
 
 _web_link_to_table_json_schema = (
-    "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json"
+    "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json"
 )
 
 try:
     with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
         _table_json_schema = json.loads(url.read().decode())
-except urllib.error.URLError as e:
+except urllib.error.URLError:
     warnings.warn(
         "Could not get schema from URL. Reading schema from package instead..."
     )
@@ -76,6 +75,9 @@ _supported_column_types = _table_json_schema["properties"]["columns"]["items"][
     "properties"
 ]["type"]["enum"]
 _supported_data_formats = _table_json_schema["properties"]["data_format"]["enum"]
+_supported_column_sensitivity = _table_json_schema["properties"]["columns"]["items"][
+    "properties"
+]["sensitivity"]["enum"]
 _column_properties = list(
     _table_json_schema["properties"]["columns"]["items"]["properties"].keys()
 )
@@ -119,6 +121,8 @@ class TableMeta:
         self.partitions = copy.deepcopy(partitions)
         self.glue_specific = copy.deepcopy(glue_specific)
         self.database = database
+
+        self._update_sensitivity()
 
         self.validate_json_schema()
         self.validate_column_types()
@@ -182,8 +186,22 @@ class TableMeta:
             self._location = location
         else:
             raise ValueError(
-                "Your table must exist inside a folder in S3. Please specify a location."
+                "Your table must exist inside a folder in S3. "
+                "Please specify a location."
             )
+
+    @property
+    def sensitivity(self):
+        return self._sensitivity
+
+    def _update_sensitivity(self):
+        column_sensitivities = {
+            column["sensitivity"] for column in self.columns if "sensitivity" in column
+        }
+        if column_sensitivities:
+            self._sensitivity = sorted(list(column_sensitivities))
+        else:
+            self._sensitivity = []
 
     @property
     def database(self):
@@ -206,11 +224,20 @@ class TableMeta:
         new_partitions = [p for p in self.partitions if p != column_name]
         self.columns = new_cols
         self.partitions = new_partitions
+        self._update_sensitivity()
 
     def add_column(
-        self, name, type, description, pattern=None, enum=None, nullable=None
+        self,
+        name,
+        type,
+        description,
+        pattern=None,
+        enum=None,
+        nullable=None,
+        sensitivity=None,
+        redacted=None,
     ):
-        self._check_column_does_not_exists(name)
+        self._check_column_does_not_exist(name)
         self._check_valid_datatype(type)
         _validate_string(name)
         cols = self.columns
@@ -224,6 +251,12 @@ class TableMeta:
         if nullable is not None:
             _validate_nullable(nullable)
             cols[-1]["nullable"] = nullable
+        if sensitivity is not None:
+            self._check_valid_column_sensitivity(sensitivity)
+            cols[-1]["sensitivity"] = sensitivity
+        if redacted is not None:
+            _validate_redacted(redacted)
+            cols[-1]["redacted"] = redacted
 
         self.columns = cols
 
@@ -232,6 +265,8 @@ class TableMeta:
             new_col_order = [c for c in self.column_names if c not in self.partitions]
             new_col_order = new_col_order + copy.deepcopy(self.partitions)
             self.reorder_columns(new_col_order)
+
+        self._update_sensitivity()
 
     def reorder_columns(self, column_name_order):
         for c in self.column_names:
@@ -289,6 +324,15 @@ class TableMeta:
                 )
             )
 
+    def _check_valid_column_sensitivity(self, sensitivity):
+        _validate_sensitivity(sensitivity)
+        if sensitivity not in _supported_column_sensitivity:
+            ss = ", ".join(_supported_column_sensitivity)
+            raise ValueError(
+                f"The sensitivity provided must match the supported "
+                f"sensitivity names: {ss}"
+            )
+
     def _check_column_exists(self, column_name):
         if column_name not in self.column_names:
             cn = ", ".join(self.column_names)
@@ -299,7 +343,7 @@ class TableMeta:
                 )
             )
 
-    def _check_column_does_not_exists(self, column_name):
+    def _check_column_does_not_exist(self, column_name):
         if column_name in self.column_names:
             raise ValueError(
                 (
@@ -347,9 +391,18 @@ class TableMeta:
                     _validate_nullable(kwargs["nullable"])
                     c["nullable"] = kwargs["nullable"]
 
+                if "sensitivity" in kwargs:
+                    self._check_valid_column_sensitivity(kwargs["sensitivity"])
+                    c["sensitivity"] = kwargs["sensitivity"]
+
+                if "redacted" in kwargs:
+                    _validate_redacted(kwargs["redacted"])
+                    c["redacted"] = kwargs["redacted"]
+
             new_cols.append(c)
 
         self.columns = new_cols
+        self._update_sensitivity()
 
     def glue_table_definition(self, full_database_path=None):
 
@@ -411,6 +464,7 @@ class TableMeta:
             "columns": self.columns,
             "location": self.location,
         }
+
         if bool(self.partitions):
             meta["partitions"] = self.partitions
 
@@ -544,9 +598,8 @@ class TableMeta:
                     )
                 else:
                     raise ValueError(
-                        "athena failed - unknown reason (printing full response):\n {athena_status}".format(
-                            athena_status
-                        )
+                        f"Athena failed - unknown reason (printing full response):\n "
+                        f"{athena_status}"
                     )
 
                 counter += 1
@@ -560,9 +613,14 @@ class TableMeta:
 class DatabaseMeta:
     """
     Python class to manage glue databases from our agnostic meta data.
+
     db = DatabaseMeta('path_to_local_meta_data_folder/')
-    This will create a database object that also holds table objects for each table json in the folder it is pointed to.
-    The meta data folder used to initialise the database must contain a database.json file.
+
+    This will create a database object that also holds table objects for each table
+    json in the folder it is pointed to.
+
+    The meta data folder used to initialise the database must contain a database.json
+    file.
     """
 
     def __init__(self, name, bucket, base_folder="", description=""):
@@ -641,10 +699,11 @@ class DatabaseMeta:
     def add_table(self, table):
         """
         Adds a table object to the database object.
-        table must be a table object e.g. table = TableMeta(example_meta_data/employees.json)
+        table must be of type TableMeta
+        For example, table = TableMeta(example_meta_data/employees.json)
         """
         if not isinstance(table, TableMeta):
-            raise ValueError("table must an object of TableMeta class")
+            raise ValueError("table must be of type TableMeta")
         self._throw_error_check_table(table.name)
 
         if not table.database:
@@ -662,7 +721,8 @@ class DatabaseMeta:
 
     def delete_glue_database(self):
         """
-        Deletes a glue database with the same name. Returns a response explaining if it was deleted or didn't delete because database was not found.
+        Deletes a glue database with the same name. Returns a response explaining if it
+        was deleted or didn't delete because database was not found.
         """
         try:
             _glue_client.delete_database(Name=self.name)
@@ -675,13 +735,16 @@ class DatabaseMeta:
 
     def delete_data_in_database(self, tables_only=False):
         """
-        Deletes the data that is in the databases s3_database_path. If tables only is False, then the entire database folder is deleted otherwise the class will only delete folders corresponding to the tables in the database.
+        Deletes the data that is in the databases s3_database_path. If tables only is
+        False, then the entire database folder is deleted otherwise the class will only
+        delete folders corresponding to the tables in the database.
         """
         bucket = _s3_resource.Bucket(self.bucket)
         database_obj_folder = self.base_folder
         if tables_only:
             for t in self.table_names:
-                # Need to end with a / to ensure we don't delete any filepaths that match the same name
+                # Need to end with a / to ensure we don't delete any filepaths that
+                # match the same name
                 table_s3_obj_folder = _end_with_slash(
                     os.path.join(database_obj_folder, self.table(t).location)
                 )
@@ -696,8 +759,11 @@ class DatabaseMeta:
 
     def create_glue_database(self, delete_if_exists=False):
         """
-        Creates a database in Glue based on the database object calling the method function.
-        By default, will error out if database exists - unless delete_if_exists is set to True (default is False).
+        Creates a database in Glue based on the database object calling the method
+        function.
+
+        By default, will error out if database exists - unless delete_if_exists is set
+        to True (default is False).
         """
         db = {"DatabaseInput": {"Description": self.description, "Name": self.name}}
 
@@ -756,9 +822,14 @@ class DatabaseMeta:
     def write_to_json(self, folder_path, write_tables=True):
         """
         Writes the database object back into the agnostic meta data json files.
+
         Function writes a file called database.json to the folder_path provided.
-        If write_tables is True (default) this method will also write all table objects as an agnostic meta data json.
-        The table meta data json will be saved as <table_name>.json where table_name == table.name.
+
+        If write_tables is True (default) this method will also write all table objects
+        as an agnostic meta data json.
+
+        The table meta data json will be saved as <table_name>.json where
+        table_name == table.name.
         """
 
         write_json(self.to_dict(), os.path.join(folder_path, "database.json"))
@@ -800,7 +871,11 @@ class DatabaseMeta:
         error_log = ""
         for k in all_col_test.keys():
             if len(all_col_test[k]["types"]) > 1:
-                error_log += f"ERROR: column {k} has multiple types [{', '.join(list(all_col_test[k]['types']))}]\n------------------\n{all_col_test[k]['traceback_log']}\n"
+                error_log += (
+                    f"ERROR: column {k} has multiple types "
+                    f"[{', '.join(list(all_col_test[k]['types']))}]\n"
+                    f"------------------\n{all_col_test[k]['traceback_log']}\n"
+                )
                 failure = True
 
         # Check results
@@ -849,7 +924,9 @@ def read_database_folder(folderpath):
     db = read_database_json(os.path.join(folderpath, "database.json"))
 
     files = os.listdir(folderpath)
-    files = set([f for f in files if re.match(".+\.json$", f) and f != "database.json"])
+    files = set(
+        [f for f in files if re.match(r".+\.json$", f) and f != "database.json"]
+    )
 
     for f in files:
         table_file_path = os.path.join(folderpath, f)

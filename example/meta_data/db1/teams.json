@@ -1,5 +1,5 @@
 {
-    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json",
+    "$schema": "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json",
     "name": "teams",
     "description": "month snapshot of which employee with working in what team",
     "data_format": "parquet",
@@ -9,7 +9,7 @@
             "name": "team_id",
             "type": "int",
             "description": "ID given to each team",
-            "nullable" : false
+            "nullable": false
         },
         {
             "name": "team_name",
@@ -20,7 +20,9 @@
             "name": "employee_id",
             "type": "int",
             "description": "primary key for each employee in the employees table",
-            "pattern" : "\\d+"
+            "pattern": "\\d+",
+            "sensitivity": "personal_data",
+            "redacted": false
         },
         {
             "name": "snapshot_year",
@@ -31,8 +33,24 @@
             "name": "snapshot_month",
             "type": "int",
             "description": "month at which snapshot of workforce was taken",
-            "enum" : [1,2,3,4,5,6,7,8,9,10,11,12]
+            "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12
+            ]
         }
     ],
-    "partitions" : ["snapshot_year", "snapshot_month"]
+    "partitions": [
+        "snapshot_year",
+        "snapshot_month"
+    ]
 }

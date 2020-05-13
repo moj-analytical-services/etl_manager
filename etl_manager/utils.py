@@ -1,4 +1,3 @@
-import collections
 import copy
 import json
 import boto3
@@ -8,6 +7,8 @@ import shutil
 import string
 import os
 import subprocess
+
+from collections.abc import Mapping
 
 import regex
 
@@ -44,11 +45,7 @@ def _dict_merge(dct, merge_dct):
     :return: None
     """
     for k, v in merge_dct.items():
-        if (
-            k in dct
-            and isinstance(dct[k], dict)
-            and isinstance(merge_dct[k], collections.Mapping)
-        ):
+        if k in dct and isinstance(dct[k], dict) and isinstance(merge_dct[k], Mapping):
             _dict_merge(dct[k], merge_dct[k])
         else:
             dct[k] = merge_dct[k]
@@ -110,6 +107,18 @@ def _validate_pattern(pattern):
 def _validate_nullable(nullable):
     if type(nullable) != bool:
         raise TypeError(f"nullable must be a boolean. Not of type {type(nullable)}")
+
+
+def _validate_sensitivity(sensitivity):
+    if not isinstance(sensitivity, str):
+        raise TypeError(
+            f"sensitivity must be a string. Not of type {type(sensitivity)}"
+        )
+
+
+def _validate_redacted(redacted):
+    if not isinstance(redacted, bool):
+        raise TypeError(f"redacted must be a boolean. Not of type {type(redacted)}")
 
 
 def _get_file_from_file_path(file_path):
