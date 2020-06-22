@@ -12,9 +12,9 @@ from gluejobutils.s3 import read_json_from_s3
 
 args = getResolvedOptions(sys.argv, ["JOB_NAME", "metadata_path", "test_arg"])
 
-print "JOB SPECS..."
-print "JOB_NAME: ", args["JOB_NAME"]
-print "test argument: ", args["test_arg"]
+print("JOB SPECS...")
+print("JOB_NAME: ", args["JOB_NAME"])
+print("test argument: ", args["test_arg"])
 
 sc = SparkContext()
 glueContext = GlueContext(sc)
