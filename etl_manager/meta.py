@@ -948,7 +948,7 @@ def get_existing_database_from_glue_catalogue(database_name):
     try:
         s3_path = tables[0]["StorageDescriptor"]["Location"]
     except IndexError:
-        raise Error(
+        raise ValueError(
             (
                 "There are no tables in this database, so there's not "
                 "enough metadata to create an etl_manager db for you"
