@@ -1,31 +1,23 @@
 name: Test
-on: [pull_request]
-
+on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Run unit tests
-        run: |
-          pytest tests/ -vv
-      - name: Run database access checks
-        run: |
-          python check_access_request.py
-        env:
-          GITHUB_HEAD_REF: ${{ github.head_ref }}
-          GITHUB_BASE_REF: ${{ github.base_ref }}
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .
+    - name: Test with unittest
+      run: |
+        python -m unittest discover tests/
