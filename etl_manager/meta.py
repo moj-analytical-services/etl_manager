@@ -179,7 +179,7 @@ class TableMeta:
 
     @location.setter
     def location(self, location):
-        _validate_string(location, allowed_chars="_/-")
+        _validate_string(location, allowed_chars="_/-", allow_upper=True)
         if location and location != "":
             if location[0] == "/":
                 raise ValueError("location should not start with a slash")
