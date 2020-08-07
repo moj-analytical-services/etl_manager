@@ -85,6 +85,7 @@ def get_curated_metadata(
             "FIXED_CHAR": "character",
             "LONG_STRING": "character",
             "BINARY": "character",
+            "OBJECT": "character",  # ADDED AS TEST - NEED TO CHECK
         }
         columns = []
 
