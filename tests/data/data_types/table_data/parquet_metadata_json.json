@@ -1,0 +1,105 @@
+{
+    "type": "struct",
+    "fields": [
+        {
+            "name": "entity_id",
+            "type": "long",
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "test_array",
+            "type": {
+                "type": "array",
+                "elementType": "long",
+                "containsNull": true
+            },
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "test_nest",
+            "type": {
+                "type": "struct",
+                "fields": [
+                    {
+                        "name": "arr_key",
+                        "type": {
+                            "type": "array",
+                            "elementType": "string",
+                            "containsNull": true
+                        },
+                        "nullable": true,
+                        "metadata": {}
+                    },
+                    {
+                        "name": "dict_key",
+                        "type": {
+                            "type": "struct",
+                            "fields": [
+                                {
+                                    "name": "nest_arr",
+                                    "type": {
+                                        "type": "array",
+                                        "elementType": "long",
+                                        "containsNull": true
+                                    },
+                                    "nullable": true,
+                                    "metadata": {}
+                                },
+                                {
+                                    "name": "nest_dict",
+                                    "type": {
+                                        "type": "struct",
+                                        "fields": [
+                                            {
+                                                "name": "a_key",
+                                                "type": "string",
+                                                "nullable": true,
+                                                "metadata": {}
+                                            },
+                                            {
+                                                "name": "b_key",
+                                                "type": "string",
+                                                "nullable": true,
+                                                "metadata": {}
+                                            }
+                                        ]
+                                    },
+                                    "nullable": true,
+                                    "metadata": {}
+                                }
+                            ]
+                        },
+                        "nullable": true,
+                        "metadata": {}
+                    }
+                ]
+            },
+            "nullable": true,
+            "metadata": {}
+        },
+        {
+            "name": "test_struct",
+            "type": {
+                "type": "struct",
+                "fields": [
+                    {
+                        "name": "desc",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                    },
+                    {
+                        "name": "num",
+                        "type": "long",
+                        "nullable": true,
+                        "metadata": {}
+                    }
+                ]
+            },
+            "nullable": true,
+            "metadata": {}
+        }
+    ]
+}
