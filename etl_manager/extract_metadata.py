@@ -28,9 +28,18 @@ def create_database_connection(settings_file):
     return connection
 
 
-def get_table_names(database: str, connection):
-    """Gets a list of the names of all tables in the database.
-    Skips tables whose names start with "SYS_"
+def get_table_names(database: str, connection) -> list:
+    """Gets names of all tables in the database, skipping any that start with "SYS_"
+
+    Parameters
+    ----------
+    database (str):
+        The name of the database/schema - for example DELIUS_ANALYTICS_PLATFORM
+
+    Returns
+    -------
+    List of table names as strings
+
     """
     cursor = connection.cursor()
     cursor.execute(f"SELECT table_name FROM all_tables WHERE OWNER = '{database}'")
@@ -48,8 +57,7 @@ def get_curated_metadata(
     connection=None,
 ):
     """
-    Creates a json file of metadata for each table named in tables
-    Skips tables with no rows
+    Creates a json file of metadata for each table that's named in tables and has rows
 
     Parameters
     ----------
@@ -85,9 +93,11 @@ def get_curated_metadata(
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
 
         except cx_Oracle.DatabaseError:
+            # Catches tables marked for deletion but still in table name list
             print(f"Problem selecting from {table} in {database}")
             continue
 
+        # cursor.description will be None if the table has no rows
         if cursor.description:
             metadata = get_table_meta(
                 cursor, table, include_op_column, include_derived_columns
@@ -98,7 +108,35 @@ def get_curated_metadata(
             print(f"No rows in {table} from {database}")
 
 
-def get_table_meta(cursor, table, include_op_column, include_derived_columns):
+def get_table_meta(
+    cursor, table: str, include_op_column: bool, include_derived_columns: bool
+) -> list:
+    """
+    Lists a table's columns, plus any primary key fields and partitions
+
+    Parameters
+    ----------
+    cursor:
+        The results of a cx_Oracle query to the table - usually
+        "SELECT * FROM {database}.{table} WHERE ROWNUM <= 1".
+        This will give the cursor a .description attribute with column info
+
+    table (str):
+        Name of the table
+
+    include_op_column (boolean):
+        If True, adds a column called 'Op' for operation type - I, U or D
+        This data is automatically added by AWS DMS ongoing replication tasks
+
+    include_derived_columns (boolean):
+        If True, adds 5 datetime columns: mojap_extraction_datetime,
+        mojap_start_datetime, mojap_end_datetime, mojap_latest_record, mojap_image_tag
+
+    Returns
+    -------
+    List of dicts
+        Contains data for all the columns in the table, ready to write to json
+    """
     primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
     partitions = get_partitions(table=table, cursor=cursor)
     type_lookup = {
@@ -124,6 +162,8 @@ def get_table_meta(cursor, table, include_op_column, include_derived_columns):
             }
         )
 
+    # Main column info - cursor.description has 7 set columns described at:
+    # https://cx-oracle.readthedocs.io/en/latest/api_manual/cursor.html#Cursor.description
     columns.extend(
         [
             {
@@ -181,7 +221,7 @@ def get_table_meta(cursor, table, include_op_column, include_derived_columns):
     if table == "DOCUMENT_HISTORY":
         columns += document_columns
 
-    if include_derived_columns is True:
+    if include_derived_columns:
         columns += derived_columns
 
     metadata = {
