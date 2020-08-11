@@ -28,6 +28,17 @@ def create_database_connection(settings_file):
     return connection
 
 
+def get_table_names(database: str, connection):
+    """Gets a list of the names of all tables in the database.
+    Skips tables whose names start with "SYS_"
+    """
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT table_name FROM all_tables WHERE OWNER = '{database}'")
+    result = cursor.fetchall()
+    names = [r[0] for r in result if not r[0].startswith("SYS_")]
+    return names
+
+
 def get_curated_metadata(
     tables: list,
     database: str,
@@ -38,6 +49,7 @@ def get_curated_metadata(
 ):
     """
     Creates a json file of metadata for each table named in tables
+    Skips tables with no rows
 
     Parameters
     ----------
@@ -59,123 +71,139 @@ def get_curated_metadata(
         mojap_start_datetime, mojap_end_datetime, mojap_latest_record, mojap_image_tag
 
     connection (cx_Oracle connection):
-        Database connection object. By default, creates one from db_settings.json
+        Database connection object
 
     Returns
     -------
     None
         But creates a json file for each table in the database
     """
-
-    if not connection:
-        connection = create_database_connection("db_settings.json")
     cursor = connection.cursor()
 
     for table in tables:
-        cursor.execute(f"SELECT * FROM {database}.{table}")
-        description = cursor.description
-        primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
-        partitions = get_partitions(table=table, cursor=cursor)
-        type_lookup = {
-            "DATETIME": "datetime",
-            "TIMESTAMP": "datetime",
-            "STRING": "character",
-            "CLOB": "character",
-            "BLOB": "character",
-            "FIXED_CHAR": "character",
-            "LONG_STRING": "character",
-            "BINARY": "character",
-            "OBJECT": "character",  # ADDED AS TEST - NEED TO CHECK
-        }
-        columns = []
+        try:
+            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
 
-        if include_op_column:
-            columns.append({
+        except cx_Oracle.DatabaseError:
+            print(f"Problem selecting from {table} in {database}")
+            continue
+
+        if cursor.description:
+            metadata = get_table_meta(
+                cursor, table, include_op_column, include_derived_columns
+            )
+            with open(f"{location}/{table.lower()}.json", "w+") as file:
+                json.dump(metadata, file, indent=4)
+        else:
+            print(f"No rows in {table} from {database}")
+
+
+def get_table_meta(cursor, table, include_op_column, include_derived_columns):
+    primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
+    partitions = get_partitions(table=table, cursor=cursor)
+    type_lookup = {
+        "DATETIME": "datetime",
+        "TIMESTAMP": "datetime",
+        "STRING": "character",
+        "CLOB": "character",
+        "BLOB": "character",
+        "FIXED_CHAR": "character",
+        "LONG_STRING": "character",
+        "BINARY": "character",
+    }
+    columns = []
+
+    if include_op_column:
+        columns.append(
+            {
                 "name": "op",
                 "type": "character",
                 "description": "Type of change, for rows added by ongoing replication.",
                 "nullable": True,
                 "enum": ["I", "U", "D"],
-            })
-
-        columns.extend(
-            [
-                {
-                    "name": column[0].lower(),
-                    "type": f"decimal({column[4]},{column[5]})"
-                    if column[1].__name__ == "NUMBER"
-                    else type_lookup[column[1].__name__],
-                    "description": "",
-                    "nullable": bool(column[6]),
-                }
-                for column in description
-            ]
-        )
-        document_columns = [
-            {
-                "name": "mojap_document_path",
-                "type": "character",
-                "description": "The path to the document",
-                "nullable": True,
             }
+        )
+
+    columns.extend(
+        [
+            {
+                "name": column[0].lower(),
+                "type": f"decimal({column[4]},{column[5]})"
+                if column[1].__name__ == "NUMBER"
+                else type_lookup[column[1].__name__],
+                "description": "",
+                "nullable": bool(column[6]),
+            }
+            for column in cursor.description
         ]
-        derived_columns = [
-            {
-                "name": "mojap_extraction_datetime",
-                "type": "datetime",
-                "description": "",
-                "nullable": False,
-            },
-            {
-                "name": "mojap_start_datetime",
-                "type": "datetime",
-                "description": "",
-                "nullable": False,
-            },
-            {
-                "name": "mojap_end_datetime",
-                "type": "datetime",
-                "description": "",
-                "nullable": False,
-            },
-            {
-                "name": "mojap_latest_record",
-                "type": "boolean",
-                "description": "",
-                "nullable": False,
-            },
-            {
-                "name": "mojap_image_tag",
-                "type": "character",
-                "description": "",
-                "nullable": False,
-            },
-        ]
-
-        if table == "DOCUMENT_HISTORY":
-            columns += document_columns
-
-        if include_derived_columns is True:
-            columns += derived_columns
-
-        metadata = {
-            "$schema": (
-                "https://moj-analytical-services.github.io/metadata_schema/table/"
-                "v1.1.0.json"
-            ),
-            "name": table.lower(),
-            "description": "",
-            "data_format": "parquet",
-            "columns": columns,
-            "location": f"{table}/",
-            "partitions": partitions,
-            "primary_key_fields": primary_key_fields,
+    )
+    document_columns = [
+        {
+            "name": "mojap_document_path",
+            "type": "character",
+            "description": "The path to the document",
+            "nullable": True,
         }
-        with open(f"{location}/{table.lower()}.json", "w+") as file:
-            json.dump(metadata, file, indent=4)
+    ]
+    derived_columns = [
+        {
+            "name": "mojap_extraction_datetime",
+            "type": "datetime",
+            "description": "",
+            "nullable": False,
+        },
+        {
+            "name": "mojap_start_datetime",
+            "type": "datetime",
+            "description": "",
+            "nullable": False,
+        },
+        {
+            "name": "mojap_end_datetime",
+            "type": "datetime",
+            "description": "",
+            "nullable": False,
+        },
+        {
+            "name": "mojap_latest_record",
+            "type": "boolean",
+            "description": "",
+            "nullable": False,
+        },
+        {
+            "name": "mojap_image_tag",
+            "type": "character",
+            "description": "",
+            "nullable": False,
+        },
+    ]
+
+    if table == "DOCUMENT_HISTORY":
+        columns += document_columns
+
+    if include_derived_columns is True:
+        columns += derived_columns
+
+    metadata = {
+        "$schema": (
+            "https://moj-analytical-services.github.io/metadata_schema/table/"
+            "v1.1.0.json"
+        ),
+        "name": table.lower(),
+        "description": "",
+        "data_format": "parquet",
+        "columns": columns,
+        "location": f"{table}/",
+        "partitions": partitions,
+        "primary_key_fields": primary_key_fields,
+    }
+    return metadata
 
 
 def get_primary_key_fields(table, cursor):
+    """Looks through constraints for primary keys, and checks they match colums
+    Run as part of get_curated_metadata
+    """
     statement = (
         "SELECT cols.column_name "
         "FROM all_constraints cons, all_cons_columns cols "
@@ -183,7 +211,6 @@ def get_primary_key_fields(table, cursor):
         "AND cons.constraint_name = cols.constraint_name "
         "AND cons.owner = cols.owner "
         "AND cons.status = 'ENABLED' "
-        "AND cons.owner = 'EOR' "
         "AND cons.table_name = :table_name "
         "ORDER BY cols.table_name, cols.position"
     )
@@ -198,6 +225,8 @@ def get_primary_key_fields(table, cursor):
 
 
 def get_partitions(table, cursor):
+    """Extracts partitions from a table - run as part of get_curated_metadata
+    """
     statement = (
         "SELECT partition_name "
         "FROM ALL_TAB_PARTITIONS "
@@ -229,6 +258,8 @@ def get_partitions(table, cursor):
 
 
 def get_subpartitions(table, partition, cursor):
+    """Extracts subpartitions - run as part of get_partitions
+    """
     statement = (
         "SELECT subpartition_name "
         "FROM ALL_TAB_SUBPARTITIONS "
