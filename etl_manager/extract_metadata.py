@@ -137,17 +137,18 @@ def get_table_meta(
     List of dicts
         Contains data for all the columns in the table, ready to write to json
     """
-    primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
-    partitions = get_partitions(table=table, cursor=cursor)
     type_lookup = {
-        "DATETIME": "datetime",
-        "TIMESTAMP": "datetime",
-        "STRING": "character",
-        "CLOB": "character",
-        "BLOB": "character",
-        "FIXED_CHAR": "character",
-        "LONG_STRING": "character",
-        "BINARY": "character",
+        "DB_TYPE_DATE": "datetime",
+        "DB_TYPE_TIMESTAMP": "datetime",
+        "DB_TYPE_TIMESTAMP_TZ": "datetime",
+        "DB_TYPE_CHAR": "character",
+        "DB_TYPE_CLOB": "character",
+        "DB_TYPE_BLOB": "character",
+        "DB_TYPE_VARCHAR": "character",
+        "DB_TYPE_LONG": "character",
+        "DB_TYPE_RAW": "character",
+        "DB_TYPE_OBJECT": "WEIRD",
+        "DB_TYPE_ROWID": "WEIRD",
     }
     columns = []
 
@@ -169,14 +170,15 @@ def get_table_meta(
             {
                 "name": column[0].lower(),
                 "type": f"decimal({column[4]},{column[5]})"
-                if column[1].__name__ == "NUMBER"
-                else type_lookup[column[1].__name__],
+                if column[1].name == "DB_TYPE_NUMBER"
+                else type_lookup[column[1].name],
                 "description": "",
                 "nullable": bool(column[6]),
             }
             for column in cursor.description
         ]
     )
+
     document_columns = [
         {
             "name": "mojap_document_path",
@@ -223,6 +225,9 @@ def get_table_meta(
 
     if include_derived_columns:
         columns += derived_columns
+
+    primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
+    partitions = get_partitions(table=table, cursor=cursor)
 
     metadata = {
         "$schema": (
