@@ -94,7 +94,7 @@ def get_curated_metadata(
 
         except cx_Oracle.DatabaseError:
             # Catches tables marked for deletion but still in table name list
-            print(f"Problem selecting from {table} in {database}")
+            print(f"Couldn't select from {table} in {database}")
             continue
 
         # cursor.description will be None if the table has no rows
