@@ -93,9 +93,7 @@ def get_curated_metadata(
     problems = {}
     for table in tables:
         try:
-            cursor.execute(
-                f"SELECT count(*) FROM {database}.{table} WHERE ROWNUM <= 1"
-            )
+            cursor.execute(f"SELECT count(*) FROM {database}.{table} WHERE ROWNUM <= 1")
             rows = cursor.fetchone()
 
         except cx_Oracle.DatabaseError as e:
@@ -109,8 +107,10 @@ def get_curated_metadata(
 
             except cx_Oracle.DatabaseError as e:
                 # Catches tables marked for deletion but still in table name list
-                print(f"Couldn't select from {table} in {database} - it might have been marked for deletion")
-                problems[table] = (e.code, e.message)
+                print(
+                    f"Couldn't select from {table} in {database} - it might have been marked for deletion"
+                )
+                problems[table] = e.args[0].message
                 continue
 
             metadata = get_table_meta(
@@ -122,6 +122,7 @@ def get_curated_metadata(
             print(f"No rows in {table} from {database}")
 
     if problems:
+        print()
         print("ERRORS RAISED")
         for p, e in problems.items():
             print(f"Error in table {p}: {e}")
@@ -183,19 +184,24 @@ def get_table_meta(
 
     # Main column info - cursor.description has 7 set columns described at:
     # https://cx-oracle.readthedocs.io/en/latest/api_manual/cursor.html#Cursor.description
-    columns.extend(
-        [
-            {
-                "name": column[0].lower(),
-                "type": f"decimal({column[4]},{column[5]})"
-                if column[1].name == "DB_TYPE_NUMBER"
-                else type_lookup[column[1].name],
-                "description": "",
-                "nullable": bool(column[6]),
-            }
-            for column in cursor.description
-        ]
-    )
+    for col in cursor.description:
+        # skip col types that DMS can't copy
+        if col[1].name not in [
+            "DB_TYPE_ROWID",
+            "DB_TYPE_BFILE",
+            "REF",
+            "ANYDATA",
+        ]:
+            columns.append(
+                {
+                    "name": col[0].lower(),
+                    "type": f"decimal({col[4]},{col[5]})"
+                    if col[1].name == "DB_TYPE_NUMBER"
+                    else type_lookup[col[1].name],
+                    "description": "",
+                    "nullable": bool(col[6]),
+                }
+            )
 
     document_columns = [
         {
