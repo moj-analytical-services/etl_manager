@@ -23,7 +23,10 @@ def create_database_connection(settings_file):
         service_name=db_settings["service_name"],
     )
     connection = cx_Oracle.connect(
-        user=db_settings["user"], password=db_settings["password"], dsn=dsn
+        user=db_settings["user"],
+        password=db_settings["password"],
+        dsn=dsn,
+        encoding="UTF-8",
     )
     return connection
 
@@ -87,18 +90,29 @@ def get_curated_metadata(
         But creates a json file for each table in the database
     """
     cursor = connection.cursor()
-
+    problems = {}
     for table in tables:
         try:
-            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
+            cursor.execute(
+                f"SELECT count(*) FROM {database}.{table} WHERE ROWNUM <= 1"
+            )
+            rows = cursor.fetchone()
 
-        except cx_Oracle.DatabaseError:
-            # Catches tables marked for deletion but still in table name list
-            print(f"Couldn't select from {table} in {database}")
+        except cx_Oracle.DatabaseError as e:
+            print(f"Couldn't read {table} in {database} - it might have been deleted")
+            problems[table] = e.args[0].message
             continue
 
-        # cursor.description will be None if the table has no rows
-        if cursor.description:
+        if rows[0] > 0:
+            try:
+                cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1",)
+
+            except cx_Oracle.DatabaseError as e:
+                # Catches tables marked for deletion but still in table name list
+                print(f"Couldn't select from {table} in {database} - it might have been marked for deletion")
+                problems[table] = (e.code, e.message)
+                continue
+
             metadata = get_table_meta(
                 cursor, table, include_op_column, include_derived_columns
             )
@@ -106,6 +120,11 @@ def get_curated_metadata(
                 json.dump(metadata, file, indent=4)
         else:
             print(f"No rows in {table} from {database}")
+
+    if problems:
+        print("ERRORS RAISED")
+        for p, e in problems.items():
+            print(f"Error in table {p}: {e}")
 
 
 def get_table_meta(
@@ -147,8 +166,7 @@ def get_table_meta(
         "DB_TYPE_VARCHAR": "character",
         "DB_TYPE_LONG": "character",
         "DB_TYPE_RAW": "character",
-        "DB_TYPE_OBJECT": "WEIRD",
-        "DB_TYPE_ROWID": "WEIRD",
+        "DB_TYPE_OBJECT": "array<character>",
     }
     columns = []
 
