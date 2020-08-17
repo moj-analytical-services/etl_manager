@@ -79,8 +79,8 @@ def _remove_final_slash(string):
 
 
 # Used by both classes (Should move into another module)
-def _validate_string(s, allowed_chars="_"):
-    if s != s.lower():
+def _validate_string(s, allowed_chars="_", allow_upper=False):
+    if s != s.lower() and not allow_upper:
         raise ValueError("string provided must be lowercase")
 
     invalid_chars = string.punctuation
