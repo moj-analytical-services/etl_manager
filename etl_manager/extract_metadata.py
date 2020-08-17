@@ -229,8 +229,7 @@ def get_table_meta(
             }
         )
 
-    # Main column info - cursor.description has 7 set columns described at:
-    # https://cx-oracle.readthedocs.io/en/latest/api_manual/cursor.html#Cursor.description
+    # Data types to skip - these are the ones AWS DMS can't copy
     if include_objects:
         skip = [
             "DB_TYPE_ROWID",
@@ -246,9 +245,9 @@ def get_table_meta(
             "ANYDATA",
             "DB_TYPE_OBJECT",
         ]
-
+    # Main column info - cursor.description has 7 set columns:
+    # name, type, display_size, internal_size, precision, scale, null_ok
     for col in cursor.description:
-        # skip col types that DMS can't copy
         if col[1].name not in skip:
             columns.append(
                 {
