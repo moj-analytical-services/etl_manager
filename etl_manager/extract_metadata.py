@@ -97,22 +97,14 @@ def get_curated_metadata(
             rows = cursor.fetchone()
 
         except cx_Oracle.DatabaseError as e:
-            print(f"Couldn't read {table} in {database} - it might have been deleted")
+            # likely problems here are that the table has been deleted, marked
+            # for deletion, or relies on an external reference you can't access
+            print(f"Couldn't read {table} in {database}")
             problems[table] = e.args[0].message
             continue
 
         if rows[0] > 0:
-            try:
-                cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1",)
-
-            except cx_Oracle.DatabaseError as e:
-                # Catches tables marked for deletion but still in table name list
-                print(
-                    f"Couldn't select from {table} in {database} - it might have been marked for deletion"
-                )
-                problems[table] = e.args[0].message
-                continue
-
+            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1",)
             metadata = get_table_meta(
                 cursor, table, include_op_column, include_derived_columns
             )
