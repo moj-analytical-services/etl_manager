@@ -129,7 +129,11 @@ def get_curated_metadata(
 
 
 def get_table_meta(
-    cursor, table: str, include_op_column: bool, include_derived_columns: bool
+    cursor,
+    table: str,
+    include_op_column: bool = True,
+    include_derived_columns: bool = False,
+    include_objects: bool = False,
 ) -> list:
     """
     Lists a table's columns, plus any primary key fields and partitions
@@ -151,6 +155,10 @@ def get_table_meta(
     include_derived_columns (boolean):
         If True, adds 5 datetime columns: mojap_extraction_datetime,
         mojap_start_datetime, mojap_end_datetime, mojap_latest_record, mojap_image_tag
+
+    include_objects (boolean):
+        If True, will include metadata for DB_TYPE_OBJECT columns as array<character>.
+        Leave False to ignore these columns - AWS DMS doesn't extract them.
 
     Returns
     -------
@@ -184,14 +192,25 @@ def get_table_meta(
 
     # Main column info - cursor.description has 7 set columns described at:
     # https://cx-oracle.readthedocs.io/en/latest/api_manual/cursor.html#Cursor.description
-    for col in cursor.description:
-        # skip col types that DMS can't copy
-        if col[1].name not in [
+    if include_objects:
+        skip = [
             "DB_TYPE_ROWID",
             "DB_TYPE_BFILE",
             "REF",
             "ANYDATA",
-        ]:
+        ]
+    else:
+        skip = [
+            "DB_TYPE_ROWID",
+            "DB_TYPE_BFILE",
+            "REF",
+            "ANYDATA",
+            "DB_TYPE_OBJECT",
+        ]
+
+    for col in cursor.description:
+        # skip col types that DMS can't copy
+        if col[1].name not in skip:
             columns.append(
                 {
                     "name": col[0].lower(),
