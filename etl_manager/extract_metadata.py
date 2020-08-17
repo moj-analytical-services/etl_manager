@@ -32,7 +32,9 @@ def create_database_connection(settings_file):
 
 
 def get_table_names(database: str, connection) -> list:
-    """Gets names of all tables in the database, skipping any that start with "SYS_"
+    """Gets names of tables in the database. Skips any that start with "SYS_"
+
+    You can save the output into a file, or pass it directly to create_table_json
 
     Parameters
     ----------
@@ -51,7 +53,51 @@ def get_table_names(database: str, connection) -> list:
     return names
 
 
-def get_curated_metadata(
+def create_database_json(
+    description: str,
+    name: str,
+    bucket: str,
+    base_folder: str,
+    location="./metadata",
+):
+    """Creates a database.json file suitable for reading with read_database_folder()
+
+    Parameters
+    ----------
+    description (str):
+        Text saying where the data comes from
+
+    name (str):
+        What you want the database to be called in Glue and Athena. Use underscores
+
+    bucket (str):
+        The S3 bucket where the actual data will end up
+
+    base_folder (str):
+        The folder/prefix within the S3 bucket for the data you want
+        Use capitals if the S3 location includes capitals
+        Don't go down to the table level - it should be the level above
+        For example "hmpps/delius/DELIUS_ANALYTICS_PLATFORM"
+
+    location (str):
+        Folder where you'd like to create the json metadata
+
+    Returns
+    -------
+    None, but creates a json file in the specified location.
+    """
+
+    db = {
+        "description": description,
+        "name": name,
+        "bucket": bucket,
+        "base_folder": base_folder
+    }
+    with open(f"{location}/database.json", "w+") as file:
+        json.dump(db, file, indent=4)
+
+
+def create_table_json(
     tables: list,
     database: str,
     location="./metadata",
@@ -61,6 +107,7 @@ def get_curated_metadata(
 ):
     """
     Creates a json file of metadata for each table that's named in tables and has rows
+    These json files are suitable for reading with read_database_folder()
 
     Parameters
     ----------
