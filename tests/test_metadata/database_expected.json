@@ -1,0 +1,6 @@
+{
+    "description": "This is a database",
+    "name": "test_database",
+    "bucket": "bucket-name",
+    "base_folder": "hmpps/delius/DELIUS_APP_SCHEMA"
+}

@@ -151,7 +151,7 @@ def create_table_json(
             continue
 
         if rows[0] > 0:
-            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1",)
+            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             metadata = get_table_meta(
                 cursor, table, include_op_column, include_derived_columns
             )
