@@ -54,11 +54,7 @@ def get_table_names(database: str, connection) -> list:
 
 
 def create_database_json(
-    description: str,
-    name: str,
-    bucket: str,
-    base_folder: str,
-    location="./metadata",
+    description: str, name: str, bucket: str, base_folder: str, location="./metadata",
 ):
     """Creates a database.json file suitable for reading with read_database_folder()
 
@@ -91,7 +87,7 @@ def create_database_json(
         "description": description,
         "name": name,
         "bucket": bucket,
-        "base_folder": base_folder
+        "base_folder": base_folder,
     }
     with open(f"{location}/database.json", "w+") as file:
         json.dump(db, file, indent=4)
@@ -154,7 +150,11 @@ def create_table_json(
         if rows[0] > 0:
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             metadata = get_table_meta(
-                cursor, table, include_op_column, include_derived_columns, include_objects
+                cursor,
+                table,
+                include_op_column,
+                include_derived_columns,
+                include_objects,
             )
             with open(f"{location}/{table.lower()}.json", "w+") as file:
                 json.dump(metadata, file, indent=4)

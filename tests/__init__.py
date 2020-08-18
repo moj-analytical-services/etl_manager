@@ -119,7 +119,7 @@ class TestCursor:
                 ("SUBPARTITION_A",),
                 ("SUBPARTITION_B",),
                 ("SUBPARTITION_C",),
-                ("SUBPARTITION_D",)
+                ("SUBPARTITION_D",),
             ]
             self.test = None
 
