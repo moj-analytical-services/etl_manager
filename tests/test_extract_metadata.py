@@ -277,16 +277,16 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(output_no_keys, expected_no_keys)
 
     def test_get_partitions(self):
-        """Tests that partitions are returned correctly. 
-        Subpartitions are tested separately. 
+        """Tests that partitions are returned correctly.
+        Subpartitions are tested separately.
         """
         output_partition = get_partitions("PARTITION_TEST", TestCursor("partition"))
         output_partitions = get_partitions("PARTITIONS_TEST", TestCursor("partitions"))
         output_no_partitions = get_partitions("NO_PARTITIONS_TEST", TestCursor())
 
-        expected_partition = [{
-            "name": "P_ADDITIONAL_IDENTIFIER", "subpartitions": None
-            }]
+        expected_partition = [
+            {"name": "P_ADDITIONAL_IDENTIFIER", "subpartitions": None}
+        ]
         expected_partitions = [
             {"name": "P_ADDITIONAL_IDENTIFIER", "subpartitions": None},
             {"name": "P_ADDITIONAL_OFFENCE", "subpartitions": None},
@@ -303,4 +303,31 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(output_no_partitions, expected_no_partitions)
 
     def test_get_subpartitions(self):
-        return
+        output_subpartition = get_subpartitions(
+            table="SUBPARTITION_TABLE",
+            partition="SUBPARTITION",
+            cursor=TestCursor("subpartition"),
+        )
+        output_subpartitions = get_subpartitions(
+            table="SUBPARTITIONS_TABLE",
+            partition="SUBPARTITIONS",
+            cursor=TestCursor("subpartitions"),
+        )
+        output_no_subpartitions = get_subpartitions(
+            table="NO_SUBPARTITIONS_TABLE",
+            partition="NO_SUBPARTITIONS",
+            cursor=TestCursor(),
+        )
+
+        expected_subpartition = ["SUBPARTITION_A"]
+        expected_subpartitions = [
+            "SUBPARTITION_A",
+            "SUBPARTITION_B",
+            "SUBPARTITION_C",
+            "SUBPARTITION_D",
+        ]
+        expected_no_subpartitions = []
+
+        self.assertEqual(output_subpartition, expected_subpartition)
+        self.assertEqual(output_subpartitions, expected_subpartitions)
+        self.assertEqual(output_no_subpartitions, expected_no_subpartitions)

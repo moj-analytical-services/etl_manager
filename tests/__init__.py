@@ -98,6 +98,21 @@ class TestCursor:
             ]
             self.test = None
 
+        elif self.test == "subpartition":
+            self.data = [
+                ("SUBPARTITION_A",),
+            ]
+            self.test = None
+
+        elif self.test == "subpartitions":
+            self.data = [
+                ("SUBPARTITION_A",),
+                ("SUBPARTITION_B",),
+                ("SUBPARTITION_C",),
+                ("SUBPARTITION_D",)
+            ]
+            self.test = None
+
         else:
             self.data = []
 
