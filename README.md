@@ -393,8 +393,10 @@ Example of full `glue_job` and `meta_data` structures and code can be found [her
 
 This package has [unit tests](https://github.com/moj-analytical-services/etl_manager/blob/master/tests/test_tests.py) which can also be used to see functionality.
 
-Unit tests can be ran by:
+Unit tests for the extract_metadata module don't test the SQL statements used in the functions.
 
-```python
-python -m unittest tests.test_tests -v
+Unit tests can be run with:
+
+```
+poetry run python -m unittest
 ```

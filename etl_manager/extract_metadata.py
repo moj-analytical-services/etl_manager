@@ -103,6 +103,7 @@ def create_table_json(
     location="./metadata",
     include_op_column=True,
     include_derived_columns=False,
+    include_objects=False,
     connection=None,
 ):
     """
@@ -153,7 +154,7 @@ def create_table_json(
         if rows[0] > 0:
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             metadata = get_table_meta(
-                cursor, table, include_op_column, include_derived_columns
+                cursor, table, include_op_column, include_derived_columns, include_objects
             )
             with open(f"{location}/{table.lower()}.json", "w+") as file:
                 json.dump(metadata, file, indent=4)
