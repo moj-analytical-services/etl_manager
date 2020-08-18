@@ -40,6 +40,9 @@ class TestCursor:
     """
 
     def __init__(self, test_to_run=None):
+        """get_table_meta needs to have description set from the start as it 
+        gets passed a cursor that's already done its execute method
+        """
         self.data = []
         self.description = []
         self.test = test_to_run
@@ -73,6 +76,13 @@ class TestCursor:
             self.data = [(7833,)]
 
     def execute(self, sql, table_name=None, partition_name=None):
+        """Each test sets a .test attribute for the cursor. This execute method
+        uses that attribute to select the response we'd expect to receive from
+        the SQL statement in the function being tested.
+
+        So this is a bit like creating a mock version of the SQL response.
+        It does mean the SQL query itself doesn't get tested.
+        """
         if self.test == "table_names":
             self.data = [("TEST_TABLE1",), ("TEST_TABLE2",), ("SYS_TABLE",)]
 
@@ -117,7 +127,11 @@ class TestCursor:
             self.data = []
 
     def fetchall(self):
+        """Returns everything from the mocked query response.
+        """
         return self.data
 
     def fetchone(self):
+        """Returns first row of the mocked query response and removes that row.
+        """
         return self.data.pop()
