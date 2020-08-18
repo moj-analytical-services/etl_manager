@@ -58,6 +58,16 @@ class TestCursor:
                 datetime.datetime(2020, 6, 23, 10, 39, 12),
                 "INSTITUTIONAL_REPORT_TRANSFER",
                 "I",
+                12345678,
+                "OBJECT",
+            )]
+
+        elif self.test == "document_history":
+            self.description = [
+                ("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1),
+            ]
+            self.data = [(
+                7833,
             )]
 
     def execute(self, sql, table_name=None):

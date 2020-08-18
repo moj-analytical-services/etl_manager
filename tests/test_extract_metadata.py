@@ -56,7 +56,7 @@ class TestMetadata(unittest.TestCase):
         return
 
     def test_get_table_meta(self):
-        """Tests option flags and tests all data types convert as intended
+        """Tests option flags, document_history tables and data type conversion
         Partitions and primary key fields tested separately
         """
         # All flag parameters set to False
@@ -162,35 +162,41 @@ class TestMetadata(unittest.TestCase):
                 "nullable": True,
             },
             {
-            "name": "mojap_extraction_datetime",
-            "type": "datetime",
-            "description": "",
-            "nullable": False,
-        },
-        {
-            "name": "mojap_start_datetime",
-            "type": "datetime",
-            "description": "",
-            "nullable": False,
-        },
-        {
-            "name": "mojap_end_datetime",
-            "type": "datetime",
-            "description": "",
-            "nullable": False,
-        },
-        {
-            "name": "mojap_latest_record",
-            "type": "boolean",
-            "description": "",
-            "nullable": False,
-        },
-        {
-            "name": "mojap_image_tag",
-            "type": "character",
-            "description": "",
-            "nullable": False,
-        },
+                "name": "test_object_skip",
+                "type": "array<character>",
+                "description": "",
+                "nullable": True,
+            },
+            {
+                "name": "mojap_extraction_datetime",
+                "type": "datetime",
+                "description": "",
+                "nullable": False,
+            },
+            {
+                "name": "mojap_start_datetime",
+                "type": "datetime",
+                "description": "",
+                "nullable": False,
+            },
+            {
+                "name": "mojap_end_datetime",
+                "type": "datetime",
+                "description": "",
+                "nullable": False,
+            },
+            {
+                "name": "mojap_latest_record",
+                "type": "boolean",
+                "description": "",
+                "nullable": False,
+            },
+            {
+                "name": "mojap_image_tag",
+                "type": "character",
+                "description": "",
+                "nullable": False,
+            },
         ]
         expected_all_flags = {
             "$schema": (
@@ -206,8 +212,46 @@ class TestMetadata(unittest.TestCase):
             "primary_key_fields": None,
         }
 
+        # DOCUMENT_HISTORY table
+        output_doc_history = get_table_meta(
+            TestCursor("document_history"),
+            table="DOCUMENT_HISTORY",
+            include_op_column=False,
+            include_derived_columns=False,
+            include_objects=False,
+        )
+
+        columns_doc_history = [
+            {
+                "name": "test_id",
+                "type": "decimal(0,-127)",
+                "description": "",
+                "nullable": True,
+            },
+            {
+                "name": "mojap_document_path",
+                "type": "character",
+                "description": "The path to the document",
+                "nullable": True,
+            },
+        ]
+        expected_doc_history = {
+            "$schema": (
+                "https://moj-analytical-services.github.io/metadata_schema/table/"
+                "v1.1.0.json"
+            ),
+            "name": "document_history",
+            "description": "",
+            "data_format": "parquet",
+            "columns": columns_doc_history,
+            "location": "DOCUMENT_HISTORY/",
+            "partitions": None,
+            "primary_key_fields": None,
+        }
+
         self.assertEqual(output_no_flags, expected_no_flags)
         self.assertEqual(output_all_flags, expected_all_flags)
+        self.assertEqual(output_doc_history, expected_doc_history)
 
     def test_get_primary_key_fields(self):
         return
