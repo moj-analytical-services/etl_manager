@@ -352,7 +352,9 @@ def get_primary_key_fields(table, cursor):
 
 
 def get_partitions(table, cursor):
-    """Extracts partitions from a table - run as part of get_curated_metadata
+    """Extracts partitions and their subpartitions from a table
+
+    Run as part of get_curated_metadata
     """
     statement = (
         "SELECT partition_name "

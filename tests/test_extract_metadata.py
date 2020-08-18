@@ -8,6 +8,9 @@ from etl_manager.extract_metadata import (
     create_database_json,
     create_table_json,
     get_table_meta,
+    get_primary_key_fields,
+    get_partitions,
+    get_subpartitions,
 )
 
 
@@ -254,10 +257,50 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(output_doc_history, expected_doc_history)
 
     def test_get_primary_key_fields(self):
-        return
+        """Tests that it formats the output correctly
+        Doesn't check that the SQL results are right
+        """
+        output_key = get_primary_key_fields("TEST_TABLE_KEY", TestCursor("primary_key"))
+        output_keys = get_primary_key_fields(
+            "TEST_TABLE_KEYS", TestCursor("primary_keys")
+        )
+        output_no_keys = get_primary_key_fields(
+            "TEST_TABLE_NO_KEYS", TestCursor("no_primary_keys")
+        )
+
+        expected_key = ("long_postcode_id",)
+        expected_keys = ("long_postcode_id", "team_id")
+        expected_no_keys = None
+
+        self.assertEqual(output_key, expected_key)
+        self.assertEqual(output_keys, expected_keys)
+        self.assertEqual(output_no_keys, expected_no_keys)
 
     def test_get_partitions(self):
-        return
+        """Tests that partitions are returned correctly. 
+        Subpartitions are tested separately. 
+        """
+        output_partition = get_partitions("PARTITION_TEST", TestCursor("partition"))
+        output_partitions = get_partitions("PARTITIONS_TEST", TestCursor("partitions"))
+        output_no_partitions = get_partitions("NO_PARTITIONS_TEST", TestCursor())
+
+        expected_partition = [{
+            "name": "P_ADDITIONAL_IDENTIFIER", "subpartitions": None
+            }]
+        expected_partitions = [
+            {"name": "P_ADDITIONAL_IDENTIFIER", "subpartitions": None},
+            {"name": "P_ADDITIONAL_OFFENCE", "subpartitions": None},
+            {"name": "P_ADDITIONAL_SENTENCE", "subpartitions": None},
+            {"name": "P_ADDRESS", "subpartitions": None},
+            {"name": "P_ADDRESS_ASSESSMENT", "subpartitions": None},
+            {"name": "P_ALIAS", "subpartitions": None},
+            {"name": "P_APPROVED_PREMISES_REFERRAL", "subpartitions": None},
+        ]
+        expected_no_partitions = None
+
+        self.assertEqual(output_partition, expected_partition)
+        self.assertEqual(output_partitions, expected_partitions)
+        self.assertEqual(output_no_partitions, expected_no_partitions)
 
     def test_get_subpartitions(self):
         return
