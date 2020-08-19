@@ -1,0 +1,52 @@
+{
+    "$schema": "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json",
+    "name": "test_table1",
+    "description": "",
+    "data_format": "parquet",
+    "columns": [
+        {
+            "name": "op",
+            "type": "character",
+            "description": "Type of change, for rows added by ongoing replication.",
+            "nullable": true,
+            "enum": [
+                "I",
+                "U",
+                "D"
+            ]
+        },
+        {
+            "name": "test_number",
+            "type": "decimal(38,0)",
+            "description": "",
+            "nullable": true
+        },
+        {
+            "name": "test_id",
+            "type": "decimal(0,-127)",
+            "description": "",
+            "nullable": true
+        },
+        {
+            "name": "test_date",
+            "type": "datetime",
+            "description": "",
+            "nullable": true
+        },
+        {
+            "name": "test_varchar",
+            "type": "character",
+            "description": "",
+            "nullable": true
+        },
+        {
+            "name": "test_flag",
+            "type": "character",
+            "description": "",
+            "nullable": true
+        }
+    ],
+    "location": "TEST_TABLE1/",
+    "partitions": null,
+    "primary_key_fields": null
+}

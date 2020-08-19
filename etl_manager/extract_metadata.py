@@ -139,7 +139,7 @@ def create_json_for_tables(
         try:
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             cursor.fetchone()
-            if cursor.rowcount:
+            if cursor.rowcount > 0:
                 metadata = get_table_meta(
                     cursor, table, include_op_column, include_derived_columns
                 )

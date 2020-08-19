@@ -2,6 +2,7 @@ import unittest
 import json
 import os
 
+from pathlib import Path
 from tests import TestConnection, TestCursor
 from etl_manager.extract_metadata import (
     get_table_names,
@@ -13,13 +14,15 @@ from etl_manager.extract_metadata import (
     get_subpartitions,
 )
 
+test_path = Path("./tests/data/test_metadata")
+
 
 class TestMetadata(unittest.TestCase):
     def test_get_table_names(self):
         """Checks that table names are pulled out of
         their tuples and listed with original capitalisation
         """
-        result = get_table_names("TEST_DB", TestConnection())
+        result = get_table_names("TEST_DB", TestConnection("table_names"))
         self.assertEqual(result, ["TEST_TABLE1", "TEST_TABLE2", "SYS_TABLE"])
 
     def test_create_json_for_database(self):
@@ -31,32 +34,45 @@ class TestMetadata(unittest.TestCase):
                 "test_database",
                 "bucket-name",
                 "hmpps/delius/DELIUS_APP_SCHEMA",
-                "./tests/test_metadata",
+                test_path,
             )
-            with open("tests/test_metadata/database.json", "r") as f:
+            with open(test_path / "database.json", "r") as f:
                 output = json.load(f)
         finally:
-            os.remove("tests/test_metadata/database.json")
+            os.remove(test_path / "database.json")
 
-        with open("tests/test_metadata/database_expected.json", "r") as f:
+        with open(test_path / "database_expected.json", "r") as f:
             expected = json.load(f)
 
         self.assertEqual(output, expected)
 
     def test_create_json_for_tables(self):
-        """
+        try:
+            create_json_for_tables(
+                tables=["TEST_TABLE1", "TEST_TABLE2"],
+                database="TEST_DB",
+                location=test_path,
+                include_op_column=True,
+                include_derived_columns=False,
+                include_objects=False,
+                connection=TestConnection("create_table_json"),
+            )
+            with open(test_path / "test_table1.json", "r") as f:
+                output1 = json.load(f)
+            with open(test_path / "test_table2.json", "r") as f:
+                output2 = json.load(f)
 
-        create_json_for_tables(
-            tables=["TEST_TABLE1", "TEST_TABLE2"],
-            database="TEST_DB",
-            location="./tests/test_metadata",
-            include_op_column=True,
-            include_derived_columns=False,
-            connection=TestConnection(),
-        )
-        # COME BACK TO THIS ONE AFTER DOING TABLE META
-        """
-        return
+        finally:
+            os.remove(test_path / "test_table1.json")
+            os.remove(test_path / "test_table2.json")
+
+        with open(test_path / "table1_expected.json", "r") as f:
+            expected1 = json.load(f)
+        with open(test_path / "table2_expected.json", "r") as f:
+            expected2 = json.load(f)
+
+        self.assertEqual(output1, expected1)
+        self.assertEqual(output2, expected2)
 
     def test_get_table_meta(self):
         """Tests option flags, document_history tables and data type conversion
