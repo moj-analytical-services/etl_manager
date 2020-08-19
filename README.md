@@ -402,7 +402,7 @@ conn = extract_metadata.create_database_connection("db_connection.json")
 table_list = extract_metadata.get_table_names(database, conn)
 
 # Create the initial database.json file
-extract_metadata.create_database_json(
+extract_metadata.create_json_for_database(
     description="Test database",
     name=database
     bucket="bucket-name",
@@ -411,7 +411,7 @@ extract_metadata.create_database_json(
 ):
 
 # Create the table metadata
-extract_metadata.create_table_json(
+extract_metadata.create_json_for_tables(
     tables=table_list,
     database=database,
     location=location,
@@ -419,9 +419,6 @@ extract_metadata.create_table_json(
     include_derived_columns=False,
     include_objects=False,
     connection=conn,
- 
-# Close the database connection
-conn.close()
 
 ```
 

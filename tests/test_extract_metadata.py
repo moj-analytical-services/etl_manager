@@ -5,8 +5,8 @@ import os
 from tests import TestConnection, TestCursor
 from etl_manager.extract_metadata import (
     get_table_names,
-    create_database_json,
-    create_table_json,
+    create_json_for_database,
+    create_json_for_tables,
     get_table_meta,
     get_primary_key_fields,
     get_partitions,
@@ -16,17 +16,17 @@ from etl_manager.extract_metadata import (
 
 class TestMetadata(unittest.TestCase):
     def test_get_table_names(self):
-        """Check function ignores SYS_ tables
-        Doesn't test the SQL query
+        """Checks that table names are pulled out of
+        their tuples and listed with original capitalisation
         """
         result = get_table_names("TEST_DB", TestConnection())
-        self.assertEqual(result, ["TEST_TABLE1", "TEST_TABLE2"])
+        self.assertEqual(result, ["TEST_TABLE1", "TEST_TABLE2", "SYS_TABLE"])
 
-    def test_create_database_json(self):
+    def test_create_json_for_database(self):
         """Tests json file is created with correct content
         """
         try:
-            create_database_json(
+            create_json_for_database(
                 "This is a database",
                 "test_database",
                 "bucket-name",
@@ -43,10 +43,10 @@ class TestMetadata(unittest.TestCase):
 
         self.assertEqual(output, expected)
 
-    def test_create_table_json(self):
+    def test_create_json_for_tables(self):
         """
 
-        create_table_json(
+        create_json_for_tables(
             tables=["TEST_TABLE1", "TEST_TABLE2"],
             database="TEST_DB",
             location="./tests/test_metadata",

@@ -53,7 +53,7 @@ def get_table_names(database: str, connection) -> list:
     return names
 
 
-def create_database_json(
+def create_json_for_database(
     description: str, name: str, bucket: str, base_folder: str, location="./metadata",
 ):
     """Creates a database.json file suitable for reading with read_database_folder()
@@ -93,7 +93,7 @@ def create_database_json(
         json.dump(db, file, indent=4)
 
 
-def create_table_json(
+def create_json_for_tables(
     tables: list,
     database: str,
     location="./metadata",
@@ -137,37 +137,32 @@ def create_table_json(
     problems = {}
     for table in tables:
         try:
-            # if I do need both queries, comment in why I'm doing it this way
-            # also why this is the query we do at this stage
-            cursor.execute(f"SELECT count(*) FROM {database}.{table} WHERE ROWNUM <= 1")
-            rows = cursor.fetchone()
+            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
+            cursor.fetchone()
+            if cursor.rowcount:
+                metadata = get_table_meta(
+                    cursor, table, include_op_column, include_derived_columns
+                )
+                with open(f"{location}/{table.lower()}.json", "w+") as file:
+                    json.dump(metadata, file, indent=4)
+            else:
+                print(f"No rows in {table} from {database}")
 
         except cx_Oracle.DatabaseError as e:
             # likely problems here are that the table has been deleted, marked
             # for deletion, or relies on an external reference you can't access
-            print(f"Couldn't read {table} in {database}")
+            print(f"Problem reading {table} in {database}")
             problems[table] = e.args[0].message
             continue
-
-        if rows[0] > 0:
-            cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
-            metadata = get_table_meta(
-                cursor,
-                table,
-                include_op_column,
-                include_derived_columns,
-                include_objects,
-            )
-            with open(f"{location}/{table.lower()}.json", "w+") as file:
-                json.dump(metadata, file, indent=4)
-        else:
-            print(f"No rows in {table} from {database}")
 
     if problems:
         print()
         print("ERRORS RAISED")
         for p, e in problems.items():
             print(f"Error in table {p}: {e}")
+
+    cursor.close()
+    connection.close()
 
 
 def get_table_meta(
