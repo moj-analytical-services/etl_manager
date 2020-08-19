@@ -137,6 +137,9 @@ def create_json_for_tables(
     problems = {}
     for table in tables:
         try:
+            # Get a row to see the columns and check the table has data
+            # 'WHERE ROWNUM <= 1' is Oracle for 'LIMIT 1'
+            # fetchone() to see the first row of the query executed
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             cursor.fetchone()
             if cursor.rowcount > 0:
@@ -149,12 +152,13 @@ def create_json_for_tables(
                 print(f"No rows in {table} from {database}")
 
         except cx_Oracle.DatabaseError as e:
-            # likely problems here are that the table has been deleted, marked
+            # Likely errors are that the table has been deleted, marked
             # for deletion, or relies on an external reference you can't access
             print(f"Problem reading {table} in {database}")
             problems[table] = e.args[0].message
             continue
 
+    # Print the error messages at the end
     if problems:
         print()
         print("ERRORS RAISED")
@@ -245,6 +249,7 @@ def get_table_meta(
         ]
     # Main column info - cursor.description has 7 set columns:
     # name, type, display_size, internal_size, precision, scale, null_ok
+    # Usually type is just a lookup, but decimal types need scale and precision too
     for col in cursor.description:
         if col[1].name not in skip:
             columns.append(
@@ -299,6 +304,7 @@ def get_table_meta(
         },
     ]
 
+    # Not yet used - retained from Oasys metadata functions in case it helps later
     if table == "DOCUMENT_HISTORY":
         columns += document_columns
 
