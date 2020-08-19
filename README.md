@@ -408,7 +408,7 @@ extract_metadata.create_json_for_database(
     bucket="bucket-name",
     base_folder="s3_prefix"
     location=location,
-):
+)
 
 # Create the table metadata
 extract_metadata.create_json_for_tables(
