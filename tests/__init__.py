@@ -37,6 +37,7 @@ class TestConnection:
     def close(self):
         return
 
+
 class TestCursor:
     """Pass this to tests instead of a cx_Oracle cursor object.
 
