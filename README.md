@@ -381,6 +381,51 @@ meta_employees = read_json_from_s3(os.path.join(args['metadata_base_path'], "emp
 ### etc
 ```
 
+## Using the extract_metadata module
+extract_metadata contains functions for connecting to an Oracle database and creating a folder full of metadata. You can then pass this metadata to etl_manager's read_database_folder function. 
+
+Currently this is designed explicitly for Delius but it should work as a starting point for connecting to other Oracle databases too. 
+
+Typically to create your metadata folder you'll need a small script in whatever repo you want to store the data in. The script could look something like this: 
+
+```python
+import extract_metadata
+
+database = "schema_name"
+location = "./metadata_folder"
+
+# Create database connection
+# You'll need a json file containing your database connection details
+conn = extract_metadata.create_database_connection("db_connection.json")
+
+# Get the list of table names
+table_list = extract_metadata.get_table_names(database, conn)
+
+# Create the initial database.json file
+extract_metadata.create_database_json(
+    description="Test database",
+    name=database
+    bucket="bucket-name",
+    base_folder="s3_prefix"
+    location=location,
+):
+
+# Create the table metadata
+extract_metadata.create_table_json(
+    tables=table_list,
+    database=database,
+    location=location,
+    include_op_column=True,
+    include_derived_columns=False,
+    include_objects=False,
+    connection=conn,
+ 
+# Close the database connection
+conn.close()
+
+```
+
+
 >**Notes:**
 > - The `test_arg` does not have two dashes in front of it. When specifying job_arguments with the GlueJob class it must be suffixed with `--` but you should remove these when accessing the args in the `job.py` script.
 > - `metadata_base_path` is a special parameter that is set by the GlueJob class. It is the S3 path to where the `meta_data` folder is in S3 so that you can read in your agnostic metadata files if you want to use them in your glue job. Note that the [gluejobutils](https://github.com/moj-analytical-services/gluejobutils) package has a lot of functionality with integrating our metadata jsons with spark.

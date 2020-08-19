@@ -32,7 +32,7 @@ def create_database_connection(settings_file):
 
 
 def get_table_names(database: str, connection) -> list:
-    """Gets names of tables in the database. Skips any that start with "SYS_"
+    """Gets names of tables in the database
 
     You can save the output into a file, or pass it directly to create_table_json
 
@@ -49,7 +49,7 @@ def get_table_names(database: str, connection) -> list:
     cursor = connection.cursor()
     cursor.execute(f"SELECT table_name FROM all_tables WHERE OWNER = '{database}'")
     result = cursor.fetchall()
-    names = [r[0] for r in result if not r[0].startswith("SYS_")]
+    names = [r[0] for r in result]
     return names
 
 
@@ -137,6 +137,8 @@ def create_table_json(
     problems = {}
     for table in tables:
         try:
+            # if I do need both queries, comment in why I'm doing it this way
+            # also why this is the query we do at this stage
             cursor.execute(f"SELECT count(*) FROM {database}.{table} WHERE ROWNUM <= 1")
             rows = cursor.fetchone()
 
