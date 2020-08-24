@@ -1,6 +1,8 @@
 import cx_Oracle
 import json
 
+from utils import write_json, read_json
+
 
 def create_database_connection(settings_file):
     """Connects to an Oracle database, with settings taken from the specified json file
@@ -14,8 +16,7 @@ def create_database_connection(settings_file):
 
     Returns a cx_Oracle database connection.
     """
-    with open(settings_file, "r") as f:
-        db_settings = json.load(f)
+    db_settings = read_json(settings_file)
 
     dsn = cx_Oracle.makedsn(
         host=db_settings["host"],
@@ -89,8 +90,7 @@ def create_json_for_database(
         "bucket": bucket,
         "base_folder": base_folder,
     }
-    with open(f"{location}/database.json", "w+") as file:
-        json.dump(db, file, indent=4)
+    write_json(db, f"{location}/database.json")
 
 
 def create_json_for_tables(
@@ -146,8 +146,7 @@ def create_json_for_tables(
                 metadata = get_table_meta(
                     cursor, table, include_op_column, include_derived_columns
                 )
-                with open(f"{location}/{table.lower()}.json", "w+") as file:
-                    json.dump(metadata, file, indent=4)
+                write_json(metadata, f"{location}/{table.lower()}.json")
             else:
                 print(f"No rows in {table} from {database}")
 
