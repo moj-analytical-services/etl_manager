@@ -1,7 +1,6 @@
 import cx_Oracle
-import json
 
-from utils import write_json, read_json
+from etl_manager.utils import write_json, read_json
 
 
 def create_database_connection(settings_file):
@@ -142,6 +141,8 @@ def create_json_for_tables(
             # fetchone() to see the first row of the query executed
             cursor.execute(f"SELECT * FROM {database}.{table} WHERE ROWNUM <= 1")
             cursor.fetchone()
+            # For Delius purposes we only want tables with at least 1 row
+            # This might not be the case for all metadata
             if cursor.rowcount > 0:
                 metadata = get_table_meta(
                     cursor, table, include_op_column, include_derived_columns
@@ -205,6 +206,8 @@ def get_table_meta(
     List of dicts
         Contains data for all the columns in the table, ready to write to json
     """
+    # This lookup is specific to Oracle data types
+    # Likely to need separate dictionaries for other data sources
     type_lookup = {
         "DB_TYPE_DATE": "datetime",
         "DB_TYPE_TIMESTAMP": "datetime",
@@ -230,7 +233,9 @@ def get_table_meta(
             }
         )
 
-    # Data types to skip - these are the ones AWS DMS can't copy
+    # Data types to skip. This list is specific to working with
+    # Amazon Database Migration Service and an Oracle database.
+    # These are the Oracle datatypes that DMS can't copy
     if include_objects:
         skip = [
             "DB_TYPE_ROWID",

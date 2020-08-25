@@ -3,8 +3,6 @@ import boto3
 import datetime
 import cx_Oracle
 
-from botocore.exceptions import NoCredentialsError
-
 
 class BotoTester(unittest.TestCase):
     @classmethod

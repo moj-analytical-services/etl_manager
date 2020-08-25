@@ -2,3 +2,8 @@
 .local/
 .DS_Store
 __pycache__/
+.vscode/
+*.egg-info
+
+# Do we commit our lock files?
+poetry.lock
