@@ -38,6 +38,7 @@
               "long",
               "float",
               "double",
+              "decimal",
               "date",
               "datetime",
               "boolean",
