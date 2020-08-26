@@ -303,8 +303,12 @@ class TestMetadata(unittest.TestCase):
         """Tests that partitions are returned correctly.
         Subpartitions are tested separately.
         """
-        output_partition = get_partitions("PARTITION_TEST", TestCursor([mocks.partition]))
-        output_partitions = get_partitions("PARTITIONS_TEST", TestCursor([mocks.partitions]))
+        output_partition = get_partitions(
+            "PARTITION_TEST", TestCursor([mocks.partition])
+        )
+        output_partitions = get_partitions(
+            "PARTITIONS_TEST", TestCursor([mocks.partitions])
+        )
         output_no_partitions = get_partitions("NO_PARTITIONS_TEST", TestCursor())
 
         expected_partition = [

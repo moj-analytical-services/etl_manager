@@ -23,8 +23,8 @@ class BotoTester(unittest.TestCase):
 class TestConnection:
     """Pass this to tests instead of a cx_Oracle connection object.
 
-    response_desc and response_data are lists containing mock description
-    and data to be returned to the cursor by future SQL queries
+    responses is a list of dictionaries, each mocking a cursor's
+    .execute response. It gets passed to the TestCursor on creation.
     """
     def __init__(self, responses=None):
         self.responses = responses or []
@@ -39,14 +39,17 @@ class TestConnection:
 class TestCursor:
     """Pass this to tests instead of a cx_Oracle cursor object.
 
-    The object should be initialised with each item in the response list
-    containing the data and description to be returned by the next SQL query
-    One list item per expected test query.
+    Use the responses parameter to mock SQL queries. Responses is a list of dicts
+    where each dict is the response to one .execute query.
+    
+    Each dict should have a desc key and a data key. Desc becomes the TestCursor's
+    .description attribute, which contains metadata about the columns returned.
+    Data becomes the TestCursor's .data attribute, and represents the rows returned 
 
-    .execute() mocks the sending of a query. The actual SQL is ignored, and instead
-    execute pushes the next responses item into the cursor's .description and .data
-    attributes. This mimics how a real SQL query would update the cursor's description
-    and hold data ready to be returned by fetch methods.
+    Running .execute() mocks the sending of a query by moving the first .responses
+    item into the TestCursor's .data and .description attributes. This mimics how
+    a real SQL query would update the cursor's description and hold data ready to
+    be returned by fetch methods. The actual SQL is ignored. 
 
     The upshot is that this class is useful for testing functions containing cx_Oracle
     objects, but it can't test the SQL query or database connection.
@@ -54,9 +57,9 @@ class TestCursor:
     def __init__(self, responses=None, description=None):
         """Initialise with responses to queue up responses to .execute queries.
         Initialise with description to mimic a cursor where a .execute query
-        has already been made
+        has already been made (for example in get_table_meta)
         """
-        # Rowcount mocks a method from cx_Oracle
+        # Rowcount mocks the .rowcount method from cx_Oracle
         # It specifies how many rows were in the last 'fetch' method called
         self.rowcount = 0
         self.responses = responses or []

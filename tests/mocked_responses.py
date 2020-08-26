@@ -1,7 +1,7 @@
 import datetime
 import cx_Oracle
 
-# Mocked SQL responses for tests
+# Mocked SQL query responses for test_extract_metadata
 table_names = {"data": [("TEST_TABLE1",), ("TEST_TABLE2",), ("SYS_TABLE",)]}
 primary_key = {"data": [("LONG_POSTCODE_ID",)]}
 primary_keys = {"data": [("LONG_POSTCODE_ID",), ("TEAM_ID",)]}

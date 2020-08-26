@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.1.0
+
+### Added
+- Optional allow_upper argument for _validate_string, to allow upper case table names in location setter
+- New extract_metadata.py module for connecting to Oracle database and creating json metadata files
+- New tests for extract_metadata.py
+
+### Fix
+- Created parquet_metadata_json.json file so all existing tests can pass
+
+### Change
+- Updated documentation to cover new metadata extraction module
+
 ## v7.0.6
 
 ### Change
