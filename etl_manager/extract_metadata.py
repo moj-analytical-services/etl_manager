@@ -182,7 +182,7 @@ def get_table_meta(
     Parameters
     ----------
     cursor:
-        The results of a cx_Oracle query to the table - usually
+        A cursor where .execute has already been run - usually querying
         "SELECT * FROM {database}.{table} WHERE ROWNUM <= 1".
         This will give the cursor a .description attribute with column info
 

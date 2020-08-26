@@ -1,6 +1,8 @@
 import unittest
 import json
 import os
+import datetime
+import cx_Oracle
 
 from pathlib import Path
 from tests import TestConnection, TestCursor
@@ -17,12 +19,104 @@ from etl_manager.extract_metadata import (
 test_path = Path("./tests/data/test_metadata")
 
 
+# Mocked SQL responses for tests
+table_names = [{"data": [("TEST_TABLE1",), ("TEST_TABLE2",), ("SYS_TABLE",)]}]
+primary_key = [{"data": [("LONG_POSTCODE_ID",)]}]
+primary_keys = [{"data": [("LONG_POSTCODE_ID",), ("TEAM_ID",)]}]
+partition = [{"data": [("P_ADDITIONAL_IDENTIFIER",)]}]
+partitions = [
+    {
+        "data": [
+            ("P_ADDITIONAL_IDENTIFIER",),
+            ("P_ADDITIONAL_OFFENCE",),
+            ("P_ADDITIONAL_SENTENCE",),
+            ("P_ADDRESS",),
+            ("P_ADDRESS_ASSESSMENT",),
+            ("P_ALIAS",),
+            ("P_APPROVED_PREMISES_REFERRAL",),
+        ]
+    }
+]
+subpartition = [{"data": [("SUBPARTITION_A",)]}]
+subpartitions = [
+    {
+        "data": [
+            ("SUBPARTITION_A",),
+            ("SUBPARTITION_B",),
+            ("SUBPARTITION_C",),
+            ("SUBPARTITION_D",),
+        ]
+    }
+]
+
+first_table = {
+        "desc": [
+            ("TEST_NUMBER", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
+            ("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1),
+            ("TEST_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
+            ("TEST_VARCHAR", cx_Oracle.DB_TYPE_VARCHAR, 30, 30, None, None, 1),
+            ("TEST_FLAG", cx_Oracle.DB_TYPE_VARCHAR, 1, 1, None, None, 1),
+            ("TEST_ROWID_SKIP", cx_Oracle.DB_TYPE_ROWID, 127, None, 0, -127, 1),
+            ("TEST_OBJECT_SKIP", cx_Oracle.DB_TYPE_OBJECT, 127, None, 0, -127, 1),
+        ],
+        "data": [
+            (
+                63495,
+                7833,
+                datetime.datetime(2020, 6, 23, 10, 39, 12),
+                "INSTITUTIONAL_REPORT_TRANSFER",
+                "I",
+                12345678,
+                "OBJECT",
+            )
+        ],
+    }
+
+second_table = {
+    "desc": [
+        ("SPG_ERROR_ID", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
+        ("ERROR_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
+        ("MESSAGE_CRN", cx_Oracle.DB_TYPE_CHAR, 7, 7, None, None, 1),
+        ("NOTES", cx_Oracle.DB_TYPE_CLOB, None, None, None, None, 1),
+        ("INCIDENT_ID", cx_Oracle.DB_TYPE_VARCHAR, 100, 100, None, None, 1),
+    ],
+    "data": [
+        (
+            198984,
+            datetime.datetime(2018, 8, 2, 14, 49, 21),
+            "E160306",
+            "CLOB TEXT",
+            1500148234,
+        )
+    ],
+}
+
+empty_table = {
+    "description": [
+        ("TEST_NUMBER", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
+        ("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1),
+        ("TEST_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
+        ("TEST_VARCHAR", cx_Oracle.DB_TYPE_VARCHAR, 30, 30, None, None, 1),
+        ("TEST_FLAG", cx_Oracle.DB_TYPE_VARCHAR, 1, 1, None, None, 1),
+        ("TEST_ROWID_SKIP", cx_Oracle.DB_TYPE_ROWID, 127, None, 0, -127, 1),
+        ("TEST_OBJECT_SKIP", cx_Oracle.DB_TYPE_OBJECT, 127, None, 0, -127, 1),
+    ]
+}
+doc_history = {
+        "desc": [("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1)],
+    }
+
+# List of query responses for create_tables test
+# The empty dictionaries are for the primary key and partition queries
+create_tables = [first_table, {}, {}, second_table, {}, {}]
+
+
 class TestMetadata(unittest.TestCase):
     def test_get_table_names(self):
         """Checks that table names are pulled out of
         their tuples and listed with original capitalisation
         """
-        result = get_table_names("TEST_DB", TestConnection("table_names"))
+        result = get_table_names("TEST_DB", TestConnection(table_names))
         self.assertEqual(result, ["TEST_TABLE1", "TEST_TABLE2", "SYS_TABLE"])
 
     def test_create_json_for_database(self):
@@ -47,6 +141,8 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(output, expected)
 
     def test_create_json_for_tables(self):
+        """Tests that the correct json is created for multiple tables
+        """
         try:
             create_json_for_tables(
                 tables=["TEST_TABLE1", "TEST_TABLE2"],
@@ -55,7 +151,7 @@ class TestMetadata(unittest.TestCase):
                 include_op_column=True,
                 include_derived_columns=False,
                 include_objects=False,
-                connection=TestConnection("create_table_json"),
+                connection=TestConnection(create_tables),
             )
             with open(test_path / "test_table1.json", "r") as f:
                 output1 = json.load(f)
@@ -77,16 +173,20 @@ class TestMetadata(unittest.TestCase):
     def test_get_table_meta(self):
         """Tests option flags, document_history tables and data type conversion
         Partitions and primary key fields tested separately
+
+        This function receives a cursor that's already had .execute run
+        This means it should already have a description and data if needed
+
+        That's why TestCursors used here are initialised with the description parameter
         """
         # All flag parameters set to False
         output_no_flags = get_table_meta(
-            TestCursor("get_table_meta"),
+            TestCursor(description=first_table["desc"]),
             table="TEST_TABLE1",
             include_op_column=False,
             include_derived_columns=False,
             include_objects=False,
         )
-
         columns_no_flags = [
             {
                 "name": "test_number",
@@ -135,13 +235,12 @@ class TestMetadata(unittest.TestCase):
 
         # All parameter flags set to True
         output_all_flags = get_table_meta(
-            TestCursor("get_table_meta"),
+            TestCursor(description=first_table["desc"]),
             table="TEST_TABLE1",
             include_op_column=True,
             include_derived_columns=True,
             include_objects=True,
         )
-
         columns_all_flags = [
             {
                 "name": "op",
@@ -233,13 +332,12 @@ class TestMetadata(unittest.TestCase):
 
         # DOCUMENT_HISTORY table
         output_doc_history = get_table_meta(
-            TestCursor("document_history"),
+            TestCursor(description=doc_history["desc"]),
             table="DOCUMENT_HISTORY",
             include_op_column=False,
             include_derived_columns=False,
             include_objects=False,
         )
-
         columns_doc_history = [
             {
                 "name": "test_id",
@@ -273,16 +371,16 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(output_doc_history, expected_doc_history)
 
     def test_get_primary_key_fields(self):
-        """Tests that it formats the output correctly
+        """Tests that primary key output is formatted correctly
         Doesn't check that the SQL results are right
         """
-        output_key = get_primary_key_fields("TEST_TABLE_KEY", TestCursor("primary_key"))
+        output_key = get_primary_key_fields(
+            "TEST_TABLE_KEY", TestCursor(primary_key)
+        )
         output_keys = get_primary_key_fields(
-            "TEST_TABLE_KEYS", TestCursor("primary_keys")
+            "TEST_TABLE_KEYS", TestCursor(primary_keys)
         )
-        output_no_keys = get_primary_key_fields(
-            "TEST_TABLE_NO_KEYS", TestCursor("no_primary_keys")
-        )
+        output_no_keys = get_primary_key_fields("TEST_TABLE_NO_KEYS", TestCursor())
 
         expected_key = ("long_postcode_id",)
         expected_keys = ("long_postcode_id", "team_id")
@@ -296,8 +394,8 @@ class TestMetadata(unittest.TestCase):
         """Tests that partitions are returned correctly.
         Subpartitions are tested separately.
         """
-        output_partition = get_partitions("PARTITION_TEST", TestCursor("partition"))
-        output_partitions = get_partitions("PARTITIONS_TEST", TestCursor("partitions"))
+        output_partition = get_partitions("PARTITION_TEST", TestCursor(partition))
+        output_partitions = get_partitions("PARTITIONS_TEST", TestCursor(partitions))
         output_no_partitions = get_partitions("NO_PARTITIONS_TEST", TestCursor())
 
         expected_partition = [
@@ -322,12 +420,12 @@ class TestMetadata(unittest.TestCase):
         output_subpartition = get_subpartitions(
             table="SUBPARTITION_TABLE",
             partition="SUBPARTITION",
-            cursor=TestCursor("subpartition"),
+            cursor=TestCursor(subpartition),
         )
         output_subpartitions = get_subpartitions(
             table="SUBPARTITIONS_TABLE",
             partition="SUBPARTITIONS",
-            cursor=TestCursor("subpartitions"),
+            cursor=TestCursor(subpartitions),
         )
         output_no_subpartitions = get_subpartitions(
             table="NO_SUBPARTITIONS_TABLE",
