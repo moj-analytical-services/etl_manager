@@ -382,11 +382,19 @@ meta_employees = read_json_from_s3(os.path.join(args['metadata_base_path'], "emp
 ```
 
 ## Using the extract_metadata module
-extract_metadata contains functions for connecting to an Oracle database and creating a folder full of metadata. You can then pass this metadata to etl_manager's read_database_folder function. 
+extract_metadata contains functions for connecting to an Oracle database and creating a folder full of metadata. The aim is to create everything needed by etl_manager's read_database_folder function. 
 
 Currently this is designed explicitly for Delius but it should work as a starting point for connecting to other Oracle databases too. 
 
-Typically to create your metadata folder you'll need a small script in whatever repo you want to store the data in. The script could look something like this: 
+### What's included
+There are 4 main functions you can run directly: 
+- **create_database_connection**: creates a connection you can pass to the other functions
+- **get_table_names**: extracts a full list of table names from a specific schema
+- **create_json_for_database**: creates a small database.json file in the format needed by read_database_folder
+- **create_json_for_tables**: creates a json file showing columns and other metadata for each table name in a list
+
+### Using the functions together
+Typically to create a metadata folder you'll want a small script combining these functions. The script can go in the same repo where you're storing the metadata. It could look something like this: 
 
 ```python
 import extract_metadata
