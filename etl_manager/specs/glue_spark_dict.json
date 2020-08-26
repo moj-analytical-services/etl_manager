@@ -4,6 +4,7 @@
     "long" : {"glue" : "bigint", "spark": "LongType"},
     "float" : {"glue" : "float", "spark": "FloatType"},
     "double" : {"glue" : "double", "spark": "DoubleType"},
+    "decimal" : {"glue" : "decimal", "spark": "DecimalType"},    
     "date" : {"glue" : "date", "spark": "DateType"},
     "datetime" : {"glue" : "timestamp", "spark": "TimestampType"},
     "boolean" : {"glue" : "boolean", "spark": "BooleanType"},
