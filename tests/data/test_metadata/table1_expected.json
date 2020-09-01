@@ -48,5 +48,5 @@
     ],
     "location": "TEST_TABLE1/",
     "partitions": null,
-    "primary_key_fields": null
+    "primary_key": null
 }

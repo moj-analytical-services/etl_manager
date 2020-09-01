@@ -10,7 +10,7 @@ from etl_manager.extract_metadata import (
     create_json_for_database,
     create_json_for_tables,
     get_table_meta,
-    get_primary_key_fields,
+    get_primary_keys,
     get_partitions,
     get_subpartitions,
 )
@@ -139,7 +139,7 @@ class TestMetadata(unittest.TestCase):
             "columns": columns_no_flags,
             "location": "TEST_TABLE1/",
             "partitions": None,
-            "primary_key_fields": None,
+            "primary_key": None,
         }
 
         # All parameter flags set to True
@@ -197,31 +197,31 @@ class TestMetadata(unittest.TestCase):
             {
                 "name": "mojap_extraction_datetime",
                 "type": "datetime",
-                "description": "",
+                "description": "When this data was extracted from its source database",
                 "nullable": False,
             },
             {
                 "name": "mojap_start_datetime",
                 "type": "datetime",
-                "description": "",
+                "description": "When this record started to be the current data for this primary key",
                 "nullable": False,
             },
             {
                 "name": "mojap_end_datetime",
                 "type": "datetime",
-                "description": "",
+                "description": "When this record stopped being the current data for this primary key",
                 "nullable": False,
             },
             {
                 "name": "mojap_latest_record",
                 "type": "boolean",
-                "description": "",
+                "description": "Whether this record is currently the latest one for this primary key",
                 "nullable": False,
             },
             {
                 "name": "mojap_image_tag",
                 "type": "character",
-                "description": "",
+                "description": "A tag of the docker image used to run the pipeline tasks, if relevant",
                 "nullable": False,
             },
         ]
@@ -236,7 +236,7 @@ class TestMetadata(unittest.TestCase):
             "columns": columns_all_flags,
             "location": "TEST_TABLE1/",
             "partitions": None,
-            "primary_key_fields": None,
+            "primary_key": None,
         }
 
         # DOCUMENT_HISTORY table
@@ -272,27 +272,27 @@ class TestMetadata(unittest.TestCase):
             "columns": columns_doc_history,
             "location": "DOCUMENT_HISTORY/",
             "partitions": None,
-            "primary_key_fields": None,
+            "primary_key": None,
         }
 
         self.assertEqual(output_no_flags, expected_no_flags)
         self.assertEqual(output_all_flags, expected_all_flags)
         self.assertEqual(output_doc_history, expected_doc_history)
 
-    def test_get_primary_key_fields(self):
+    def test_get_primary_keys(self):
         """Tests that primary key output is formatted correctly
         Doesn't check that the SQL results are right
         """
-        output_key = get_primary_key_fields(
+        output_key = get_primary_keys(
             "TEST_TABLE_KEY", TestCursor([mocks.primary_key])
         )
-        output_keys = get_primary_key_fields(
+        output_keys = get_primary_keys(
             "TEST_TABLE_KEYS", TestCursor([mocks.primary_keys])
         )
-        output_no_keys = get_primary_key_fields("TEST_TABLE_NO_KEYS", TestCursor())
+        output_no_keys = get_primary_keys("TEST_TABLE_NO_KEYS", TestCursor())
 
-        expected_key = ("long_postcode_id",)
-        expected_keys = ("long_postcode_id", "team_id")
+        expected_key = ["long_postcode_id",]
+        expected_keys = ["long_postcode_id", "team_id"]
         expected_no_keys = None
 
         self.assertEqual(output_key, expected_key)

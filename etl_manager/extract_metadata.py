@@ -1,34 +1,6 @@
-import cx_Oracle
+import os
 
-from etl_manager.utils import write_json, read_json
-
-
-def create_database_connection(settings_file):
-    """Connects to an Oracle database, with settings taken from the specified json file
-
-    The json file should specify:
-        - host: usually localhost
-        - password
-        - port: usually 1521
-        - service_name
-        - user
-
-    Returns a cx_Oracle database connection.
-    """
-    db_settings = read_json(settings_file)
-
-    dsn = cx_Oracle.makedsn(
-        host=db_settings["host"],
-        port=db_settings["port"],
-        service_name=db_settings["service_name"],
-    )
-    connection = cx_Oracle.connect(
-        user=db_settings["user"],
-        password=db_settings["password"],
-        dsn=dsn,
-        encoding="UTF-8",
-    )
-    return connection
+from etl_manager.utils import write_json
 
 
 def get_table_names(database: str, connection) -> list:
@@ -40,6 +12,9 @@ def get_table_names(database: str, connection) -> list:
     ----------
     database (str):
         The name of the database/schema - for example DELIUS_ANALYTICS_PLATFORM
+
+    connection (database connection object):
+        The database connection to query - for example a cx_Oracle.connect() object
 
     Returns
     -------
@@ -54,7 +29,7 @@ def get_table_names(database: str, connection) -> list:
 
 
 def create_json_for_database(
-    description: str, name: str, bucket: str, base_folder: str, location="./metadata",
+    description: str, name: str, bucket: str, base_folder: str, location="./meta_data",
 ):
     """Creates a database.json file suitable for reading with read_database_folder()
 
@@ -89,13 +64,13 @@ def create_json_for_database(
         "bucket": bucket,
         "base_folder": base_folder,
     }
-    write_json(db, f"{location}/database.json")
+    write_json(db, os.path.join(location, "database.json"))
 
 
 def create_json_for_tables(
     tables: list,
     database: str,
-    location="./metadata",
+    location="./meta_data",
     include_op_column=True,
     include_derived_columns=False,
     include_objects=False,
@@ -124,8 +99,8 @@ def create_json_for_tables(
         If True, adds 5 datetime columns: mojap_extraction_datetime,
         mojap_start_datetime, mojap_end_datetime, mojap_latest_record, mojap_image_tag
 
-    connection (cx_Oracle connection):
-        Database connection object
+    connection (database connection object):
+        The database connection to query - for example a cx_Oracle.connect() object
 
     Returns
     -------
@@ -147,15 +122,16 @@ def create_json_for_tables(
                 metadata = get_table_meta(
                     cursor, table, include_op_column, include_derived_columns
                 )
-                write_json(metadata, f"{location}/{table.lower()}.json")
+                write_json(metadata, os.path.join(location, f"{table.lower()}.json"))
+
             else:
                 print(f"No rows in {table} from {database}")
 
-        except cx_Oracle.DatabaseError as e:
+        except Exception as e:
             # Likely errors are that the table has been deleted, marked
             # for deletion, or relies on an external reference you can't access
             print(f"Problem reading {table} in {database}")
-            problems[table] = e.args[0].message
+            problems[table] = e.args[0].message  # this attribute may be Oracle-only
             continue
 
     # Print the error messages at the end
@@ -279,31 +255,31 @@ def get_table_meta(
         {
             "name": "mojap_extraction_datetime",
             "type": "datetime",
-            "description": "",
+            "description": "When this data was extracted from its source database",
             "nullable": False,
         },
         {
             "name": "mojap_start_datetime",
             "type": "datetime",
-            "description": "",
+            "description": "When this record started to be the current data for this primary key",
             "nullable": False,
         },
         {
             "name": "mojap_end_datetime",
             "type": "datetime",
-            "description": "",
+            "description": "When this record stopped being the current data for this primary key",
             "nullable": False,
         },
         {
             "name": "mojap_latest_record",
             "type": "boolean",
-            "description": "",
+            "description": "Whether this record is currently the latest one for this primary key",
             "nullable": False,
         },
         {
             "name": "mojap_image_tag",
             "type": "character",
-            "description": "",
+            "description": "A tag of the docker image used to run the pipeline tasks, if relevant",
             "nullable": False,
         },
     ]
@@ -315,7 +291,7 @@ def get_table_meta(
     if include_derived_columns:
         columns += derived_columns
 
-    primary_key_fields = get_primary_key_fields(table=table, cursor=cursor)
+    primary_keys = get_primary_keys(table=table, cursor=cursor)
     partitions = get_partitions(table=table, cursor=cursor)
 
     metadata = {
@@ -329,12 +305,12 @@ def get_table_meta(
         "columns": columns,
         "location": f"{table}/",
         "partitions": partitions,
-        "primary_key_fields": primary_key_fields,
+        "primary_key": primary_keys,
     }
     return metadata
 
 
-def get_primary_key_fields(table, cursor):
+def get_primary_keys(table, cursor):
     """Looks through constraints for primary keys, and checks they match colums
     Run as part of get_curated_metadata
     """
@@ -352,10 +328,10 @@ def get_primary_key_fields(table, cursor):
     result = cursor.fetchall()
     if result == []:
         print(f"No primary key fields found for table {table.lower()}")
-        primary_key_fields = None
+        primary_keys = None
     else:
-        primary_key_fields = tuple(item[0].lower() for item in result)
-    return primary_key_fields
+        primary_keys = [item[0].lower() for item in result]
+    return primary_keys
 
 
 def get_partitions(table, cursor):

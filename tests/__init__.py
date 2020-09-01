@@ -26,6 +26,7 @@ class TestConnection:
     responses is a list of dictionaries, each mocking a cursor's
     .execute response. It gets passed to the TestCursor on creation.
     """
+
     def __init__(self, responses=None):
         self.responses = responses or []
 
@@ -41,19 +42,20 @@ class TestCursor:
 
     Use the responses parameter to mock SQL queries. Responses is a list of dicts
     where each dict is the response to one .execute query.
-    
+
     Each dict should have a desc key and a data key. Desc becomes the TestCursor's
     .description attribute, which contains metadata about the columns returned.
-    Data becomes the TestCursor's .data attribute, and represents the rows returned 
+    Data becomes the TestCursor's .data attribute, and represents the rows returned
 
     Running .execute() mocks the sending of a query by moving the first .responses
     item into the TestCursor's .data and .description attributes. This mimics how
     a real SQL query would update the cursor's description and hold data ready to
-    be returned by fetch methods. The actual SQL is ignored. 
+    be returned by fetch methods. The actual SQL is ignored.
 
     The upshot is that this class is useful for testing functions containing cx_Oracle
     objects, but it can't test the SQL query or database connection.
     """
+
     def __init__(self, responses=None, description=None):
         """Initialise with responses to queue up responses to .execute queries.
         Initialise with description to mimic a cursor where a .execute query

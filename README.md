@@ -382,13 +382,12 @@ meta_employees = read_json_from_s3(os.path.join(args['metadata_base_path'], "emp
 ```
 
 ## Using the extract_metadata module
-extract_metadata contains functions for connecting to an Oracle database and creating a folder full of metadata. The aim is to create everything needed by etl_manager's read_database_folder function. 
+extract_metadata contains functions for connecting to a database and creating a folder full of metadata. The aim is to create everything needed by etl_manager's read_database_folder function. 
 
-Currently this is designed explicitly for Delius but it should work as a starting point for connecting to other Oracle databases too. 
+Currently this is designed explicitly for Delius, which is an Oracle database. However, this should hopefully work as a starting point for more generalised metadata extraction.
 
 ### What's included
-There are 4 main functions you can run directly: 
-- **create_database_connection**: creates a connection you can pass to the other functions
+There are 3 main functions you can run directly: 
 - **get_table_names**: extracts a full list of table names from a specific schema
 - **create_json_for_database**: creates a small database.json file in the format needed by read_database_folder
 - **create_json_for_tables**: creates a json file showing columns and other metadata for each table name in a list
@@ -397,14 +396,16 @@ There are 4 main functions you can run directly:
 Typically to create a metadata folder you'll want a small script combining these functions. The script can go in the same repo where you're storing the metadata. It could look something like this: 
 
 ```python
+import cx_Oracle
 import extract_metadata
 
 database = "schema_name"
 location = "./metadata_folder"
 
 # Create database connection
-# You'll need a json file containing your database connection details
-conn = extract_metadata.create_database_connection("db_connection.json")
+conn = cx_Oracle.connect(
+    # add your connection parameters
+)
 
 # Get the list of table names
 table_list = extract_metadata.get_table_names(database, conn)
