@@ -1,6 +1,15 @@
 import datetime
 import cx_Oracle
 
+
+class MockDataType():
+    def __init__(self, name):
+        self.name = name
+
+    def name(self):
+        return self.name
+
+
 # Mocked SQL query responses for test_extract_metadata
 table_names = {"data": [("TEST_TABLE1",), ("TEST_TABLE2",), ("SYS_TABLE",)]}
 primary_key = {"data": [("LONG_POSTCODE_ID",)]}
@@ -28,13 +37,13 @@ subpartitions = {
 }
 first_table = {
     "desc": [
-        ("TEST_NUMBER", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
-        ("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1),
-        ("TEST_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
-        ("TEST_VARCHAR", cx_Oracle.DB_TYPE_VARCHAR, 30, 30, None, None, 1),
-        ("TEST_FLAG", cx_Oracle.DB_TYPE_VARCHAR, 1, 1, None, None, 1),
-        ("TEST_ROWID_SKIP", cx_Oracle.DB_TYPE_ROWID, 127, None, 0, -127, 1),
-        ("TEST_OBJECT_SKIP", cx_Oracle.DB_TYPE_OBJECT, 127, None, 0, -127, 1),
+        ("TEST_NUMBER", MockDataType("DB_TYPE_NUMBER"), 39, None, 38, 0, 1),
+        ("TEST_ID", MockDataType("DB_TYPE_NUMBER"), 127, None, 0, -127, 1),
+        ("TEST_DATE", MockDataType("DB_TYPE_DATE"), 23, None, None, None, 1),
+        ("TEST_VARCHAR", MockDataType("DB_TYPE_VARCHAR"), 30, 30, None, None, 1),
+        ("TEST_FLAG", MockDataType("DB_TYPE_VARCHAR"), 1, 1, None, None, 1),
+        ("TEST_ROWID_SKIP", MockDataType("DB_TYPE_ROWID"), 127, None, 0, -127, 1),
+        ("TEST_OBJECT_SKIP", MockDataType("DB_TYPE_OBJECT"), 127, None, 0, -127, 1),
     ],
     "data": [
         (
@@ -50,11 +59,11 @@ first_table = {
 }
 second_table = {
     "desc": [
-        ("SPG_ERROR_ID", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
-        ("ERROR_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
-        ("MESSAGE_CRN", cx_Oracle.DB_TYPE_CHAR, 7, 7, None, None, 1),
-        ("NOTES", cx_Oracle.DB_TYPE_CLOB, None, None, None, None, 1),
-        ("INCIDENT_ID", cx_Oracle.DB_TYPE_VARCHAR, 100, 100, None, None, 1),
+        ("SPG_ERROR_ID", MockDataType("DB_TYPE_NUMBER"), 39, None, 38, 0, 1),
+        ("ERROR_DATE", MockDataType("DB_TYPE_DATE"), 23, None, None, None, 1),
+        ("MESSAGE_CRN", MockDataType("DB_TYPE_CHAR"), 7, 7, None, None, 1),
+        ("NOTES", MockDataType("DB_TYPE_CLOB"), None, None, None, None, 1),
+        ("INCIDENT_ID", MockDataType("DB_TYPE_VARCHAR"), 100, 100, None, None, 1),
     ],
     "data": [
         (
@@ -68,15 +77,15 @@ second_table = {
 }
 empty_table = {
     "description": [
-        ("TEST_NUMBER", cx_Oracle.DB_TYPE_NUMBER, 39, None, 38, 0, 1),
-        ("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1),
-        ("TEST_DATE", cx_Oracle.DB_TYPE_DATE, 23, None, None, None, 1),
-        ("TEST_VARCHAR", cx_Oracle.DB_TYPE_VARCHAR, 30, 30, None, None, 1),
-        ("TEST_FLAG", cx_Oracle.DB_TYPE_VARCHAR, 1, 1, None, None, 1),
-        ("TEST_ROWID_SKIP", cx_Oracle.DB_TYPE_ROWID, 127, None, 0, -127, 1),
-        ("TEST_OBJECT_SKIP", cx_Oracle.DB_TYPE_OBJECT, 127, None, 0, -127, 1),
+        ("TEST_NUMBER", MockDataType("DB_TYPE_NUMBER"), 39, None, 38, 0, 1),
+        ("TEST_ID", MockDataType("DB_TYPE_NUMBER"), 127, None, 0, -127, 1),
+        ("TEST_DATE", MockDataType("DB_TYPE_DATE"), 23, None, None, None, 1),
+        ("TEST_VARCHAR", MockDataType("DB_TYPE_VARCHAR"), 30, 30, None, None, 1),
+        ("TEST_FLAG", MockDataType("DB_TYPE_VARCHAR"), 1, 1, None, None, 1),
+        ("TEST_ROWID_SKIP", MockDataType("DB_TYPE_ROWID"), 127, None, 0, -127, 1),
+        ("TEST_OBJECT_SKIP", MockDataType("DB_TYPE_OBJECT"), 127, None, 0, -127, 1),
     ]
 }
 doc_history = {
-    "desc": [("TEST_ID", cx_Oracle.DB_TYPE_NUMBER, 127, None, 0, -127, 1)],
+    "desc": [("TEST_ID", MockDataType("DB_TYPE_NUMBER"), 127, None, 0, -127, 1)],
 }
