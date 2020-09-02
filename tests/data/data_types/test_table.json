@@ -32,7 +32,7 @@
         },
         {
             "name": "test_decimal",
-            "type": "decimal",
+            "type": "decimal<precision:int,scale:int>",
             "description": "column with decimal data type"            
         }
     ]
