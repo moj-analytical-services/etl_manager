@@ -56,7 +56,7 @@ class ColumnTypesTest(BotoTester):
             ("long", True),
             ("float", True),
             ("double", True),
-            ("decimal", True),
+            ("decimal<precision:int,scale:int>", True),
             ("date", True),
             ("datetime", True),
             ("boolean", True),
