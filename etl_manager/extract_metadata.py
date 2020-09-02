@@ -3,7 +3,7 @@ import os
 from etl_manager.utils import write_json
 
 
-def get_table_names(database: str, connection) -> list:
+def get_table_names(database: str, connection, include_tablespace=False) -> list:
     """Gets names of tables in the database
 
     You can save the output into a file, or pass it directly to create_table_json
@@ -16,16 +16,23 @@ def get_table_names(database: str, connection) -> list:
     connection (database connection object):
         The database connection to query - for example a cx_Oracle.connect() object
 
+    include_tablespace (bool):
+        If False, return list of table names.
+        If true, return list of tuples of table name and tablespace
+
     Returns
     -------
-    List of table names as strings
+    List of table names as strings.
+    If including tablespaces, returns list of tuples of table names and tablespaces
 
     """
     cursor = connection.cursor()
-    cursor.execute(f"SELECT table_name FROM all_tables WHERE OWNER = '{database}'")
+    cursor.execute(f"SELECT table_name, tablespace_name FROM all_tables WHERE OWNER = '{database}'")
     result = cursor.fetchall()
-    names = [r[0] for r in result]
-    return names
+    if include_tablespace:
+        return [(r[0], r[1]) for r in result]
+    else:
+        return [r[0] for r in result]
 
 
 def create_json_for_database(

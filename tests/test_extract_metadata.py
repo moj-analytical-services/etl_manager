@@ -23,7 +23,7 @@ class TestMetadata(unittest.TestCase):
         """Checks that table names are pulled out of
         their tuples and listed with original capitalisation
         """
-        result = get_table_names("TEST_DB", TestConnection([mocks.table_names]))
+        result = get_table_names("TEST_DB", TestConnection([mocks.table_names]), False)
         self.assertEqual(result, ["TEST_TABLE1", "TEST_TABLE2", "SYS_TABLE"])
 
     def test_create_json_for_database(self):
