@@ -1,7 +1,7 @@
 import datetime
 
 
-class MockDataType():
+class MockDataType:
     def __init__(self, name):
         self.name = name
 

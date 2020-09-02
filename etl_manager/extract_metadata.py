@@ -27,7 +27,9 @@ def get_table_names(database: str, connection, include_tablespace=False) -> list
 
     """
     cursor = connection.cursor()
-    cursor.execute(f"SELECT table_name, tablespace_name FROM all_tables WHERE OWNER = '{database}'")
+    cursor.execute(
+        f"SELECT table_name, tablespace_name FROM all_tables WHERE OWNER = '{database}'"
+    )
     result = cursor.fetchall()
     if include_tablespace:
         return [(r[0], r[1]) for r in result]

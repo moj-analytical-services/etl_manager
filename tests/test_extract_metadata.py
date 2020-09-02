@@ -283,15 +283,15 @@ class TestMetadata(unittest.TestCase):
         """Tests that primary key output is formatted correctly
         Doesn't check that the SQL results are right
         """
-        output_key = get_primary_keys(
-            "TEST_TABLE_KEY", TestCursor([mocks.primary_key])
-        )
+        output_key = get_primary_keys("TEST_TABLE_KEY", TestCursor([mocks.primary_key]))
         output_keys = get_primary_keys(
             "TEST_TABLE_KEYS", TestCursor([mocks.primary_keys])
         )
         output_no_keys = get_primary_keys("TEST_TABLE_NO_KEYS", TestCursor())
 
-        expected_key = ["long_postcode_id",]
+        expected_key = [
+            "long_postcode_id",
+        ]
         expected_keys = ["long_postcode_id", "team_id"]
         expected_no_keys = None
 
