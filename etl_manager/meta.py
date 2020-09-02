@@ -293,8 +293,9 @@ class TableMeta:
 
                 b1 = c["type"].lower().startswith("array")
                 b2 = c["type"].lower().startswith("struct")
+                b3 = c["type"].lower().startswith("decimal")
 
-                if b1 or b2:
+                if b1 or b2 or b3:
                     # Replace agnostic meta type with Athena type anywhere in string
                     # (user provides agnostic types, but we need Athena/glue type)
                     this_type = c["type"]
