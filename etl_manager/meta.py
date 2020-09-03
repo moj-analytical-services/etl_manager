@@ -60,7 +60,7 @@ _web_link_to_table_json_schema = (
     "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json"
 )
 
-""" try:
+try:
     with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
         _table_json_schema = json.loads(url.read().decode())
 except urllib.error.URLError:
@@ -69,11 +69,7 @@ except urllib.error.URLError:
     )
     _table_json_schema = json.load(
         pkg_resources.resource_stream(__name__, "specs/table_schema.json")
-    ) """
-
-_table_json_schema = json.load(
-    pkg_resources.resource_stream(__name__, "specs/table_schema.json")
-)
+    )
 
 _supported_column_types = _table_json_schema["properties"]["columns"]["items"][
     "properties"
