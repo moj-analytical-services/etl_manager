@@ -627,10 +627,10 @@ class TableMetaTest(BotoTester):
         tb.add_column("b", "int", "")
         self.assertListEqual(tb.column_names, ["a", "b", "p"])
 
-    """ def test_local_schema_matches_web_schema(self):
+    def test_local_schema_matches_web_schema(self):
         with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
             web_schema = json.loads(url.read().decode())
-        self.assertDictEqual(_table_json_schema, web_schema) """
+        self.assertDictEqual(_table_json_schema, web_schema)
 
     def test_table_sensitivity(self):
         tm = TableMeta(name="test", location="test")
