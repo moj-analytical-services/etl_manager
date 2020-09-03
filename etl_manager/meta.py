@@ -295,13 +295,18 @@ class TableMeta:
                 b2 = c["type"].lower().startswith("struct")
                 b3 = c["type"].lower().startswith("decimal")
 
-                if b1 or b2 or b3:
+                if b1 or b2:
                     # Replace agnostic meta type with Athena type anywhere in string
                     # (user provides agnostic types, but we need Athena/glue type)
                     this_type = c["type"]
                     for key in _agnostic_to_glue_spark_dict.keys():
                         replacement_type = _agnostic_to_glue_spark_dict[key]["glue"]
                         this_type = this_type.replace(key, replacement_type)
+                    new_c["Type"] = this_type
+                elif b3:
+                    this_type = c["type"]
+                    replacement_type = _agnostic_to_glue_spark_dict["decimal"]["glue"]
+                    this_type = this_type.replace("decimal", replacement_type)
                     new_c["Type"] = this_type
                 else:
                     new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]
