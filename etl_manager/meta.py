@@ -57,7 +57,7 @@ _agnostic_to_glue_spark_dict = json.load(
 )
 
 _web_link_to_table_json_schema = (
-    "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json"
+    "https://moj-analytical-services.github.io/metadata_schema/table/v1.2.0.json"
 )
 
 try:
