@@ -400,14 +400,11 @@ class TableMetaTest(BotoTester):
     """
 
     def test_data_type_conversion_against_gluejobutils(self):
-        """ with urllib.request.urlopen(
+        with urllib.request.urlopen(
             "https://raw.githubusercontent.com/moj-analytical-services/gluejobutils/"
             "master/gluejobutils/data/data_type_conversion.json"
         ) as url:
-            gluejobutils_data = json.loads(url.read().decode()) """
-
-        with open("tests/data/gluejobutils_data_type_conversion.json") as f:
-            gluejobutils_data = json.load(f)
+            gluejobutils_data = json.loads(url.read().decode())
 
         self.assertDictEqual(_agnostic_to_glue_spark_dict, gluejobutils_data)
 
