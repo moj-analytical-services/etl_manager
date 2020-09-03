@@ -32,8 +32,8 @@
         },
         {
             "name": "test_decimal",
-            "type": "decimal<precision:int,scale:int>",
-            "description": "column with decimal data type"            
+            "type": "decimal(38,0)",
+            "description": "column with decimal data type"     
         }
     ]
 }
