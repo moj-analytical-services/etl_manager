@@ -27,6 +27,7 @@ from etl_manager.utils import (
     _glue_client,
     read_json,
     _remove_final_slash,
+    trim_complex_type,
 )
 from etl_manager.etl import GlueJob
 
@@ -47,6 +48,11 @@ class UtilsTest(BotoTester):
         self.assertEqual(_validate_string("test:!@", ":!@"), None)
         self.assertEqual(_remove_final_slash("hello/"), "hello")
         self.assertEqual(_remove_final_slash("hello"), "hello")
+
+    def test_trim_complex_type(self):
+        self.assertEqual(trim_complex_type("decimal(38,0)"), "decimal")
+        self.assertEqual(trim_complex_type("array<decimal(38,0)>"), "array")
+        self.assertEqual(trim_complex_type("struct<arr_key:array<decimal(38,0)>>"), "struct")
 
 
 class GlueTest(BotoTester):
