@@ -109,7 +109,7 @@ The employees table has an ID for each employee their name and dob. The table me
 
 **Currently supported data types for your columns currently are:**
 
-`character | int | long | float | double | date | datetime |  boolean`
+`character | int | long | float | double | decimal | date | datetime |  boolean`
 
 This is a standard layout for a table metadata json. `$schema` points to another json that validates the structure of out table metadata files. Your table will have this `name` and `description` _(Note: It is strongly suggested that the name of your table matches the name of the metadata json file)_ when the database is created. The `location` is the relative folder path to where your table exists. This path is relative to your database `base_folder`. This means that the full path your table is `s3://<database.bucket>/<database.base_folder>/<table.folder>/`. So in this example the table employees should be in the s3 path `s3://my-bucket/database/database1/employees`. The `data_format` specifies what type of data the table is. Finally your columns is an array of objects. Where each object is a column definition specifying the `name`, `description` and `type` (data type) of the column. Each column can have optional arguments `pattern`, `enum` and `nullable` (see [table_schema.json](https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json) for definition).
 
