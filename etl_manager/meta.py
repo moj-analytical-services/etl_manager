@@ -57,7 +57,7 @@ _agnostic_to_glue_spark_dict = json.load(
 )
 
 _web_link_to_table_json_schema = (
-    "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json"
+    "https://moj-analytical-services.github.io/metadata_schema/table/v1.2.0.json"
 )
 
 try:
@@ -289,6 +289,7 @@ class TableMeta:
 
                 b1 = c["type"].lower().startswith("array")
                 b2 = c["type"].lower().startswith("struct")
+                b3 = c["type"].lower().startswith("decimal")
 
                 if b1 or b2:
                     # Replace agnostic meta type with Athena type anywhere in string
@@ -297,6 +298,11 @@ class TableMeta:
                     for key in _agnostic_to_glue_spark_dict.keys():
                         replacement_type = _agnostic_to_glue_spark_dict[key]["glue"]
                         this_type = this_type.replace(key, replacement_type)
+                    new_c["Type"] = this_type
+                elif b3:
+                    this_type = c["type"]
+                    replacement_type = _agnostic_to_glue_spark_dict["decimal"]["glue"]
+                    this_type = this_type.replace("decimal", replacement_type)
                     new_c["Type"] = this_type
                 else:
                     new_c["Type"] = _agnostic_to_glue_spark_dict[c["type"]]["glue"]

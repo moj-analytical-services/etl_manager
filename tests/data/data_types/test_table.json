@@ -1,5 +1,5 @@
 {
-    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.0.0.json",
+    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.2.0.json",
     "name": "test_table",
     "description": "table containing columns with each of the data types for testing database creation",
     "data_format": "json",
@@ -29,6 +29,11 @@
             "name": "test_struct_arrays",
             "type": "struct<arr:array<int>>",
             "description": "column with struct data type"
+        },
+        {
+            "name": "test_decimal",
+            "type": "decimal(38,0)",
+            "description": "column with decimal data type"     
         }
     ]
 }

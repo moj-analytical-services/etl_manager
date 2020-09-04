@@ -1,12 +1,46 @@
 {
-    "character" : {"glue" : "string", "spark": "StringType"},
-    "int" : {"glue" : "int", "spark": "IntegerType"},
-    "long" : {"glue" : "bigint", "spark": "LongType"},
-    "float" : {"glue" : "float", "spark": "FloatType"},
-    "double" : {"glue" : "double", "spark": "DoubleType"},
-    "date" : {"glue" : "date", "spark": "DateType"},
-    "datetime" : {"glue" : "timestamp", "spark": "TimestampType"},
-    "boolean" : {"glue" : "boolean", "spark": "BooleanType"},
-    "array" : {"glue" : "array", "spark": "ArrayType"},
-    "struct" : {"glue" : "struct", "spark": "MapType"}
-}
+    "character":{
+      "glue":"string",
+      "spark":"StringType"
+    },
+    "int":{
+      "glue":"int",
+      "spark":"IntegerType"
+    },
+    "long":{
+      "glue":"bigint",
+      "spark":"LongType"
+    },
+    "float":{
+      "glue":"float",
+      "spark":"FloatType"
+    },
+    "double":{
+      "glue":"double",
+      "spark":"DoubleType"
+    },
+    "decimal":{
+      "glue":"decimal",
+      "spark":"DecimalType"
+    },
+    "date":{
+      "glue":"date",
+      "spark":"DateType"
+    },
+    "datetime":{
+      "glue":"timestamp",
+      "spark":"TimestampType"
+    },
+    "boolean":{
+      "glue":"boolean",
+      "spark":"BooleanType"
+    },
+    "array":{
+      "glue":"array",
+      "spark":"ArrayType"
+    },
+    "struct":{
+      "glue":"struct",
+      "spark":"MapType"
+    }
+  }

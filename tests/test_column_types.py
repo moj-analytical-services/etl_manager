@@ -56,6 +56,7 @@ class ColumnTypesTest(BotoTester):
             ("long", True),
             ("float", True),
             ("double", True),
+            ("decimal(38,0)", True),
             ("date", True),
             ("datetime", True),
             ("boolean", True),
@@ -68,6 +69,7 @@ class ColumnTypesTest(BotoTester):
             ("struct<num:int,arr:array<int>>", True),
             ("array<struct<num:int,desc:character>>", True),
             ("struct<num:int,desc:character>", True),
+            ("array<decimal(38,0)>", True),
         ]
     )
     def test_col_type_recursive_regex(self, col_type, expected):

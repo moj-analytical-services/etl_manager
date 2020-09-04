@@ -158,7 +158,7 @@ def _unnest_github_zipfile_and_return_new_zip_path(zip_path):
 # Note the ?R recursive.  We only allow 'character' (the agnostic type), in a non-complex type, but must allow string within complex types.
 # User will still get an error for string as non-complex type from the schema.
 COL_TYPE_REGEX = regex.compile(
-    r"(character|int|long|float|double|date|datetime|boolean|struct<(([a-zA-Z_]+):((?R)(,?)))+>|array<(?R)>)"
+    r"(character|int|long|float|double|date|datetime|boolean|decimal\(\d+,\d+\)|struct<(([a-zA-Z_]+):((?R)(,?)))+>|array<(?R)>)"
 )
 
 
@@ -186,7 +186,7 @@ def glue_type_to_dict(data_type):
 
 
 def trim_complex_type(col_type):
-    return col_type.split("<", 1)[0]
+    return col_type.split("(", 1)[0].split("<", 1)[0]
 
 
 def trim_complex_data_types(json_data):
