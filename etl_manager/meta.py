@@ -976,7 +976,7 @@ def get_existing_database_from_glue_catalogue(database_name):
     """
     Find a database in the Glue catalogue from its database_name,
     and return a corresponding etl_manager DatabaseMeta object
-    Note that the DatabaseMeta object will contain no tables 
+    Note that the DatabaseMeta object will contain no tables
     i.e. it will NOT contain a list of tables already in the database.
     """
     glue_db = _glue_client.get_database(Name=database_name)
@@ -1008,7 +1008,7 @@ def _convert_etl_manager_agnostic_type_to_glue_type(type_string):
 
 def _parquet_metadata_type_to_etl_mgr_type(pmeta_type):
     """
-    Convert a field from parquet metadata dictionary to a etl_manager type string 
+    Convert a field from parquet metadata dictionary to a etl_manager type string
     """
 
     if type(pmeta_type) == str:
@@ -1041,7 +1041,7 @@ def tablemeta_from_parquet_meta(pmeta_json, name, location):
     i.e. the result of either:
 
     df = spark.read.parquet("path_to_parquet")
-    pmeta_json = df.schema.json()  
+    pmeta_json = df.schema.json()
 
     or
 
