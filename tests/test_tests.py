@@ -417,6 +417,7 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm.location, "folder/")
         self.assertEqual(tm.columns, [])
         self.assertEqual(tm.partitions, [])
+        self.assertEqual(tm.primary_key, [])
         self.assertEqual(tm.glue_specific, {})
 
         kwargs = {
@@ -441,6 +442,7 @@ class TableMetaTest(BotoTester):
                     "description": "date of birth for the employee",
                 },
             ],
+            "primary_key": ["employee_id"]
         }
 
         tm2 = TableMeta(**kwargs)
@@ -450,6 +452,7 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm2.location, kwargs["location"])
         self.assertEqual(tm2.columns, kwargs["columns"])
         self.assertEqual(tm2.partitions, [])
+        self.assertEqual(tm2.primary_key, kwargs["primary_key"])
         self.assertEqual(tm2.glue_specific, {})
         with self.assertRaises(ValueError):
             tm2.database = "not a database obj"
@@ -615,7 +618,7 @@ class TableMetaTest(BotoTester):
         with self.assertRaises(ValueError):
             tm.update_column("employee_id", sensitivity="non-sensitive")
 
-    def test_partion_cols_are_last(self):
+    def test_partition_cols_are_last(self):
         tb = TableMeta(name="test", location="test")
 
         tb.add_column("p", "int", "")
@@ -626,6 +629,29 @@ class TableMetaTest(BotoTester):
 
         tb.add_column("b", "int", "")
         self.assertListEqual(tb.column_names, ["a", "b", "p"])
+
+    def test_primary_key(self):
+        tm = TableMeta(name="test", location="test")
+        tm.add_column("a", "int", "")
+        tm.add_column("b", "int", "")
+
+        tm.primary_key = ["a"]
+        self.assertListEqual(tm.primary_key, ["a"])
+
+        tm.primary_key = ["b"]
+        self.assertListEqual(tm.primary_key, ["b"])
+
+        tm.primary_key = ["a", "b"]
+        self.assertListEqual(tm.primary_key, ["a", "b"])
+
+        tm.primary_key = None
+        self.assertListEqual(tm.primary_key, [])
+
+        with self.assertRaises(ValueError):
+            tm.primary_key = ["c"]
+
+        with self.assertRaises(TypeError):
+            tm.primary_key = "a"
 
     def test_local_schema_matches_web_schema(self):
         with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
