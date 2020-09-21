@@ -57,7 +57,7 @@ _agnostic_to_glue_spark_dict = json.load(
 )
 
 _web_link_to_table_json_schema = (
-    "https://moj-analytical-services.github.io/metadata_schema/table/v1.2.0.json"
+    "https://moj-analytical-services.github.io/metadata_schema/table/v1.3.0.json"
 )
 
 try:
@@ -109,6 +109,7 @@ class TableMeta:
         data_format="csv",
         description="",
         partitions=[],
+        primary_key=[],
         glue_specific={},
         database=None,
     ):
@@ -119,6 +120,7 @@ class TableMeta:
         self.data_format = data_format
         self.description = description
         self.partitions = copy.deepcopy(partitions)
+        self.primary_key = copy.deepcopy(primary_key)
         self.glue_specific = copy.deepcopy(glue_specific)
         self.database = database
 
@@ -174,6 +176,21 @@ class TableMeta:
             self.reorder_columns(new_col_order)
 
     @property
+    def primary_key(self):
+        return self._primary_key
+
+    @primary_key.setter
+    def primary_key(self, primary_key):
+        if not (isinstance(primary_key, list) or primary_key is None):
+            raise TypeError("primary_key must be type list or None")
+        if not primary_key:
+            self._primary_key = []
+        else:
+            for pk in primary_key:
+                self._check_column_exists(pk)
+            self._primary_key = primary_key
+
+    @property
     def location(self):
         return self._location
 
@@ -222,8 +239,10 @@ class TableMeta:
         self._check_column_exists(column_name)
         new_cols = [c for c in self.columns if c["name"] != column_name]
         new_partitions = [p for p in self.partitions if p != column_name]
+        new_primary_key = [pk for pk in self.primary_key if pk != column_name]
         self.columns = new_cols
         self.partitions = new_partitions
+        self.primary_key = new_primary_key
         self._update_sensitivity()
 
     def add_column(
@@ -474,6 +493,9 @@ class TableMeta:
         if bool(self.partitions):
             meta["partitions"] = self.partitions
 
+        if bool(self.primary_key):
+            meta["primary_key"] = self.primary_key
+
         if bool(self.glue_specific):
             meta["glue_specific"] = self.glue_specific
 
@@ -498,6 +520,8 @@ class TableMeta:
 
         partition_text = ", ".join(self.partitions) if self.partitions else "None"
 
+        primary_key_test = ", ".join(self.primary_key) if self.primary_key else "None"
+
         f = open(filepath, "w")
         f.write(f"# {self.name}")
         f.write(f"\n")
@@ -517,6 +541,9 @@ class TableMeta:
         f.write("\n")
         f.write("\n")
         f.write(f"**Table Partitions:** {partition_text}")
+        f.write("\n")
+        f.write("\n")
+        f.write(f"**Primary Key:** {primary_key_test}")
         f.write("\n")
         f.write("\n")
         f.write(f"**Database Name:** {db_name}")
@@ -897,6 +924,9 @@ def read_table_json(filepath, database=None):
     if "partitions" not in meta:
         meta["partitions"] = []
 
+    if "primary_key" not in meta:
+        meta["primary_key"] = []
+
     if "glue_specific" not in meta:
         meta["glue_specific"] = {}
 
@@ -907,6 +937,7 @@ def read_table_json(filepath, database=None):
         data_format=meta["data_format"],
         description=meta["description"],
         partitions=meta["partitions"],
+        primary_key=meta["primary_key"],
         glue_specific=meta["glue_specific"],
         database=database,
     )
