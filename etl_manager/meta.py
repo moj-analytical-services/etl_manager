@@ -520,7 +520,7 @@ class TableMeta:
 
         partition_text = ", ".join(self.partitions) if self.partitions else "None"
 
-        primary_key_test = ", ".join(self.primary_key) if self.primary_key else "None"
+        primary_key_text = ", ".join(self.primary_key) if self.primary_key else "None"
 
         f = open(filepath, "w")
         f.write(f"# {self.name}")
@@ -543,7 +543,7 @@ class TableMeta:
         f.write(f"**Table Partitions:** {partition_text}")
         f.write("\n")
         f.write("\n")
-        f.write(f"**Primary Key:** {primary_key_test}")
+        f.write(f"**Primary Key:** {primary_key_text}")
         f.write("\n")
         f.write("\n")
         f.write(f"**Database Name:** {db_name}")
