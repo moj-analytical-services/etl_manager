@@ -121,6 +121,20 @@
         "sop_full/"
       ]
     },
+    "partitions": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "title": "Columns used to partition the table"
+    },
+    "primary_key": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "title": "Columns that form the primary key of the table"
+    },
     "glue_specific": {
       "type": [
         "null",

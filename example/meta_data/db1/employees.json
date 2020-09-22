@@ -1,5 +1,5 @@
 {
-    "$schema" : "https://moj-analytical-services.github.io/metadata_schema/table/v1.1.0.json",
+    "$schema": "https://moj-analytical-services.github.io/metadata_schema/table/v1.3.0.json",
     "name": "employees",
     "description": "table containing employee information",
     "data_format": "parquet",
@@ -20,5 +20,8 @@
             "type": "date",
             "description": "date of birth for the employee"
         }
+    ],
+    "primary_key": [
+        "employee_id"
     ]
 }
