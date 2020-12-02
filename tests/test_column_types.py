@@ -59,6 +59,7 @@ class ColumnTypesTest(BotoTester):
             ("decimal(38,0)", True),
             ("date", True),
             ("datetime", True),
+            ("binary", True),
             ("boolean", True),
             ("struct", False),
             ("array", False),

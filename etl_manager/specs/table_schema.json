@@ -41,6 +41,7 @@
               "decimal",
               "date",
               "datetime",
+              "binary",
               "boolean",
               "struct",
               "array"
