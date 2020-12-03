@@ -1,5 +1,5 @@
 {
-    "$schema": "https://moj-analytical-services.github.io/metadata_schema/table/v1.3.0.json",
+    "$schema": "https://moj-analytical-services.github.io/metadata_schema/table/v1.4.0.json",
     "name": "test_table",
     "description": "table containing columns with each of the data types for testing database creation",
     "data_format": "json",
