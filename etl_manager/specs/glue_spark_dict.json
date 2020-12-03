@@ -31,6 +31,10 @@
       "glue":"timestamp",
       "spark":"TimestampType"
     },
+    "binary": {
+      "glue":"binary",
+      "spark":"BinaryType"
+    },
     "boolean":{
       "glue":"boolean",
       "spark":"BooleanType"

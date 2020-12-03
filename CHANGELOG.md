@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## v7.4.0
+
+### Change
+- Add support for `binary` type
+
+## v7.3.0
+
+### Change
+- Set the default AWS Glue version to 2.0
+
 ## v7.2.0
 
 ### Change
