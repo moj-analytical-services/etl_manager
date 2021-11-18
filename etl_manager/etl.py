@@ -1,26 +1,16 @@
-from urllib.request import urlretrieve
 import datetime
 import glob
-import json
 import os
 import re
 import shutil
 import tempfile
 import time
 import zipfile
+from urllib.request import urlretrieve
+
 from botocore.exceptions import ClientError
 
-from etl_manager.utils import (
-    read_json,
-    write_json,
-    _dict_merge,
-    _validate_string,
-    _glue_client,
-    _unnest_github_zipfile_and_return_new_zip_path,
-    _s3_client,
-    _s3_resource,
-)
-
+from etl_manager.utils import _glue_client, _s3_client, _s3_resource, _validate_string
 
 # Create temp folder - upload to s3
 # Lock it in
