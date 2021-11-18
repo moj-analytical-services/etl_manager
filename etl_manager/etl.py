@@ -227,11 +227,6 @@ class GlueJob:
         _validate_string(job_name, allowed_chars="-_:")
         self._job_name = job_name
 
-    @job_name.setter
-    def job_name(self, job_name):
-        _validate_string(job_name, allowed_chars="-_:")
-        self._job_name = job_name
-
     @property
     def job_run_id(self):
         return self._job_run_id
