@@ -1,26 +1,17 @@
-from urllib.request import urlretrieve
 import datetime
 import glob
-import json
 import os
 import re
 import shutil
 import tempfile
 import time
+from typing import Optional
 import zipfile
+from urllib.request import urlretrieve
+
 from botocore.exceptions import ClientError
 
-from etl_manager.utils import (
-    read_json,
-    write_json,
-    _dict_merge,
-    _validate_string,
-    _glue_client,
-    _unnest_github_zipfile_and_return_new_zip_path,
-    _s3_client,
-    _s3_resource,
-)
-
+from etl_manager.utils import _glue_client, _s3_client, _s3_resource, _validate_string
 
 # Create temp folder - upload to s3
 # Lock it in
@@ -91,6 +82,7 @@ class GlueJob:
         job_arguments={},
         include_shared_job_resources=True,
         timeout_override_minutes=None,
+        tags: Optional[dict] = None,
     ):
         self.GLUE_WORKER_HOURLY_COST = 0.44  # i.e. 44 cents per worker per hour
         self.MAXIMUM_COST_TIMEOUT = (
@@ -129,6 +121,7 @@ class GlueJob:
         self.job_arguments = job_arguments
 
         self.timeout_override_minutes = timeout_override_minutes
+        self.tags = tags if tags is not None else dict()
 
         self.github_py_resources = []
 
@@ -237,10 +230,15 @@ class GlueJob:
         _validate_string(job_name, allowed_chars="-_:")
         self._job_name = job_name
 
-    @job_name.setter
-    def job_name(self, job_name):
-        _validate_string(job_name, allowed_chars="-_:")
-        self._job_name = job_name
+    @property
+    def tags(self):
+        return self._tags
+
+    @tags.setter
+    def tags(self, tags: dict):
+        if not isinstance(tags, dict):
+            raise TypeError("tags must be of type dict")
+        self._tags = tags
 
     @property
     def job_run_id(self):
@@ -495,6 +493,7 @@ class GlueJob:
             "MaxRetries": self.max_retries,
             "AllocatedCapacity": self.allocated_capacity,
             "GlueVersion": self.glue_version,
+            "Tags": self.tags,
             "Timeout": self.timeout,
         }
 

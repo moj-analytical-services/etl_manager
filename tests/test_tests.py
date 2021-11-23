@@ -34,7 +34,6 @@ from etl_manager.etl import GlueJob
 from tests import BotoTester
 
 
-
 class UtilsTest(BotoTester):
     """
     Test packages utilities functions
@@ -52,7 +51,9 @@ class UtilsTest(BotoTester):
     def test_trim_complex_type(self):
         self.assertEqual(trim_complex_type("decimal(38,0)"), "decimal")
         self.assertEqual(trim_complex_type("array<decimal(38,0)>"), "array")
-        self.assertEqual(trim_complex_type("struct<arr_key:array<decimal(38,0)>>"), "struct")
+        self.assertEqual(
+            trim_complex_type("struct<arr_key:array<decimal(38,0)>>"), "struct"
+        )
 
 
 class GlueTest(BotoTester):
@@ -190,6 +191,41 @@ class GlueTest(BotoTester):
         g.allocated_capacity = 40
 
         self.assertEqual(g._job_definition()["Timeout"], 2880)
+
+    def test_tags(self):
+        # Test default tags
+        g1 = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+        )
+        self.assertEqual(g1.tags, {})
+
+        # Test overriding default tags
+        g1.tags = {"a": "b"}
+        self.assertEqual(g1.tags, {"a": "b"})
+
+        # Test tags in job definition
+        job_definition = g1._job_definition()
+        self.assertEqual(job_definition["Tags"], {"a": "b"})
+
+        # Test setting custom tags
+        g2 = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+            tags={"c": "d"},
+        )
+        self.assertEqual(g2.tags, {"c": "d"})
+
+        # Test disallowed type
+        with self.assertRaises(TypeError):
+            GlueJob(
+                "example/glue_jobs/simple_etl_job/",
+                bucket="alpha-everyone",
+                job_role="alpha_user_isichei",
+                tags=["test"],
+            )
 
 
 class TableTest(BotoTester):
@@ -442,7 +478,7 @@ class TableMetaTest(BotoTester):
                     "description": "date of birth for the employee",
                 },
             ],
-            "primary_key": ["employee_id"]
+            "primary_key": ["employee_id"],
         }
 
         tm2 = TableMeta(**kwargs)
@@ -683,7 +719,8 @@ class TableMetaTest(BotoTester):
         self.assertEqual(tm.sensitivity, ["personal_data", "special_category_data"])
 
         tm.update_column(
-            column_name="employee_ethnicity", sensitivity="personal_data",
+            column_name="employee_ethnicity",
+            sensitivity="personal_data",
         )
         self.assertEqual(tm.sensitivity, ["personal_data"])
 
