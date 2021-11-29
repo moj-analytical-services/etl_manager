@@ -131,6 +131,7 @@ class GlueJob:
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
 
+        self.glue_version = "2.0"
         self.python_version = "3"
 
     @property
@@ -256,7 +257,7 @@ class GlueJob:
             raise ValueError(
                 f"glue_version must be one of {valid_glue_versions} (give {v})"
             )
-        self._python_version = v
+        self._glue_version = v
 
     @property
     def python_version(self):

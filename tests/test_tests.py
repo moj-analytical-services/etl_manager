@@ -108,6 +108,7 @@ class GlueTest(BotoTester):
         self.assertEqual(g.max_retries, 0)
         self.assertEqual(g.max_concurrent_runs, 1)
         self.assertEqual(g.allocated_capacity, 2)
+        self.assertEqual(g.glue_version, "2.0")
         self.assertEqual(g.python_version, "3")
 
         jobdef = g._job_definition()
@@ -227,6 +228,22 @@ class GlueTest(BotoTester):
                 job_role="alpha_user_isichei",
                 tags=["test"],
             )
+
+    def test_glue_version(self):
+        g = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+        )
+        for glue_version in ["2.0", "1.0", "0.9"]:
+            g.glue_version = glue_version
+            self.assertEqual(g.glue_version, glue_version)
+
+        with self.assertRaises(TypeError):
+            g.glue_version = 1
+
+        with self.assertRaises(ValueError):
+            g.glue_version = "1.1"
 
     def test_python_version(self):
         g = GlueJob(
