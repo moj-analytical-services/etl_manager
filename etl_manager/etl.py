@@ -131,8 +131,7 @@ class GlueJob:
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
 
-        self._glue_version = "2.0"
-        self._python_version = "3"
+        self.python_version = "3"
 
     @property
     def timeout(self):
