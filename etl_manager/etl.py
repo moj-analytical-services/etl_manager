@@ -131,8 +131,8 @@ class GlueJob:
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
 
-        self._glue_version = "2.0"
-        self._python_version = "3"
+        self.glue_version = "2.0"
+        self.python_version = "3"
 
     @property
     def timeout(self):
@@ -250,14 +250,14 @@ class GlueJob:
 
     @glue_version.setter
     def glue_version(self, v):
-        valid_glue_versions = ["2.0", "1.0", "0.9"]
+        valid_glue_versions = ["3.0", "2.0", "1.0", "0.9"]
         if not isinstance(v, str):
             raise TypeError(f"glue_version must be of type str (given {type(v)})")
         if v not in valid_glue_versions:
             raise ValueError(
                 f"glue_version must be one of {valid_glue_versions} (give {v})"
             )
-        self._python_version = v
+        self._glue_version = v
 
     @property
     def python_version(self):
