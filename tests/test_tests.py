@@ -235,7 +235,7 @@ class GlueTest(BotoTester):
             bucket="alpha-everyone",
             job_role="alpha_user_isichei",
         )
-        for glue_version in ["2.0", "1.0", "0.9"]:
+        for glue_version in ["3.0", "2.0", "1.0", "0.9"]:
             g.glue_version = glue_version
             self.assertEqual(g.glue_version, glue_version)
 
