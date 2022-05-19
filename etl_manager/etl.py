@@ -536,7 +536,7 @@ class GlueJob:
 
         if self.pip_requirements is not None:
             pip_req = self._get_pip_requirements()
-            job_definition["DefaultArguments"]["----additional-python-modules"] = pip_req
+            job_definition["DefaultArguments"]["--additional-python-modules"] = pip_req
 
         if len(self.resources) > 0:
             extra_files = ",".join(
