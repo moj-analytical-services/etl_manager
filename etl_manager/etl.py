@@ -5,7 +5,7 @@ import re
 import shutil
 import tempfile
 import time
-from typing import Optional
+from typing import Optional, Union
 import zipfile
 from urllib.request import urlretrieve
 
@@ -133,6 +133,7 @@ class GlueJob:
 
         self.glue_version = "2.0"
         self.python_version = "3"
+        self.pip_requirements = None
 
     @property
     def timeout(self):
@@ -199,6 +200,7 @@ class GlueJob:
                 "--debug",
                 "--mode",
                 "--metadata_base_path",
+                "--additional-python-modules"
             ]
             for k in job_arguments.keys():
                 if k[:2] != "--" or k in special_aws_params:
@@ -274,6 +276,41 @@ class GlueJob:
             )
 
         self._python_version = v
+
+    @property
+    def pip_requirements(self):
+        return self._pip_requirements
+
+    @pip_requirements.setter
+    def pip_requirements(self, requirements: Union[str, None]):
+        glue_version = self.glue_version
+        if glue_version not in ["3.0", "2.0"]:
+            raise ValueError(
+                f"pip_requirements cannot be set for Glue {glue_version}"
+            )
+        if requirements is not None:
+            if not isinstance(requirements, str):
+                raise TypeError(
+                    f"pip_requirements must be a str (given {type(requirements)}"
+                )
+            try:
+                _, ext = os.path.splitext(requirements)
+            except Exception:
+                raise ValueError("requirements should be a valid filepath")
+            if ext != ".txt":
+                raise ValueError("requirements should be a filepath to a txt file")
+
+        self._pip_requirements = requirements
+
+    def _get_pip_requirements(self):
+        req_txt = self.pip_requirements
+        if req_txt is not None:
+            with open(req_txt, 'r') as f:
+                req = f.readlines()
+
+            req_str = ",".join(req).replace("\n", '')
+
+            return req_str
 
     def _check_nondup_resources(self, resources_list):
         file_list = [os.path.basename(r) for r in resources_list]
@@ -496,6 +533,10 @@ class GlueJob:
             "Tags": self.tags,
             "Timeout": self.timeout,
         }
+
+        if self.pip_requirements is not None:
+            pip_req = self._get_pip_requirements()
+            job_definition["DefaultArguments"]["--additional-python-modules"] = pip_req
 
         if len(self.resources) > 0:
             extra_files = ",".join(
