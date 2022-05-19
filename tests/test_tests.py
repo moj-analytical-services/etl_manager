@@ -110,6 +110,7 @@ class GlueTest(BotoTester):
         self.assertEqual(g.allocated_capacity, 2)
         self.assertEqual(g.glue_version, "2.0")
         self.assertEqual(g.python_version, "3")
+        self.assertEqual(g.pip_requirements, None)
 
         jobdef = g._job_definition()
         self.assertTrue("j2.jar" in jobdef["DefaultArguments"]["--extra-jars"])
@@ -260,6 +261,23 @@ class GlueTest(BotoTester):
 
         with self.assertRaises(ValueError):
             g.python_version = "1.1"
+
+    def test_pip_requirements(self):
+        g = GlueJob(
+            "example/glue_jobs/simple_etl_job/",
+            bucket="alpha-everyone",
+            job_role="alpha_user_isichei",
+        )
+
+        for glue_version in ["1.0", "0.9"]:
+            g.glue_version = glue_version
+            self.assertEqual(g.pip_requirements, None)
+
+        for glue_version in ["2.0", "3.0"]:
+            g.glue_version = glue_version
+            for fp in ["gibberish", "requirements"]:
+                with self.assertRaises(ValueError) as context:
+                    g.pip_requirements = fp
 
 
 class TableTest(BotoTester):
