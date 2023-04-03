@@ -480,7 +480,7 @@ class TableMeta:
 
         return glue_table_definition
 
-    def to_dict(self):
+    def to_dict(self, always_key=False):
         meta = {
             "$schema": _web_link_to_table_json_schema,
             "name": self.name,
@@ -492,17 +492,21 @@ class TableMeta:
 
         if bool(self.partitions):
             meta["partitions"] = self.partitions
+        elif always_key:
+            meta["partitions"] = None
 
         if bool(self.primary_key):
             meta["primary_key"] = self.primary_key
+        elif always_key:
+            meta["primary_key"] = None
 
         if bool(self.glue_specific):
             meta["glue_specific"] = self.glue_specific
 
         return meta
 
-    def write_to_json(self, file_path):
-        write_json(self.to_dict(), file_path)
+    def write_to_json(self, file_path, always_key=False):
+        write_json(self.to_dict(always_key), file_path)
 
     def generate_markdown_doc(self, filepath):
         """
