@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "etl_manager"
-version = "7.5.2"
+version = "7.5.3"
 description = "A python package to manage etl processes on AWS"
 license = "MIT"
 authors = ["Karik Isichei <karik.isichei@digital.justice.gov.uk>"]
@@ -12,7 +12,7 @@ python = "^3.6"
 boto3 = ">=1.9.205"
 jsonschema = ">=3.0.0"
 parameterized = "0.7.*"
-regex = "^2020.7.14"
+regex = ">=2020.7.14"
 
 
 [tool.poetry.dev-dependencies]
