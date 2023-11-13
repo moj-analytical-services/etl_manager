@@ -252,7 +252,7 @@ class GlueJob:
 
     @glue_version.setter
     def glue_version(self, v):
-        valid_glue_versions = ["3.0", "2.0", "1.0", "0.9"]
+        valid_glue_versions = ["4.0", "3.0", "2.0", "1.0", "0.9"]
         if not isinstance(v, str):
             raise TypeError(f"glue_version must be of type str (given {type(v)})")
         if v not in valid_glue_versions:
@@ -284,7 +284,7 @@ class GlueJob:
     @pip_requirements.setter
     def pip_requirements(self, requirements: Union[str, None]):
         glue_version = self.glue_version
-        if glue_version not in ["3.0", "2.0"]:
+        if glue_version not in ["4.0", "3.0", "2.0"]:
             raise ValueError(
                 f"pip_requirements cannot be set for Glue {glue_version}"
             )
