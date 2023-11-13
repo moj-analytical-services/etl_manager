@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 
+## v7.6.0
+
+### Change
+
+- Add support for AWS Glue v4.0
+
 ## v7.5.3
 
 ### Change
