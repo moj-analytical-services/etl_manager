@@ -130,7 +130,7 @@ class GlueJob:
         self.max_retries = 0
         self.max_concurrent_runs = 1
         self.allocated_capacity = 2
-        self.worker_type = "G1.X"
+        self.worker_type = "G.1X"
 
         self.glue_version = "2.0"
         self.python_version = "3"
@@ -276,7 +276,7 @@ class GlueJob:
             raise TypeError(f"worker_type must be of type str (given {type(t)})")
         if t not in valid_worker_types:
             raise ValueError(
-                f"worker_type must be one of {valid_glue_versions} (give {t})"
+                f"worker_type must be one of {valid_worker_types} (give {t})"
             )
         self._worker_type = t
 
