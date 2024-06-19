@@ -107,7 +107,8 @@ class GlueTest(BotoTester):
         self.assertEqual(g.github_py_resources, [])
         self.assertEqual(g.max_retries, 0)
         self.assertEqual(g.max_concurrent_runs, 1)
-        self.assertEqual(g.allocated_capacity, 2)
+        self.assertEqual(g.worker_type, "G.1X")
+        self.assertEqual(g.number_of_workers, 2)
         self.assertEqual(g.glue_version, "2.0")
         self.assertEqual(g.python_version, "3")
         self.assertEqual(g.pip_requirements, None)
@@ -175,11 +176,13 @@ class GlueTest(BotoTester):
 
         self.assertEqual(g._job_definition()["Timeout"], 1363)
 
-        g.allocated_capacity = 10
+        g.number_of_workers = 5
+        g.worker_type = "G.2X"
 
         self.assertEqual(g._job_definition()["Timeout"], 272)
 
-        g.allocated_capacity = 40
+        g.number_of_workers = 40
+        g.worker_type = "G.1X"
 
         self.assertEqual(g._job_definition()["Timeout"], 68)
 
@@ -191,7 +194,7 @@ class GlueTest(BotoTester):
             timeout_override_minutes=2880,
         )
 
-        g.allocated_capacity = 40
+        g.number_of_workers = 40
 
         self.assertEqual(g._job_definition()["Timeout"], 2880)
 
