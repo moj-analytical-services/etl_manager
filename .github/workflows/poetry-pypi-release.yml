@@ -1,16 +1,39 @@
-name: Release Package on PyPi
+name: Publish
 on:
   push:
     tags:
       - 'v*.*.*'
 jobs:
-  poetry-publish:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
         with:
-          fetch-depth: 1
-      - name: release to PyPI
-        uses: moj-analytical-services/actions-poetry-pypi-release@v1
+          python-version: 3.11
+
+      - run: |
+          pip install poetry
+          poetry build
+
+      - uses: actions/upload-artifact@v3
         with:
-          pypi-api-token: ${{ secrets.PYPI_API_TOKEN }}
+          path: ./dist
+
+  pypi-publish:
+    needs: ['build']
+    environment: 'release'
+
+    name: upload release to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v3
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages_dir: artifact/
