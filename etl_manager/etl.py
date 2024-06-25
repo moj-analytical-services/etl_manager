@@ -129,8 +129,8 @@ class GlueJob:
         self._job_run_id = None
         self.max_retries = 0
         self.max_concurrent_runs = 1
-        self.allocated_capacity = 2
-
+        self.number_of_workers = 2
+        self.worker_type = "G.1X"
         self.glue_version = "2.0"
         self.python_version = "3"
         self.pip_requirements = None
@@ -138,12 +138,14 @@ class GlueJob:
     @property
     def timeout(self):
         if self.timeout_override_minutes is None:
+            # "G.2X" -> 2.0
+            dpu_per_worker = float(self.worker_type[2]+'.'+self.worker_type[3:-1])
             # 60 because timeout is in munites, whereas glue worker cost is in hours
             return int(
                 60
                 * (
                     self.MAXIMUM_COST_TIMEOUT
-                    / (self.GLUE_WORKER_HOURLY_COST * self.allocated_capacity)
+                    / (self.GLUE_WORKER_HOURLY_COST * dpu_per_worker * self.number_of_workers)
                 )
             )
         else:
@@ -260,6 +262,21 @@ class GlueJob:
                 f"glue_version must be one of {valid_glue_versions} (give {v})"
             )
         self._glue_version = v
+
+    @property
+    def worker_type(self):
+        return self._worker_type
+
+    @worker_type.setter
+    def worker_type(self, t):
+        valid_worker_types = ["G.1X", "G.2X", "G.4X", "G.8X", "G.025X"]
+        if not isinstance(t, str):
+            raise TypeError(f"worker_type must be of type str (given {type(t)})")
+        if t not in valid_worker_types:
+            raise ValueError(
+                f"worker_type must be one of {valid_worker_types} (give {t})"
+            )
+        self._worker_type = t
 
     @property
     def python_version(self):
@@ -528,7 +545,8 @@ class GlueJob:
                 "--job-bookmark-option": "job-bookmark-disable",
             },
             "MaxRetries": self.max_retries,
-            "AllocatedCapacity": self.allocated_capacity,
+            "WorkerType": self.worker_type,
+            "NumberOfWorkers": self.number_of_workers,
             "GlueVersion": self.glue_version,
             "Tags": self.tags,
             "Timeout": self.timeout,
