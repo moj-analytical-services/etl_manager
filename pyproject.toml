@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "etl_manager"
-version = "8.1.0"
+version = "9.0.0"
 description = "A python package to manage etl processes on AWS"
 license = "MIT"
 authors = ["Karik Isichei <karik.isichei@digital.justice.gov.uk>"]
