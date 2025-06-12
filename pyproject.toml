@@ -13,8 +13,6 @@ boto3 = ">=1.9.205"
 jsonschema = ">=3.0.0"
 parameterized = "0.7.*"
 regex = ">=2020.7.14"
-setuptools = "59.6.0"
-
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.8.3"
