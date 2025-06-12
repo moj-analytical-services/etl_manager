@@ -61,7 +61,7 @@ _web_link_to_table_json_schema = (
 )
 
 try:
-    with urllib.request.urlopen(_web_link_to_table_json_schema) as url:
+    with urllib.request.urlopen(_web_link_to_table_json_schema, timeout=5) as url:
         _table_json_schema = json.loads(url.read().decode())
 except urllib.error.URLError:
     warnings.warn(
